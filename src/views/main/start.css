@@ -1,5 +1,13 @@
+/* 窗口高的时候表单在中间偏上，矮的时候从顶上开始、可以滚动 */
 .start-page {
-  padding: 44px 46px 32px;
+  --page-w: 680px;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: clamp(32px, 6vh, 80px);
+}
+
+.start-form {
+  margin-block: auto;
 }
 
 .start-page .input {

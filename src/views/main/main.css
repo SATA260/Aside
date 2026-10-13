@@ -69,10 +69,12 @@
   z-index: 5;
 }
 
+/* 每页有自己的内容宽度，窗口变大时内容在侧栏右边居中，而不是挤在左上角 */
 .page {
+  --page-w: 720px;
   height: 100%;
   overflow-y: auto;
-  padding: 44px 52px 40px;
+  padding: clamp(44px, 7vh, 96px) max(52px, (100% - var(--page-w)) / 2) 40px;
 }
 
 .page-title {
@@ -95,9 +97,25 @@
 
 /* ---------- 设置 ---------- */
 
+.settings-page {
+  --page-w: 640px;
+}
+
 .settings-group {
-  max-width: 640px;
   margin-bottom: 30px;
+  break-inside: avoid;
+}
+
+/* 宽窗口分两栏，少滚动 */
+@media (min-width: 1480px) {
+  .settings-page {
+    --page-w: 1180px;
+  }
+
+  .settings-cols {
+    columns: 2;
+    column-gap: 72px;
+  }
 }
 
 .settings-group h3 {
@@ -138,6 +156,7 @@
   align-items: center;
   gap: 6px;
   font-size: 11px;
+  white-space: nowrap;
   color: var(--muted);
   background: none;
   border: 0;

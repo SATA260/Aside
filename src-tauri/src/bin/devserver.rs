@@ -18,7 +18,8 @@ fn main() {
         .expect("无法初始化 Aside");
     Aside::spawn_ticker(app.clone());
 
-    let addr = "127.0.0.1:1430";
+    let port = std::env::var("ASIDE_BRIDGE_PORT").unwrap_or_else(|_| "1430".into());
+    let addr = format!("127.0.0.1:{port}");
     println!("开发桥已启动：http://{addr}，数据目录：{}", data_dir.display());
-    serve(app, addr, Some(hub), Some(clock));
+    serve(app, &addr, Some(hub), Some(clock));
 }

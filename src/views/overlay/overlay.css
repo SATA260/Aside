@@ -3,6 +3,8 @@ html[data-view="overlay"] body {
 }
 
 .overlay {
+  /* 全屏页的尺寸单位：屏幕短边 800 以内是 1px，屏幕越大越大，最多 1.6px，远远看也清楚 */
+  --u: clamp(1px, 100vmin / 800, 1.6px);
   position: fixed;
   inset: 0;
   overflow: hidden;
@@ -39,9 +41,18 @@ html[data-view="overlay"] body {
   );
 }
 
+.overlay .dot {
+  width: calc(8 * var(--u));
+  height: calc(8 * var(--u));
+}
+
+/* 从上到下：科目和时刻、大数字、文字按钮、地平线和一句话。中间那块占满剩下的高度 */
 .focus {
   position: absolute;
   inset: 0;
+  display: flex;
+  flex-direction: column;
+  padding: calc(44 * var(--u)) calc(56 * var(--u)) calc(64 * var(--u));
   transition: transform 4s linear;
 }
 
@@ -50,46 +61,54 @@ html[data-view="overlay"] body {
 }
 
 .ov-top {
-  position: absolute;
-  top: 44px;
-  left: 56px;
-  right: 56px;
   display: flex;
   justify-content: space-between;
   align-items: baseline;
+  gap: calc(32 * var(--u));
 }
 
 .ov-subject {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 20px;
+  gap: calc(10 * var(--u));
+  min-width: 0;
+  font-size: calc(20 * var(--u));
+}
+
+.ov-subject > span {
+  flex: none;
 }
 
 .ov-subject .task {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--muted);
 }
 
 .ov-clock {
+  flex: none;
   font-weight: 300;
-  font-size: 18px;
+  font-size: calc(18 * var(--u));
   color: var(--muted);
   letter-spacing: 0.04em;
 }
 
 .ov-center {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 44%;
-  transform: translateY(-50%);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
 }
 
 .ov-time {
   font-family: var(--font-num);
   font-weight: 200;
-  font-size: min(228px, 22vw);
+  font-size: min(calc(228 * var(--u)), 24vw);
   line-height: 1;
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
@@ -118,17 +137,15 @@ html[data-view="overlay"] body {
 }
 
 .ov-note {
-  margin-top: 18px;
-  font-size: 17px;
+  margin-top: calc(18 * var(--u));
+  font-size: calc(17 * var(--u));
   color: var(--muted);
   letter-spacing: 0.08em;
 }
 
 .ov-bottom {
-  position: absolute;
-  left: 10%;
-  right: 10%;
-  bottom: 64px;
+  align-self: center;
+  width: 80vw;
 }
 
 .horizon {
@@ -173,29 +190,26 @@ html[data-view="overlay"] body {
 .h-labels {
   display: flex;
   justify-content: space-between;
-  margin-top: 14px;
-  font-size: 13px;
+  margin-top: calc(14 * var(--u));
+  font-size: calc(13 * var(--u));
   color: var(--muted);
   letter-spacing: 0.04em;
 }
 
 .quote {
-  margin-top: 34px;
+  margin-top: calc(34 * var(--u));
   text-align: center;
-  font-size: 19px;
+  font-size: calc(19 * var(--u));
   color: var(--muted);
   letter-spacing: 0.12em;
 }
 
 /* 文字按钮：直接写在背景上，鼠标静止 3 秒淡出 */
 .textctl {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 196px;
   display: flex;
   justify-content: center;
-  gap: 48px;
+  gap: calc(48 * var(--u));
+  margin-bottom: calc(30 * var(--u));
   transition: opacity 0.6s var(--ease);
 }
 
@@ -207,7 +221,7 @@ html[data-view="overlay"] body {
 .textctl button {
   position: relative;
   font-family: var(--font-wk);
-  font-size: 15px;
+  font-size: calc(15 * var(--u));
   letter-spacing: 0.14em;
   color: var(--muted);
   background: none;
@@ -228,9 +242,9 @@ html[data-view="overlay"] body {
   content: "";
   position: absolute;
   left: 50%;
-  bottom: -9px;
-  width: 4px;
-  height: 4px;
+  bottom: calc(-9 * var(--u));
+  width: calc(4 * var(--u));
+  height: calc(4 * var(--u));
   border-radius: 50%;
   background: var(--accent);
   transform: translateX(-50%);
@@ -250,6 +264,7 @@ html[data-view="overlay"] body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  padding: 0 6vw;
   text-align: center;
   animation: end-in 0.8s var(--ease) both;
 }
@@ -266,47 +281,53 @@ html[data-view="overlay"] body {
 }
 
 .end-title {
-  font-size: 46px;
+  font-size: calc(46 * var(--u));
   letter-spacing: 0.06em;
 }
 
 .end-title em {
   font-style: normal;
   font-weight: 300;
-  font-size: 54px;
+  font-size: calc(54 * var(--u));
   margin: 0 0.12em;
 }
 
 .end-sub {
-  margin-top: 18px;
-  font-size: 18px;
+  margin-top: calc(18 * var(--u));
+  font-size: calc(18 * var(--u));
   color: var(--muted);
   display: flex;
-  gap: 10px;
+  gap: calc(10 * var(--u));
   align-items: center;
 }
 
 .end-actions {
-  margin-top: 56px;
+  margin-top: calc(56 * var(--u));
   display: flex;
-  gap: 14px;
+  gap: calc(14 * var(--u));
+}
+
+.end-wrap .btn {
+  font-size: calc(15 * var(--u));
+  padding: calc(13 * var(--u)) calc(30 * var(--u));
 }
 
 .note-box {
-  margin-top: 30px;
-  width: 460px;
+  margin-top: calc(30 * var(--u));
+  width: min(calc(460 * var(--u)), 100%);
   display: flex;
-  gap: 10px;
+  gap: calc(10 * var(--u));
 }
 
 .note-box input {
   flex: 1;
-  padding: 12px 16px;
-  border-radius: 10px;
+  min-width: 0;
+  padding: calc(12 * var(--u)) calc(16 * var(--u));
+  border-radius: calc(10 * var(--u));
   border: 1px solid var(--line);
   background: color-mix(in srgb, var(--surface) 60%, transparent);
   color: var(--text);
-  font-size: 16px;
+  font-size: calc(16 * var(--u));
   outline: none;
 }
 
@@ -319,12 +340,12 @@ html[data-view="overlay"] body {
 }
 
 .note-box .btn {
-  padding: 10px 20px;
+  padding: calc(10 * var(--u)) calc(20 * var(--u));
 }
 
 .end-wrap .quote {
   position: absolute;
-  bottom: 64px;
+  bottom: calc(64 * var(--u));
   left: 0;
   right: 0;
 }

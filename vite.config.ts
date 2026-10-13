@@ -14,7 +14,8 @@ export default defineConfig(() => ({
   clearScreen: false,
   // 2. tauri expects a fixed port, fail if that port is not available
   server: {
-    port: 1420,
+    // 端到端测试另起一套（见 playwright.config.ts），不和正在开发的抢端口
+    port: Number(process.env.ASIDE_VITE_PORT ?? 1420),
     strictPort: true,
     host: host || false,
     hmr: host
@@ -27,7 +28,7 @@ export default defineConfig(() => ({
     // 浏览器调试时转发到开发桥（src-tauri/src/bin/devserver.rs）
     proxy: {
       "/__dev": {
-        target: "http://127.0.0.1:1430",
+        target: `http://127.0.0.1:${process.env.ASIDE_BRIDGE_PORT ?? 1430}`,
         rewrite: (path: string) => path.replace(/^\/__dev/, ""),
       },
     },

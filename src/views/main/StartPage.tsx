@@ -71,71 +71,73 @@ function StartFormView({ init, timer, settings }: { init: StartForm; timer: Time
 
   return (
     <div className="page start-page">
-      <Greeting todayMs={timer.today_ms} />
-      {timer.recovered && <RecoveredNotice outcome={timer.recovered} />}
-      {active && <ActiveNotice timer={timer} />}
+      <div className="start-form">
+        <Greeting todayMs={timer.today_ms} />
+        {timer.recovered && <RecoveredNotice outcome={timer.recovered} />}
+        {active && <ActiveNotice timer={timer} />}
 
-      <div className="field">
-        <div className="label">科目</div>
-        <div className="chips">
-          {subjects.map((s) => (
-            <Chip key={s.id} on={s.id === subjectId} color={s.color} onClick={() => set({ subjectId: s.id })}>
-              <Dot color={s.color} />
-              <span className="wk">{s.name}</span>
-            </Chip>
-          ))}
-        </div>
-      </div>
-
-      <div className="row">
         <div className="field">
-          <div className="label">方式</div>
-          <Segmented
-            value={form.mode}
-            options={MODES}
-            onChange={(mode) => setForm((f) => switchMode(f, mode, settings))}
+          <div className="label">科目</div>
+          <div className="chips">
+            {subjects.map((s) => (
+              <Chip key={s.id} on={s.id === subjectId} color={s.color} onClick={() => set({ subjectId: s.id })}>
+                <Dot color={s.color} />
+                <span className="wk">{s.name}</span>
+              </Chip>
+            ))}
+          </div>
+        </div>
+
+        <div className="row">
+          <div className="field">
+            <div className="label">方式</div>
+            <Segmented
+              value={form.mode}
+              options={MODES}
+              onChange={(mode) => setForm((f) => switchMode(f, mode, settings))}
+            />
+          </div>
+          {DISPLAYS.length > 1 && (
+            <div className="field">
+              <div className="label">显示</div>
+              <Segmented value={form.display} options={DISPLAYS} onChange={(display) => set({ display })} />
+            </div>
+          )}
+        </div>
+
+        <div className="field">
+          <div className="label">{form.mode === "countup" ? "时长" : "时长（最长 24 小时）"}</div>
+          {form.mode === "countup" ? (
+            <p className="countup-hint">从 0 开始往上数，想停就停；连续 24 小时会自动结束。</p>
+          ) : (
+            <LengthPicker
+              key={form.mode}
+              presets={form.mode === "mock" ? MOCK_PRESETS : COUNTDOWN_PRESETS}
+              value={form.lengthMs}
+              onChange={(lengthMs) => set({ lengthMs })}
+            />
+          )}
+          {error && <p className="field-error">{error}</p>}
+        </div>
+
+        <div className="field">
+          <div className="label">这一段要做什么（可以不填）</div>
+          <input
+            className="input"
+            placeholder={form.mode === "mock" ? "比如：数学一 · 2023 真题" : "比如：高数基础 第 12 讲"}
+            value={form.task}
+            maxLength={TASK_MAX}
+            onChange={(e) => set({ task: e.target.value })}
+            onKeyDown={(e) => e.key === "Enter" && !error && !active && !busy && void start()}
           />
         </div>
-        {DISPLAYS.length > 1 && (
-          <div className="field">
-            <div className="label">显示</div>
-            <Segmented value={form.display} options={DISPLAYS} onChange={(display) => set({ display })} />
-          </div>
-        )}
-      </div>
 
-      <div className="field">
-        <div className="label">{form.mode === "countup" ? "时长" : "时长（最长 24 小时）"}</div>
-        {form.mode === "countup" ? (
-          <p className="countup-hint">从 0 开始往上数，想停就停；连续 24 小时会自动结束。</p>
-        ) : (
-          <LengthPicker
-            key={form.mode}
-            presets={form.mode === "mock" ? MOCK_PRESETS : COUNTDOWN_PRESETS}
-            value={form.lengthMs}
-            onChange={(lengthMs) => set({ lengthMs })}
-          />
-        )}
-        {error && <p className="field-error">{error}</p>}
-      </div>
-
-      <div className="field">
-        <div className="label">这一段要做什么（可以不填）</div>
-        <input
-          className="input"
-          placeholder={form.mode === "mock" ? "比如：数学一 · 2023 真题" : "比如：高数基础 第 12 讲"}
-          value={form.task}
-          maxLength={TASK_MAX}
-          onChange={(e) => set({ task: e.target.value })}
-          onKeyDown={(e) => e.key === "Enter" && !error && !active && !busy && void start()}
-        />
-      </div>
-
-      <div className="go">
-        <Button variant="primary" cue={null} disabled={!!error || active || busy} onClick={() => void start()}>
-          开始专注
-        </Button>
-        <span className="hint">{formatAccel(settings.shortcut_toggle)} 也可以随时开始</span>
+        <div className="go">
+          <Button variant="primary" cue={null} disabled={!!error || active || busy} onClick={() => void start()}>
+            开始专注
+          </Button>
+          <span className="hint">{formatAccel(settings.shortcut_toggle)} 也可以随时开始</span>
+        </div>
       </div>
     </div>
   );

@@ -85,19 +85,6 @@ export function FocusScreen({ timer, settings }: { timer: TimerView; settings: S
         <div className="ov-note wk">{paused ? `暂停中 · ${learned}` : learned}</div>
       </main>
 
-      <footer className="ov-bottom">
-        <div className="horizon" style={{ "--p": line.p } as CSSProperties}>
-          <div className="track" />
-          <div className="fill" />
-          <div className="glow" />
-        </div>
-        <div className="h-labels num">
-          <span>{hm(line.from)}</span>
-          <span>{hm(line.to)}</span>
-        </div>
-        <p className="quote wk">慢慢来，比较快。</p>
-      </footer>
-
       <nav className="textctl wk">
         <button type="button" className={paused ? "on" : ""} onClick={() => void togglePause()}>
           {paused ? "继续" : "暂停"}
@@ -115,6 +102,19 @@ export function FocusScreen({ timer, settings }: { timer: TimerView; settings: S
           {confirmEnd ? "再点一次结束" : "结束"}
         </button>
       </nav>
+
+      <footer className="ov-bottom">
+        <div className="horizon" style={{ "--p": line.p } as CSSProperties}>
+          <div className="track" />
+          <div className="fill" />
+          <div className="glow" />
+        </div>
+        <div className="h-labels num">
+          <span>{hm(line.from)}</span>
+          <span>{hm(line.to)}</span>
+        </div>
+        <p className="quote wk">慢慢来，比较快。</p>
+      </footer>
     </div>
   );
 }

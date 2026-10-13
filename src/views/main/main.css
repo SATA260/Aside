@@ -96,6 +96,7 @@
 /* ---------- 设置 ---------- */
 
 .settings-group {
+  max-width: 640px;
   margin-bottom: 30px;
 }
 

@@ -3,29 +3,90 @@
 
 use std::sync::Arc;
 
+use serde::Deserialize;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 use serde_json::Value;
 
-use crate::app::Aside;
+use crate::app::{Aside, StartArgs};
 use crate::error::{AppError, AppResult};
 
 fn args<T: DeserializeOwned>(value: Value) -> AppResult<T> {
-    Ok(serde_json::from_value(value)?)
+    serde_json::from_value(value).map_err(|e| AppError::Invalid(format!("参数不对：{e}")))
 }
 
 fn ok<T: Serialize>(value: T) -> AppResult<Value> {
     Ok(serde_json::to_value(value)?)
 }
 
+#[derive(Deserialize)]
+struct Id {
+    id: i64,
+}
+
+#[derive(Deserialize)]
+struct IncludeArchived {
+    #[serde(default)]
+    include_archived: bool,
+}
+
+#[derive(Deserialize)]
+struct SubjectInput {
+    name: String,
+    color: String,
+}
+
+#[derive(Deserialize)]
+struct SubjectPatch {
+    id: i64,
+    name: Option<String>,
+    color: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct Ids {
+    ids: Vec<i64>,
+}
+
+#[derive(Deserialize)]
+struct Note {
+    id: i64,
+    note: String,
+}
+
 /// `caller` 是发起调用的窗口标签，比如 `main`、`overlay-0`、`mini`。
 pub fn dispatch(app: &Aside, cmd: &str, input: Value, _caller: &str) -> AppResult<Value> {
     let input = if input.is_null() { Value::Object(Default::default()) } else { input };
     match cmd {
-        "timer_snapshot" => {
-            let _: Value = args(input)?;
-            ok(app.timer_snapshot())
+        "timer_view" => ok(app.timer_view()),
+        "timer_start" => ok(app.timer_start(args::<StartArgs>(input)?)?),
+        "timer_pause" => ok(app.timer_pause()?),
+        "timer_resume" => ok(app.timer_resume()?),
+        "timer_finish" => ok(app.timer_finish()?),
+        "timer_close" => ok(app.timer_close()?),
+        "timer_dismiss_recovered" => ok(app.timer_dismiss_recovered()),
+
+        "settings_get" => ok(app.settings()),
+        "settings_update" => ok(app.settings_update(input)?),
+
+        "subjects_list" => ok(app.subjects_list(args::<IncludeArchived>(input)?.include_archived)?),
+        "subject_create" => {
+            let a: SubjectInput = args(input)?;
+            ok(app.subject_create(&a.name, &a.color)?)
         }
+        "subject_update" => {
+            let a: SubjectPatch = args(input)?;
+            ok(app.subject_update(a.id, a.name.as_deref(), a.color.as_deref())?)
+        }
+        "subject_archive" => ok(app.subject_archive(args::<Id>(input)?.id)?),
+        "subject_restore" => ok(app.subject_restore(args::<Id>(input)?.id)?),
+        "subjects_reorder" => ok(app.subjects_reorder(&args::<Ids>(input)?.ids)?),
+
+        "session_set_note" => {
+            let a: Note = args(input)?;
+            ok(app.session_set_note(a.id, &a.note)?)
+        }
+
         _ => Err(AppError::Invalid(format!("未知的命令：{cmd}"))),
     }
 }

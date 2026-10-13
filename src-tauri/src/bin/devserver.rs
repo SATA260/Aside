@@ -82,8 +82,9 @@ fn main() {
         .unwrap_or_else(|_| PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../.devdata"));
     let hub = Arc::new(Hub { state: Mutex::new((1, VecDeque::new())), changed: Condvar::new() });
     let clock = Arc::new(OffsetClock::default());
-    let app = Aside::new(data_dir.clone(), clock.clone(), hub.clone(), Arc::new(DevShell { hub: hub.clone() }))
+    let app = Aside::open(data_dir.clone(), clock.clone(), hub.clone(), Arc::new(DevShell { hub: hub.clone() }))
         .expect("无法初始化 Aside");
+    Aside::spawn_ticker(app.clone());
 
     let addr = "127.0.0.1:1430";
     let server = Server::http(addr).expect("端口 1430 被占用");

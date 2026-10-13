@@ -5,6 +5,7 @@ pub mod error;
 pub mod events;
 mod lecture;
 mod media;
+pub mod settings;
 pub mod shell;
 pub mod store;
 mod system;
@@ -38,12 +39,13 @@ pub fn run() {
         .setup(|app| {
             let handle = app.handle().clone();
             let data_dir = app.path().app_data_dir()?;
-            let aside = Aside::new(
+            let aside = Aside::open(
                 data_dir,
                 Arc::new(SystemClock),
                 Arc::new(TauriEvents { app: handle.clone() }),
                 Arc::new(TauriShell { app: handle.clone() }),
             )?;
+            Aside::spawn_ticker(aside.clone());
             app.manage(aside);
             if let Some(main) = app.get_webview_window("main") {
                 main.show()?;

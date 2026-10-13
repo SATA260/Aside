@@ -1,1 +1,264 @@
-//! 把计时状态机接到时钟、数据库和事件上。
+//! 把计时状态机接到时钟、数据库、事件和窗口上：开始、暂停、结束、每秒的 tick、
+//! 每 30 秒一次的心跳，以及异常退出后的恢复。
+
+use std::sync::Arc;
+use std::time::Duration;
+
+use serde::Serialize;
+
+use crate::app::{Aside, StartArgs};
+use crate::error::{AppResult, invalid};
+use crate::events::{TIMER_FINISHED, TIMER_TICK};
+use crate::store::subjects::{self, Subject};
+use crate::store::sessions;
+use crate::timer::{Display, EndReason, Finished, MINUTE_MS, Mode, Plan, Snapshot, Timer};
+
+const HEARTBEAT_MS: i64 = 30_000;
+
+#[derive(Debug, Clone, Serialize)]
+pub struct Outcome {
+    pub session_id: Option<i64>,
+    /// 不到 1 分钟的不记录
+    pub recorded: bool,
+    pub focused_ms: i64,
+    pub reason: EndReason,
+    pub plan: Plan,
+    pub started_at: i64,
+    pub ended_at: i64,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct TimerView {
+    #[serde(flatten)]
+    pub snapshot: Snapshot,
+    pub subject: Option<Subject>,
+    /// 刚结束的那一段，结束页用
+    pub last: Option<Outcome>,
+    /// 上次异常退出后补记的那一段，开始页提示一次
+    pub recovered: Option<Outcome>,
+    pub now: i64,
+}
+
+#[derive(Default)]
+pub struct TimerState {
+    timer: Timer,
+    subject: Option<Subject>,
+    last: Option<Outcome>,
+    recovered: Option<Outcome>,
+    heartbeat_at: i64,
+}
+
+pub fn view_name(display: Display) -> &'static str {
+    match display {
+        Display::Fullscreen => "overlay",
+        Display::Mini => "mini",
+        Display::Lecture => "lecture",
+    }
+}
+
+impl Aside {
+    pub fn timer_view(&self) -> TimerView {
+        let st = self.timer_state();
+        self.view_of(&st, self.clock.now_ms())
+    }
+
+    fn view_of(&self, st: &TimerState, now: i64) -> TimerView {
+        TimerView {
+            snapshot: st.timer.snapshot(now),
+            subject: st.subject.clone(),
+            last: st.last.clone(),
+            recovered: st.recovered.clone(),
+            now,
+        }
+    }
+
+    fn broadcast(&self, view: &TimerView) {
+        if let Ok(payload) = serde_json::to_value(view) {
+            self.events.emit(TIMER_TICK, payload);
+        }
+    }
+
+    pub fn timer_start(&self, args: StartArgs) -> AppResult<TimerView> {
+        let subject = self.store.read(|c| subjects::get(c, args.subject_id))?;
+        if subject.archived {
+            return invalid("这个科目已经归档了，先在科目页恢复它");
+        }
+        let plan = Plan {
+            subject_id: subject.id,
+            mode: args.mode,
+            planned_ms: args.planned_ms,
+            task: args.task,
+            display: args.display,
+        };
+        let now = self.clock.now_ms();
+        let view = {
+            let mut st = self.timer_state();
+            let mut timer = st.timer.clone();
+            timer.start(plan.clone(), now)?;
+            self.store.write(|c| sessions::save_active(c, &timer, now))?;
+            st.timer = timer;
+            st.subject = Some(subject);
+            st.last = None;
+            st.heartbeat_at = now;
+            self.view_of(&st, now)
+        };
+        self.edit_settings(|s| {
+            s.last_mode = plan.mode;
+            s.last_display = plan.display;
+            match (plan.mode, plan.planned_ms) {
+                (Mode::Countdown, Some(ms)) => s.last_countdown_ms = ms,
+                (Mode::Mock, Some(ms)) => s.last_mock_ms = ms,
+                _ => {}
+            }
+        })?;
+        self.broadcast(&view);
+        self.shell.open_view(view_name(plan.display));
+        self.shell.close_view("main");
+        Ok(view)
+    }
+
+    pub fn timer_pause(&self) -> AppResult<TimerView> {
+        self.change(|t, now| t.pause(now))
+    }
+
+    pub fn timer_resume(&self) -> AppResult<TimerView> {
+        self.change(|t, now| t.resume(now))
+    }
+
+    fn change(&self, f: impl FnOnce(&mut Timer, i64) -> Result<(), crate::timer::TimerError>) -> AppResult<TimerView> {
+        let now = self.clock.now_ms();
+        let view = {
+            let mut st = self.timer_state();
+            let mut timer = st.timer.clone();
+            f(&mut timer, now)?;
+            self.store.write(|c| sessions::save_active(c, &timer, now))?;
+            st.timer = timer;
+            st.heartbeat_at = now;
+            self.view_of(&st, now)
+        };
+        self.broadcast(&view);
+        Ok(view)
+    }
+
+    pub fn timer_finish(&self) -> AppResult<Outcome> {
+        let now = self.clock.now_ms();
+        let (outcome, view) = {
+            let mut st = self.timer_state();
+            let done = st.timer.finish(now)?;
+            let outcome = self.complete(&mut st, done)?;
+            (outcome, self.view_of(&st, now))
+        };
+        self.after_finish(&outcome, &view);
+        Ok(outcome)
+    }
+
+    /// 关掉结束页：回到开始页。
+    pub fn timer_close(&self) -> AppResult<TimerView> {
+        let now = self.clock.now_ms();
+        let view = {
+            let mut st = self.timer_state();
+            if st.timer.is_active() {
+                return invalid("专注还在进行中");
+            }
+            st.timer.reset();
+            self.view_of(&st, now)
+        };
+        self.broadcast(&view);
+        self.shell.open_view("main");
+        self.shell.close_view("overlay");
+        Ok(view)
+    }
+
+    pub fn timer_dismiss_recovered(&self) {
+        self.timer_state().recovered = None;
+    }
+
+    /// 每秒调用一次：到点自动结束，按时写心跳，向所有窗口广播当前时间。
+    pub fn tick(&self) {
+        let now = self.clock.now_ms();
+        let mut finished = None;
+        let view = {
+            let mut st = self.timer_state();
+            if let Some(done) = st.timer.tick(now) {
+                match self.complete(&mut st, done) {
+                    Ok(outcome) => finished = Some(outcome),
+                    Err(e) => eprintln!("写入专注记录失败：{e}"),
+                }
+            } else if st.timer.is_active() && now - st.heartbeat_at >= HEARTBEAT_MS {
+                match self.store.write(|c| sessions::save_active(c, &st.timer, now)) {
+                    Ok(()) => st.heartbeat_at = now,
+                    Err(e) => eprintln!("写入心跳失败：{e}"),
+                }
+            }
+            if !st.timer.is_active() && finished.is_none() {
+                return;
+            }
+            self.view_of(&st, now)
+        };
+        match finished {
+            Some(outcome) => self.after_finish(&outcome, &view),
+            None => self.broadcast(&view),
+        }
+    }
+
+    pub fn spawn_ticker(app: Arc<Aside>) {
+        std::thread::spawn(move || {
+            loop {
+                let wait = 1_000 - app.clock.now_ms().rem_euclid(1_000);
+                std::thread::sleep(Duration::from_millis(wait as u64 + 5));
+                app.tick();
+            }
+        });
+    }
+
+    /// 写入记录（够 1 分钟的话）并清掉心跳，两步在同一个事务里。
+    fn complete(&self, st: &mut TimerState, done: Finished) -> AppResult<Outcome> {
+        let recorded = done.focused_ms >= MINUTE_MS;
+        let session_id = self.store.write(|c| {
+            sessions::clear_active(c)?;
+            Ok(if recorded { Some(sessions::insert_from_timer(c, &done)?) } else { None })
+        })?;
+        let outcome = Outcome {
+            session_id,
+            recorded,
+            focused_ms: done.focused_ms,
+            reason: done.reason,
+            plan: done.plan,
+            started_at: done.started_at,
+            ended_at: done.ended_at,
+        };
+        st.last = Some(outcome.clone());
+        Ok(outcome)
+    }
+
+    fn after_finish(&self, outcome: &Outcome, view: &TimerView) {
+        self.broadcast(view);
+        if let Ok(payload) = serde_json::to_value(outcome) {
+            self.events.emit(TIMER_FINISHED, payload);
+        }
+        if outcome.recorded {
+            self.data_changed();
+        }
+        if outcome.plan.display != Display::Fullscreen {
+            self.shell.open_view("overlay");
+            self.shell.close_view(view_name(outcome.plan.display));
+        }
+    }
+
+    /// 启动时调用：上次有没结束的专注，就按最后一次心跳结束并记下。
+    pub(crate) fn recover_timer(&self) -> AppResult<()> {
+        let Some((mut timer, heartbeat_at)) = self.store.read(sessions::load_active)? else {
+            return Ok(());
+        };
+        let mut st = self.timer_state();
+        match timer.recover(heartbeat_at) {
+            Ok(done) => {
+                let outcome = self.complete(&mut st, done)?;
+                st.last = None;
+                st.recovered = Some(outcome);
+            }
+            Err(_) => self.store.write(sessions::clear_active)?,
+        }
+        Ok(())
+    }
+}

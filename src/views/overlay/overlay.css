@@ -1,0 +1,350 @@
+html[data-view="overlay"] body {
+  background: var(--bg);
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  color: var(--text);
+  background: linear-gradient(180deg, var(--bg) 0%, var(--bg) 35%, var(--bg2) 100%);
+  animation: overlay-in 0.6s var(--ease);
+}
+
+@keyframes overlay-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* 天色：底部一层很淡的主题色光，60 秒缓慢呼吸 */
+.overlay .sky {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    120% 60% at 50% 105%,
+    color-mix(in srgb, var(--accent) 16%, transparent) 0%,
+    transparent 60%
+  );
+  transition: filter 3s var(--ease);
+}
+
+.overlay.ended .sky {
+  filter: brightness(1.15);
+  background: radial-gradient(
+    130% 80% at 50% 100%,
+    color-mix(in srgb, var(--accent) 26%, transparent) 0%,
+    transparent 70%
+  );
+}
+
+.focus {
+  position: absolute;
+  inset: 0;
+  transition: transform 4s linear;
+}
+
+.focus.idle {
+  cursor: none;
+}
+
+.ov-top {
+  position: absolute;
+  top: 44px;
+  left: 56px;
+  right: 56px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.ov-subject {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 20px;
+}
+
+.ov-subject .task {
+  color: var(--muted);
+}
+
+.ov-clock {
+  font-weight: 300;
+  font-size: 18px;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+
+.ov-center {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 44%;
+  transform: translateY(-50%);
+  text-align: center;
+}
+
+.ov-time {
+  font-family: var(--font-num);
+  font-weight: 200;
+  font-size: min(228px, 22vw);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  background: none;
+  border: 0;
+  cursor: inherit;
+  transition: opacity 0.4s;
+}
+
+.ov-time.paused {
+  opacity: 0.55;
+}
+
+.ov-time .colon {
+  display: inline-block;
+  width: 0.32em;
+  height: 0.5em;
+  vertical-align: 0.1em;
+  opacity: 0.5;
+  color: transparent;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 12%, var(--text) 0.028em, transparent 0.034em),
+    radial-gradient(circle at 50% 88%, var(--text) 0.028em, transparent 0.034em);
+}
+
+.ov-note {
+  margin-top: 18px;
+  font-size: 17px;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+}
+
+.ov-bottom {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: 64px;
+}
+
+.horizon {
+  position: relative;
+  height: 12px;
+}
+
+.horizon .track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 6px;
+  height: 1px;
+  background: var(--line);
+}
+
+.horizon .fill {
+  position: absolute;
+  left: 0;
+  top: 6px;
+  height: 1px;
+  width: calc(var(--p) * 100%);
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 80%, transparent));
+  transition: width 1s linear;
+}
+
+.horizon .glow {
+  position: absolute;
+  top: 6px;
+  left: calc(var(--p) * 100%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--accent);
+  box-shadow:
+    0 0 12px 3px color-mix(in srgb, var(--accent) 55%, transparent),
+    0 0 40px 10px color-mix(in srgb, var(--accent) 18%, transparent);
+  transition: left 1s linear;
+}
+
+.h-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+
+.quote {
+  margin-top: 34px;
+  text-align: center;
+  font-size: 19px;
+  color: var(--muted);
+  letter-spacing: 0.12em;
+}
+
+/* 文字按钮：直接写在背景上，鼠标静止 3 秒淡出 */
+.textctl {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 196px;
+  display: flex;
+  justify-content: center;
+  gap: 48px;
+  transition: opacity 0.6s var(--ease);
+}
+
+.focus.idle .textctl {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.textctl button {
+  position: relative;
+  font-family: var(--font-wk);
+  font-size: 15px;
+  letter-spacing: 0.14em;
+  color: var(--muted);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.textctl button:hover {
+  color: var(--text);
+}
+
+.textctl button.on {
+  color: var(--text);
+}
+
+.textctl button.on::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -9px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+  transform: translateX(-50%);
+  box-shadow: 0 0 8px 1px color-mix(in srgb, var(--accent) 60%, transparent);
+}
+
+.textctl .end {
+  opacity: 0.7;
+}
+
+/* ---------- 结束页 ---------- */
+
+.end-wrap {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  animation: end-in 0.8s var(--ease) both;
+}
+
+.overlay.completed .end-wrap {
+  animation-delay: 2.4s;
+}
+
+@keyframes end-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.end-title {
+  font-size: 46px;
+  letter-spacing: 0.06em;
+}
+
+.end-title em {
+  font-style: normal;
+  font-weight: 300;
+  font-size: 54px;
+  margin: 0 0.12em;
+}
+
+.end-sub {
+  margin-top: 18px;
+  font-size: 18px;
+  color: var(--muted);
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.end-actions {
+  margin-top: 56px;
+  display: flex;
+  gap: 14px;
+}
+
+.note-box {
+  margin-top: 30px;
+  width: 460px;
+  display: flex;
+  gap: 10px;
+}
+
+.note-box input {
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--surface) 60%, transparent);
+  color: var(--text);
+  font-size: 16px;
+  outline: none;
+}
+
+.note-box input:focus {
+  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
+.note-box input::placeholder {
+  color: var(--muted);
+}
+
+.note-box .btn {
+  padding: 10px 20px;
+}
+
+.end-wrap .quote {
+  position: absolute;
+  bottom: 64px;
+  left: 0;
+  right: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .horizon .fill,
+  .horizon .glow,
+  .focus {
+    transition: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .horizon .glow {
+    animation: breathe 6s ease-in-out infinite;
+  }
+
+  @keyframes breathe {
+    50% {
+      opacity: 0.65;
+    }
+  }
+}

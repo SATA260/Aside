@@ -4,6 +4,7 @@ use rusqlite::{Connection, OptionalExtension, params};
 use serde::Serialize;
 
 use crate::error::{AppResult, invalid};
+use crate::stats::Piece;
 use crate::timer::{Finished, Segment, Timer};
 
 pub const MAX_NOTE_CHARS: usize = 200;
@@ -103,6 +104,20 @@ pub fn insert_from_timer(c: &Connection, done: &Finished) -> AppResult<i64> {
     let id = c.last_insert_rowid();
     insert_segments(c, id, &done.segments)?;
     Ok(id)
+}
+
+/// 和 [from, to) 有交集的运行段，带上所属科目。边界之外的部分由调用方裁掉。
+pub fn pieces_between(c: &Connection, from: i64, to: i64) -> AppResult<Vec<Piece>> {
+    let mut stmt = c.prepare(
+        "SELECT s.subject_id, g.start_at, g.end_at
+         FROM segments g JOIN sessions s ON s.id = g.session_id
+         WHERE g.end_at > ?1 AND g.start_at < ?2
+         ORDER BY g.start_at",
+    )?;
+    let rows = stmt
+        .query_map(params![from, to], |r| Ok(Piece { subject_id: r.get(0)?, start: r.get(1)?, end: r.get(2)? }))?
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(rows)
 }
 
 /// 所有记录落在 [from, to) 里的专注时长，跨边界的运行段只算里面的部分。

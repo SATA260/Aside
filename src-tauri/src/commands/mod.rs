@@ -3,6 +3,7 @@
 
 use std::sync::Arc;
 
+use chrono::NaiveDate;
 use serde::Deserialize;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
@@ -82,6 +83,12 @@ struct Note {
     note: String,
 }
 
+#[derive(Deserialize)]
+struct Range {
+    from: NaiveDate,
+    to: NaiveDate,
+}
+
 /// `caller` 是发起调用的窗口标签，比如 `main`、`overlay-0`、`mini`。
 pub fn dispatch(app: &Aside, cmd: &str, input: Value, _caller: &str) -> AppResult<Value> {
     let input = if input.is_null() { Value::Object(Default::default()) } else { input };
@@ -122,6 +129,12 @@ pub fn dispatch(app: &Aside, cmd: &str, input: Value, _caller: &str) -> AppResul
         "session_set_note" => {
             let a: Note = args(input)?;
             ok(app.session_set_note(a.id, &a.note)?)
+        }
+
+        "stats_overview" => ok(app.stats_overview()?),
+        "stats_days" => {
+            let a: Range = args(input)?;
+            ok(app.stats_days(a.from, a.to)?)
         }
 
         _ => Err(AppError::Invalid(format!("未知的命令：{cmd}"))),

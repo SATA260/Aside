@@ -66,6 +66,39 @@ export interface Settings {
 
 export type ShortcutAction = "toggle" | "display";
 
+/** 本地日期，形如 2026-10-14 */
+export type DateStr = string;
+
+export interface SubjectMs {
+  subject_id: number;
+  ms: number;
+}
+
+export interface DayTotal {
+  date: DateStr;
+  /** 这一天 0 点的时刻 */
+  start: number;
+  total_ms: number;
+  subjects: SubjectMs[];
+}
+
+export interface Period {
+  from: DateStr;
+  to: DateStr;
+  total_ms: number;
+  days_studied: number;
+  subjects: SubjectMs[];
+}
+
+export interface Overview {
+  today: DateStr;
+  /** 热力图第一天（16 周前的周一）到今天 */
+  days: DayTotal[];
+  week: Period;
+  month: Period;
+  balance: string;
+}
+
 export interface StartArgs {
   subject_id: number;
   mode: Mode;

@@ -1,5 +1,16 @@
 import { call } from "./ipc";
-import type { DisplayMode, Outcome, Settings, ShortcutAction, StartArgs, Subject, TimerView } from "./types";
+import type {
+  DateStr,
+  DayTotal,
+  DisplayMode,
+  Outcome,
+  Overview,
+  Settings,
+  ShortcutAction,
+  StartArgs,
+  Subject,
+  TimerView,
+} from "./types";
 
 export const api = {
   timer: {
@@ -32,5 +43,9 @@ export const api = {
   },
   sessions: {
     setNote: (id: number, note: string) => call<null>("session_set_note", { id, note }),
+  },
+  stats: {
+    overview: () => call<Overview>("stats_overview"),
+    days: (from: DateStr, to: DateStr) => call<DayTotal[]>("stats_days", { from, to }),
   },
 };

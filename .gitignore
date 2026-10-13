@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local tooling and test output
+.venv
+.devdata
+test-results
+playwright-report

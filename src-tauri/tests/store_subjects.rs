@@ -65,16 +65,27 @@ fn reopening_keeps_presets_without_duplicating() {
 }
 
 #[test]
-fn created_subject_is_read_back_from_disk_after_the_other_subjects() {
+fn created_subject_is_read_back_from_disk_just_before_other() {
     let (dir, store) = open();
     let created = store.write(|c| subjects::create(c, "计组", "#123456")).unwrap();
     drop(store);
 
     let store = reopen(&dir);
     let list = store.read(|c| subjects::list(c, false)).unwrap();
-    let last = list.last().unwrap();
-    assert_eq!((last.id, last.name.as_str(), last.color.as_str()), (created.id, "计组", "#123456"));
-    assert!(!last.is_fallback);
+    let new = &list[list.len() - 2];
+    assert_eq!((new.id, new.name.as_str(), new.color.as_str()), (created.id, "计组", "#123456"));
+    assert!(!new.is_fallback);
+    assert_eq!(names(&store, false), ["政治", "英语", "数学", "专业课", "计组", "其他"]);
+}
+
+#[test]
+fn created_subject_goes_last_when_other_was_moved_up() {
+    let (_dir, store) = open();
+    let ids: Vec<i64> = ["其他", "政治", "英语", "数学", "专业课"].iter().map(|n| id_of(&store, n)).collect();
+    store.write(|c| subjects::reorder(c, &ids)).unwrap();
+
+    store.write(|c| subjects::create(c, "计组", "#123456")).unwrap();
+    assert_eq!(names(&store, false), ["其他", "政治", "英语", "数学", "专业课", "计组"]);
 }
 
 #[test]

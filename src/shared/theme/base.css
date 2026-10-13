@@ -101,6 +101,7 @@ kbd {
 }
 
 .link {
+  white-space: nowrap;
   font-size: 13px;
   color: var(--accent);
   background: none;

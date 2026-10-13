@@ -81,7 +81,18 @@ pub fn create(c: &Connection, name: &str, color: &str) -> AppResult<Subject> {
     let name = clean_name(name)?;
     check_color(color)?;
     ensure_unique(c, &name, None)?;
-    let sort: i64 = c.query_row("SELECT COALESCE(MAX(sort), -1) + 1 FROM subjects", [], |r| r.get(0))?;
+    let (last_sort, last_is_fallback): (i64, bool) = c.query_row(
+        "SELECT sort, is_fallback FROM subjects ORDER BY sort DESC, id DESC LIMIT 1",
+        [],
+        |r| Ok((r.get(0)?, r.get(1)?)),
+    )?;
+    // “其他”在最后时，新科目排在它前面
+    let sort = if last_is_fallback {
+        c.execute("UPDATE subjects SET sort = ?1 WHERE is_fallback = 1", [last_sort + 1])?;
+        last_sort
+    } else {
+        last_sort + 1
+    };
     c.execute(
         "INSERT INTO subjects (name, color, sort) VALUES (?1, ?2, ?3)",
         params![name, color, sort],

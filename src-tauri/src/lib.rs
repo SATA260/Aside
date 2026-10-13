@@ -7,6 +7,7 @@ mod lecture;
 mod media;
 pub mod settings;
 pub mod shell;
+pub mod stats;
 pub mod store;
 mod system;
 pub mod timer;

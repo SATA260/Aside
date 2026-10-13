@@ -9,6 +9,7 @@ use serde::Serialize;
 use crate::app::{Aside, StartArgs};
 use crate::error::{AppResult, invalid};
 use crate::events::{TIMER_FINISHED, TIMER_TICK};
+use crate::stats;
 use crate::store::subjects::{self, Subject};
 use crate::store::sessions;
 use crate::timer::{Display, EndReason, Finished, MINUTE_MS, Mode, Plan, Snapshot, Timer};
@@ -36,6 +37,10 @@ pub struct TimerView {
     pub last: Option<Outcome>,
     /// 上次异常退出后补记的那一段，开始页提示一次
     pub recovered: Option<Outcome>,
+    /// 用户点了“再来一段”：开始页沿用上一段的科目
+    pub again: bool,
+    /// 今天一共专注了多久，包括正在进行的这一段
+    pub today_ms: i64,
     pub now: i64,
 }
 
@@ -45,6 +50,7 @@ pub struct TimerState {
     subject: Option<Subject>,
     last: Option<Outcome>,
     recovered: Option<Outcome>,
+    again: bool,
     heartbeat_at: i64,
 }
 
@@ -63,11 +69,16 @@ impl Aside {
     }
 
     fn view_of(&self, st: &TimerState, now: i64) -> TimerView {
+        let (from, to) = stats::day_bounds(now);
+        let recorded = self.store.read(|c| sessions::focused_between(c, from, to)).unwrap_or(0);
+        let live: i64 = st.timer.live_segments(now).iter().map(|s| stats::clipped(s, from, to)).sum();
         TimerView {
             snapshot: st.timer.snapshot(now),
             subject: st.subject.clone(),
             last: st.last.clone(),
             recovered: st.recovered.clone(),
+            again: st.again,
+            today_ms: recorded + live,
             now,
         }
     }
@@ -99,6 +110,7 @@ impl Aside {
             st.timer = timer;
             st.subject = Some(subject);
             st.last = None;
+            st.again = false;
             st.heartbeat_at = now;
             self.view_of(&st, now)
         };
@@ -152,8 +164,8 @@ impl Aside {
         Ok(outcome)
     }
 
-    /// 关掉结束页：回到开始页。
-    pub fn timer_close(&self) -> AppResult<TimerView> {
+    /// 关掉结束页回到开始页。`again` 表示用户点的是“再来一段”，开始页沿用上一段的科目。
+    pub fn timer_close(&self, again: bool) -> AppResult<TimerView> {
         let now = self.clock.now_ms();
         let view = {
             let mut st = self.timer_state();
@@ -161,6 +173,7 @@ impl Aside {
                 return invalid("专注还在进行中");
             }
             st.timer.reset();
+            st.again = again && st.last.is_some();
             self.view_of(&st, now)
         };
         self.broadcast(&view);

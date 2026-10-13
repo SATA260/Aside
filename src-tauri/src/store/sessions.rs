@@ -105,6 +105,16 @@ pub fn insert_from_timer(c: &Connection, done: &Finished) -> AppResult<i64> {
     Ok(id)
 }
 
+/// 所有记录落在 [from, to) 里的专注时长，跨边界的运行段只算里面的部分。
+pub fn focused_between(c: &Connection, from: i64, to: i64) -> AppResult<i64> {
+    Ok(c.query_row(
+        "SELECT COALESCE(SUM(MIN(end_at, ?2) - MAX(start_at, ?1)), 0)
+         FROM segments WHERE end_at > ?1 AND start_at < ?2",
+        params![from, to],
+        |r| r.get(0),
+    )?)
+}
+
 pub fn clean_note(note: &str) -> AppResult<String> {
     let note = note.trim();
     if note.chars().count() > MAX_NOTE_CHARS {

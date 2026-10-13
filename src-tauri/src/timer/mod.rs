@@ -229,6 +229,19 @@ impl Timer {
         }
     }
 
+    /// 进行中这一段到 `now` 为止的所有运行段（含正在跑的那段），按天统计用。
+    pub fn live_segments(&self, now: i64) -> Vec<Segment> {
+        if !self.is_active() {
+            return Vec::new();
+        }
+        let mut segments = self.segments.clone();
+        if let Some(start) = self.run_start {
+            let room = (self.limit_ms() - self.closed_ms()).max(0);
+            segments.push(Segment { start, end: now.max(start).min(start + room) });
+        }
+        segments
+    }
+
     fn finish_with(&mut self, now: i64, reason: EndReason) -> Result<Finished, TimerError> {
         if !self.is_active() {
             return Err(TimerError::NotActive);

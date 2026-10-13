@@ -49,6 +49,12 @@ struct Ids {
 }
 
 #[derive(Deserialize)]
+struct Again {
+    #[serde(default)]
+    again: bool,
+}
+
+#[derive(Deserialize)]
 struct Note {
     id: i64,
     note: String,
@@ -63,7 +69,7 @@ pub fn dispatch(app: &Aside, cmd: &str, input: Value, _caller: &str) -> AppResul
         "timer_pause" => ok(app.timer_pause()?),
         "timer_resume" => ok(app.timer_resume()?),
         "timer_finish" => ok(app.timer_finish()?),
-        "timer_close" => ok(app.timer_close()?),
+        "timer_close" => ok(app.timer_close(args::<Again>(input)?.again)?),
         "timer_dismiss_recovered" => ok(app.timer_dismiss_recovered()),
 
         "settings_get" => ok(app.settings()),

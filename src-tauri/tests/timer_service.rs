@@ -109,7 +109,7 @@ fn under_one_minute_is_not_recorded_and_exactly_one_minute_is() {
     assert_eq!(short.session_id, None);
     assert_eq!(session_count(&r.app), 0);
 
-    r.app.timer_close().unwrap();
+    r.app.timer_close(false).unwrap();
     r.clock.set(T0 + 10 * MIN);
     start(&r.app, "其他", 25);
     r.clock.set(T0 + 11 * MIN);
@@ -230,7 +230,7 @@ fn closing_the_end_page_returns_to_the_main_window() {
     start(&r.app, "数学", 45);
     r.clock.set(T0 + 5 * MIN);
     r.app.timer_finish().unwrap();
-    r.app.timer_close().unwrap();
+    r.app.timer_close(false).unwrap();
     assert_eq!(r.app.timer_view().snapshot.phase, Phase::Idle);
     assert_eq!(r.shell.calls()[2..], ["open:main", "close:overlay"]);
 }

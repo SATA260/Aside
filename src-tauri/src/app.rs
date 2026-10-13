@@ -11,7 +11,7 @@ use serde_json::{Value, json};
 use crate::clock::Clock;
 use crate::error::AppResult;
 use crate::events::{DATA_CHANGED, EventSink, SETTINGS_CHANGED};
-use crate::settings::Settings;
+use crate::settings::{Point, Settings};
 use crate::shell::Shell;
 use crate::store::{self, Store, sessions, subjects};
 use crate::timer::service::TimerState;
@@ -95,6 +95,11 @@ impl Aside {
         let mut next = self.settings();
         f(&mut next);
         self.save_settings(next.normalized())
+    }
+
+    /// 浮窗关掉时记下它的位置，下次在同一个地方出现。
+    pub fn remember_mini_pos(&self, x: f64, y: f64) -> AppResult<Settings> {
+        self.edit_settings(|s| s.mini_pos = Some(Point { x, y }))
     }
 
     fn save_settings(&self, next: Settings) -> AppResult<Settings> {

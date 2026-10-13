@@ -191,6 +191,16 @@ impl Timer {
         self.finish_with(now, EndReason::Manual)
     }
 
+    /// 专注中在全屏和浮窗之间切换，只改显示方式，不影响计时。
+    pub fn set_display(&mut self, display: Display) -> Result<(), TimerError> {
+        if !self.is_active() {
+            return Err(TimerError::NotActive);
+        }
+        let plan = self.plan.as_mut().ok_or(TimerError::NotActive)?;
+        plan.display = display;
+        Ok(())
+    }
+
     /// 异常退出后恢复：按最后一次心跳的时刻结束。
     pub fn recover(&mut self, heartbeat_at: i64) -> Result<Finished, TimerError> {
         self.finish_with(heartbeat_at, EndReason::Recovered)

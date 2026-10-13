@@ -12,7 +12,7 @@ use crate::events::{TIMER_FINISHED, TIMER_TICK};
 use crate::stats;
 use crate::store::subjects::{self, Subject};
 use crate::store::sessions;
-use crate::timer::{Display, EndReason, Finished, MINUTE_MS, Mode, Plan, Snapshot, Timer};
+use crate::timer::{Display, EndReason, Finished, MINUTE_MS, Mode, Plan, Snapshot, Timer, TimerError};
 
 const HEARTBEAT_MS: i64 = 30_000;
 
@@ -181,6 +181,42 @@ impl Aside {
         self.shell.open_view("main");
         self.shell.close_view("overlay");
         Ok(view)
+    }
+
+    /// 专注中换一种显示方式：先打开新窗口，再关掉旧的。只影响这一段，不改开始页上次的选择。
+    pub fn timer_switch_display(&self, display: Display) -> AppResult<TimerView> {
+        let now = self.clock.now_ms();
+        let (from, view) = {
+            let mut st = self.timer_state();
+            let mut timer = st.timer.clone();
+            let from = timer.plan().map(|p| p.display);
+            timer.set_display(display)?;
+            if from != Some(display) {
+                self.store.write(|c| sessions::save_active(c, &timer, now))?;
+                st.timer = timer;
+            }
+            (from, self.view_of(&st, now))
+        };
+        if let Some(from) = from.filter(|f| *f != display) {
+            self.broadcast(&view);
+            self.shell.open_view(view_name(display));
+            self.shell.close_view(view_name(from));
+        }
+        Ok(view)
+    }
+
+    /// 全屏和浮窗互相切换，快捷键用。
+    pub fn timer_toggle_display(&self) -> AppResult<TimerView> {
+        let current = {
+            let st = self.timer_state();
+            st.timer.plan().filter(|_| st.timer.is_active()).map(|p| p.display)
+        };
+        match current {
+            Some(Display::Fullscreen) => self.timer_switch_display(Display::Mini),
+            Some(Display::Mini) => self.timer_switch_display(Display::Fullscreen),
+            Some(Display::Lecture) => Ok(self.timer_view()),
+            None => Err(TimerError::NotActive.into()),
+        }
     }
 
     pub fn timer_dismiss_recovered(&self) -> TimerView {

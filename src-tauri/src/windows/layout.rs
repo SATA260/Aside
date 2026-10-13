@@ -29,6 +29,29 @@ pub fn overlay_spots(screens: &[Rect], primary: Option<Rect>) -> Vec<OverlaySpot
         .collect()
 }
 
+/// 浮窗窗口的逻辑大小：胶囊 248×56，四周留出阴影的位置。
+pub const MINI_W: f64 = 280.0;
+pub const MINI_H: f64 = 88.0;
+const MINI_RIGHT: f64 = 24.0;
+const MINI_TOP: f64 = 56.0;
+
+/// 浮窗放在哪：上次的位置还在某块屏幕上就用它，否则放在主屏右上角。
+/// `size` 和屏幕坐标用同样的单位。
+pub fn mini_spot(saved: Option<(f64, f64)>, size: (f64, f64), screens: &[Rect], primary: Option<Rect>) -> (f64, f64) {
+    let (w, h) = size;
+    if let Some((x, y)) = saved {
+        let (cx, cy) = (x + w / 2.0, y + h / 2.0);
+        if screens.iter().any(|s| cx >= s.x && cx < s.x + s.w && cy >= s.y && cy < s.y + s.h) {
+            return (x, y);
+        }
+    }
+    let home = primary.filter(|p| screens.contains(p)).or(screens.first().copied());
+    match home {
+        Some(s) => (s.x + s.w - w - MINI_RIGHT, s.y + MINI_TOP),
+        None => (MINI_RIGHT, MINI_TOP),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -57,5 +80,30 @@ mod tests {
         assert_eq!(summary(&spots), [("overlay-0", 1470.0, false), ("overlay-1", 0.0, true)]);
         let stale = Rect { x: 9.0, ..LEFT };
         assert_eq!(summary(&overlay_spots(&[RIGHT, LEFT], Some(stale)))[0], ("overlay-0", 1470.0, false));
+    }
+
+    const SIZE: (f64, f64) = (MINI_W, MINI_H);
+
+    #[test]
+    fn floating_window_starts_at_the_top_right_of_the_primary_screen() {
+        assert_eq!(mini_spot(None, SIZE, &[LEFT, RIGHT], Some(RIGHT)), (1470.0 + 2560.0 - 280.0 - 24.0, -200.0 + 56.0));
+        assert_eq!(mini_spot(None, SIZE, &[LEFT], None), (1470.0 - 280.0 - 24.0, 56.0));
+    }
+
+    #[test]
+    fn floating_window_returns_where_it_was_left() {
+        assert_eq!(mini_spot(Some((300.0, 700.0)), SIZE, &[LEFT, RIGHT], Some(LEFT)), (300.0, 700.0));
+        // 一半拖出了屏幕边缘，中心还在屏幕上
+        assert_eq!(mini_spot(Some((1300.0, 10.0)), SIZE, &[LEFT], Some(LEFT)), (1300.0, 10.0));
+    }
+
+    #[test]
+    fn floating_window_comes_back_when_its_screen_is_gone() {
+        assert_eq!(mini_spot(Some((3000.0, 100.0)), SIZE, &[LEFT], Some(LEFT)), (1470.0 - 280.0 - 24.0, 56.0));
+    }
+
+    #[test]
+    fn floating_window_has_a_spot_even_without_screen_info() {
+        assert_eq!(mini_spot(None, SIZE, &[], None), (24.0, 56.0));
     }
 }

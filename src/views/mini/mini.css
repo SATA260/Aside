@@ -1,0 +1,113 @@
+html[data-view="mini"],
+html[data-view="mini"] body {
+  background: transparent;
+}
+
+.mini {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+
+.pill {
+  position: relative;
+  width: 248px;
+  height: 56px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  border: 1px solid var(--line);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.28);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px 0 18px;
+  color: var(--text);
+  overflow: hidden;
+}
+
+.pill .name {
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pill .t {
+  margin-left: auto;
+  font-family: var(--font-num);
+  font-weight: 300;
+  font-size: 26px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  transition:
+    font-size 0.2s var(--ease),
+    opacity 0.3s var(--ease);
+}
+
+.pill .t .wk {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.pill.paused .t {
+  opacity: 0.5;
+}
+
+.pill .p {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: calc(var(--p) * 100%);
+  background: linear-gradient(90deg, transparent, var(--accent));
+  transition: width 1s linear;
+}
+
+.pill.paused .p {
+  opacity: 0.4;
+}
+
+.pill .ico {
+  display: none;
+  gap: 2px;
+}
+
+.pill:hover .name,
+.pill.confirming .name {
+  display: none;
+}
+
+.pill:hover .ico,
+.pill.confirming .ico {
+  display: flex;
+}
+
+.pill:hover .t {
+  font-size: 20px;
+}
+
+.pill .ico button {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  cursor: pointer;
+  transition:
+    color 0.2s var(--ease),
+    background-color 0.2s var(--ease);
+}
+
+.pill .ico button:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--text) 12%, transparent);
+}
+
+.pill .ico button.end.on {
+  color: var(--text);
+  background: color-mix(in srgb, var(--subject-politics) 35%, transparent);
+}

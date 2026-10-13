@@ -59,6 +59,7 @@ version = "0.1.0"
 dependencies = [
  "chrono",
  "keepawake",
+ "objc2-app-kit",
  "rusqlite",
  "serde",
  "serde_json",

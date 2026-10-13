@@ -2,12 +2,15 @@
 
 mod layout;
 
+use std::sync::Arc;
+
 use tauri::window::Color;
 use tauri::{AppHandle, Manager, Monitor, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 
+use crate::app::Aside;
 use crate::shell::Shell;
 use crate::system::power::Power;
-use layout::{OverlaySpot, Rect, overlay_spots};
+use layout::{MINI_H, MINI_W, OverlaySpot, Rect, mini_spot, overlay_spots};
 
 const OVERLAY_PREFIX: &str = "overlay-";
 /// 窗口刚建好、页面还没画出来时的底色，和夜读主题一致，避免闪一下白
@@ -23,6 +26,7 @@ impl Shell for TauriShell {
         let result = match view {
             "main" => show_main(&self.app),
             "overlay" => open_overlay(&self.app),
+            "mini" => open_mini(&self.app),
             _ => Ok(()),
         };
         if let Err(e) = result {
@@ -44,6 +48,12 @@ impl Shell for TauriShell {
                     }
                 }
             }
+            "mini" => {
+                if let Some(w) = self.app.get_webview_window("mini") {
+                    remember_position(&self.app, &w);
+                    let _ = w.destroy();
+                }
+            }
             _ => {}
         }
     }
@@ -54,6 +64,8 @@ impl Shell for TauriShell {
 }
 
 pub fn show_main(app: &AppHandle) -> tauri::Result<()> {
+    #[cfg(target_os = "macos")]
+    app.set_activation_policy(tauri::ActivationPolicy::Regular)?;
     if let Some(main) = app.get_webview_window("main") {
         main.show()?;
         main.unminimize()?;
@@ -73,16 +85,36 @@ fn screen_rect(m: &Monitor) -> Rect {
 }
 
 fn place(w: &WebviewWindow, r: Rect) -> tauri::Result<()> {
+    move_to(w, r.x, r.y)?;
     #[cfg(target_os = "macos")]
-    {
-        w.set_position(tauri::LogicalPosition::new(r.x, r.y))?;
-        w.set_size(tauri::LogicalSize::new(r.w, r.h))
-    }
+    return w.set_size(tauri::LogicalSize::new(r.w, r.h));
     #[cfg(not(target_os = "macos"))]
-    {
-        w.set_position(tauri::PhysicalPosition::new(r.x, r.y))?;
-        w.set_size(tauri::PhysicalSize::new(r.w, r.h))
+    return w.set_size(tauri::PhysicalSize::new(r.w, r.h));
+}
+
+fn move_to(w: &WebviewWindow, x: f64, y: f64) -> tauri::Result<()> {
+    #[cfg(target_os = "macos")]
+    return w.set_position(tauri::LogicalPosition::new(x, y));
+    #[cfg(not(target_os = "macos"))]
+    return w.set_position(tauri::PhysicalPosition::new(x, y));
+}
+
+/// 窗口左上角，单位和 `screen_rect` 一致。
+fn position_of(w: &WebviewWindow) -> tauri::Result<(f64, f64)> {
+    let p = w.outer_position()?;
+    #[cfg(target_os = "macos")]
+    let p = p.to_logical::<f64>(w.scale_factor()?);
+    #[cfg(not(target_os = "macos"))]
+    let p = p.cast::<f64>();
+    Ok((p.x, p.y))
+}
+
+/// 逻辑像素换成屏幕坐标的单位：macOS 本来就是逻辑点，Windows 按主屏缩放换成物理像素。
+fn native_scale(app: &AppHandle) -> f64 {
+    if cfg!(target_os = "macos") {
+        return 1.0;
     }
+    app.primary_monitor().ok().flatten().map_or(1.0, |m| m.scale_factor())
 }
 
 fn screens(app: &AppHandle) -> tauri::Result<(Vec<Rect>, Option<Rect>)> {
@@ -125,6 +157,65 @@ fn open_overlay(app: &AppHandle) -> tauri::Result<()> {
     match timer_window {
         Some(w) => w.set_focus(),
         None => Ok(()),
+    }
+}
+
+/// 置顶的透明小窗，胶囊画在网页里。出现在上次拖到的位置。
+fn open_mini(app: &AppHandle) -> tauri::Result<()> {
+    if let Some(w) = app.get_webview_window("mini") {
+        return w.show();
+    }
+    let (all, primary) = screens(app)?;
+    let scale = native_scale(app);
+    let saved = app.try_state::<Arc<Aside>>().and_then(|a| a.settings().mini_pos).map(|p| (p.x, p.y));
+    let (x, y) = mini_spot(saved, (MINI_W * scale, MINI_H * scale), &all, primary);
+    // macOS 只让没有程序坞图标的 app 把窗口放进别的 app 的全屏空间，而且窗口要在切换之后才创建。
+    // 主窗口再出现时恢复程序坞图标，见 `show_main`。
+    #[cfg(target_os = "macos")]
+    app.set_activation_policy(tauri::ActivationPolicy::Accessory)?;
+    let w = WebviewWindowBuilder::new(app, "mini", WebviewUrl::App("index.html?view=mini".into()))
+        .title("Aside")
+        .inner_size(MINI_W, MINI_H)
+        .decorations(false)
+        .transparent(true)
+        .shadow(false)
+        .resizable(false)
+        .skip_taskbar(true)
+        .always_on_top(true)
+        .visible_on_all_workspaces(true)
+        .accept_first_mouse(true)
+        .focused(false)
+        .visible(false)
+        .build()?;
+    move_to(&w, x, y)?;
+    #[cfg(target_os = "macos")]
+    float_over_fullscreen_apps(&w)?;
+    w.show()
+}
+
+/// 用户在全屏的网课或文档里时，浮窗也要浮在上面，而不是留在桌面那个空间里。
+#[cfg(target_os = "macos")]
+fn float_over_fullscreen_apps(w: &WebviewWindow) -> tauri::Result<()> {
+    use objc2_app_kit::{NSWindow, NSWindowCollectionBehavior};
+    let target = w.clone();
+    w.run_on_main_thread(move || {
+        let Ok(ptr) = target.ns_window() else { return };
+        // SAFETY: 指针来自 Tauri，指向这个窗口的 NSWindow，并且这里在主线程上
+        let ns = unsafe { &*(ptr as *const NSWindow) };
+        ns.setCollectionBehavior(
+            ns.collectionBehavior()
+                | NSWindowCollectionBehavior::CanJoinAllSpaces
+                | NSWindowCollectionBehavior::FullScreenAuxiliary,
+        );
+    })
+}
+
+fn remember_position(app: &AppHandle, w: &WebviewWindow) {
+    let (Ok((x, y)), Some(aside)) = (position_of(w), app.try_state::<Arc<Aside>>()) else {
+        return;
+    };
+    if let Err(e) = aside.remember_mini_pos(x, y) {
+        eprintln!("记住浮窗位置失败：{e}");
     }
 }
 

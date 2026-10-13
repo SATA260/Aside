@@ -222,6 +222,20 @@ fn clock_going_backwards_never_produces_negative_time() {
 }
 
 #[test]
+fn display_can_change_mid_session_without_touching_the_time() {
+    let mut t = started(countdown(45));
+    t.pause(T0 + 5 * MIN).unwrap();
+    t.set_display(Display::Mini).unwrap();
+    assert_eq!(t.plan().unwrap().display, Display::Mini);
+    assert_eq!((t.phase(), t.focused_ms(T0 + 9 * MIN)), (Phase::Paused, 5 * MIN));
+
+    let mut idle = Timer::default();
+    assert_eq!(idle.set_display(Display::Mini), Err(TimerError::NotActive));
+    t.finish(T0 + 9 * MIN).unwrap();
+    assert_eq!(t.set_display(Display::Fullscreen), Err(TimerError::NotActive));
+}
+
+#[test]
 fn timer_survives_a_round_trip_through_json() {
     let mut t = started(countdown(45));
     t.pause(T0 + 5 * MIN).unwrap();

@@ -260,6 +260,75 @@ fn computer_may_sleep_again_after_an_automatic_finish() {
 }
 
 #[test]
+fn shrinking_to_the_floating_window_swaps_windows_and_survives_a_crash() {
+    let r = rig();
+    start(&r.app, "数学", 45);
+    r.clock.set(T0 + 5 * MIN);
+    let view = r.app.timer_switch_display(Display::Mini).unwrap();
+    assert_eq!(view.snapshot.plan.unwrap().display, Display::Mini);
+    assert_eq!(view.snapshot.focused_ms, 5 * MIN);
+    assert_eq!(r.shell.calls()[2..], ["open:mini", "close:overlay"]);
+
+    let (timer, _) = r.app.store.read(sessions::load_active).unwrap().unwrap();
+    assert_eq!(timer.plan().unwrap().display, Display::Mini);
+}
+
+#[test]
+fn switching_to_the_same_display_changes_nothing() {
+    let r = rig();
+    start(&r.app, "数学", 45);
+    r.app.timer_switch_display(Display::Fullscreen).unwrap();
+    assert_eq!(r.shell.calls(), ["open:overlay", "close:main"]);
+}
+
+#[test]
+fn toggle_flips_between_fullscreen_and_the_floating_window() {
+    let r = rig();
+    start(&r.app, "数学", 45);
+    let mini = r.app.timer_toggle_display().unwrap();
+    assert_eq!(mini.snapshot.plan.unwrap().display, Display::Mini);
+    let back = r.app.timer_toggle_display().unwrap();
+    assert_eq!(back.snapshot.plan.unwrap().display, Display::Fullscreen);
+    assert_eq!(r.shell.calls()[2..], ["open:mini", "close:overlay", "open:overlay", "close:mini"]);
+}
+
+#[test]
+fn switching_display_needs_a_session_in_progress() {
+    let r = rig();
+    assert!(matches!(r.app.timer_switch_display(Display::Mini), Err(AppError::Invalid(_))));
+    assert!(matches!(r.app.timer_toggle_display(), Err(AppError::Invalid(_))));
+    assert!(r.shell.calls().is_empty());
+}
+
+#[test]
+fn switching_mid_session_keeps_the_start_page_choice() {
+    let r = rig();
+    start(&r.app, "数学", 45);
+    r.app.timer_switch_display(Display::Mini).unwrap();
+    assert_eq!(r.app.settings().last_display, Display::Fullscreen);
+}
+
+#[test]
+fn finishing_in_the_floating_window_shows_the_end_page_fullscreen() {
+    let r = rig();
+    start(&r.app, "数学", 45);
+    r.app.timer_switch_display(Display::Mini).unwrap();
+    r.clock.set(T0 + 5 * MIN);
+    r.app.timer_finish().unwrap();
+    assert_eq!(r.shell.calls()[4..], ["open:overlay", "close:mini"]);
+}
+
+#[test]
+fn floating_window_position_is_remembered() {
+    let r = rig();
+    assert_eq!(r.app.settings().mini_pos, None);
+    r.app.remember_mini_pos(1180.0, 64.5).unwrap();
+    let reopened = reopen(&r);
+    let pos = reopened.settings().mini_pos.unwrap();
+    assert_eq!((pos.x, pos.y), (1180.0, 64.5));
+}
+
+#[test]
 fn closing_the_end_page_returns_to_the_main_window() {
     let r = rig();
     start(&r.app, "数学", 45);

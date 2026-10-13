@@ -58,6 +58,7 @@ export interface Settings {
   last_countdown_ms: number;
   last_mock_ms: number;
   last_display: DisplayMode;
+  mini_pos: { x: number; y: number } | null;
 }
 
 export interface StartArgs {

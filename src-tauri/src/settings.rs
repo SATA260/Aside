@@ -25,6 +25,12 @@ pub enum TimeDisplay {
     Elapsed,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct Point {
+    pub x: f64,
+    pub y: f64,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Settings {
@@ -36,6 +42,8 @@ pub struct Settings {
     pub last_countdown_ms: i64,
     pub last_mock_ms: i64,
     pub last_display: Display,
+    /// 浮窗上次关掉时的位置，没拖过时为空
+    pub mini_pos: Option<Point>,
 }
 
 impl Default for Settings {
@@ -49,6 +57,7 @@ impl Default for Settings {
             last_countdown_ms: 45 * MINUTE_MS,
             last_mock_ms: 180 * MINUTE_MS,
             last_display: Display::Fullscreen,
+            mini_pos: None,
         }
     }
 }

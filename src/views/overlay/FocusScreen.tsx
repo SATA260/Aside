@@ -102,6 +102,15 @@ export function FocusScreen({ timer, settings }: { timer: TimerView; settings: S
         <button type="button" className={paused ? "on" : ""} onClick={() => void togglePause()}>
           {paused ? "继续" : "暂停"}
         </button>
+        <button
+          type="button"
+          onClick={() => {
+            play("tap");
+            void attempt(api.timer.switchDisplay("mini"));
+          }}
+        >
+          缩成浮窗
+        </button>
         <button type="button" className="end" onClick={end}>
           {confirmEnd ? "再点一次结束" : "结束"}
         </button>

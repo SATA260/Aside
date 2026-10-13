@@ -10,6 +10,7 @@ use serde_json::Value;
 
 use crate::app::{Aside, StartArgs};
 use crate::error::{AppError, AppResult};
+use crate::timer::Display;
 
 fn args<T: DeserializeOwned>(value: Value) -> AppResult<T> {
     serde_json::from_value(value).map_err(|e| AppError::Invalid(format!("参数不对：{e}")))
@@ -55,6 +56,11 @@ struct Again {
 }
 
 #[derive(Deserialize)]
+struct DisplayArg {
+    display: Display,
+}
+
+#[derive(Deserialize)]
 struct Note {
     id: i64,
     note: String,
@@ -71,6 +77,8 @@ pub fn dispatch(app: &Aside, cmd: &str, input: Value, _caller: &str) -> AppResul
         "timer_finish" => ok(app.timer_finish()?),
         "timer_close" => ok(app.timer_close(args::<Again>(input)?.again)?),
         "timer_dismiss_recovered" => ok(app.timer_dismiss_recovered()),
+        "timer_switch_display" => ok(app.timer_switch_display(args::<DisplayArg>(input)?.display)?),
+        "timer_toggle_display" => ok(app.timer_toggle_display()?),
 
         "settings_get" => ok(app.settings()),
         "settings_update" => ok(app.settings_update(input)?),

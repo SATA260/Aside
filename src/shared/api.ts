@@ -1,5 +1,5 @@
 import { call } from "./ipc";
-import type { Outcome, Settings, StartArgs, Subject, TimerView } from "./types";
+import type { DisplayMode, Outcome, Settings, StartArgs, Subject, TimerView } from "./types";
 
 export const api = {
   timer: {
@@ -10,6 +10,7 @@ export const api = {
     finish: () => call<Outcome>("timer_finish"),
     close: (again: boolean) => call<TimerView>("timer_close", { again }),
     dismissRecovered: () => call<TimerView>("timer_dismiss_recovered"),
+    switchDisplay: (display: DisplayMode) => call<TimerView>("timer_switch_display", { display }),
   },
   settings: {
     get: () => call<Settings>("settings_get"),

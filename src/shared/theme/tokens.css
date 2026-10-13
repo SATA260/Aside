@@ -1,0 +1,48 @@
+:root {
+  --font-ui: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --font-num: "Manrope", var(--font-ui);
+  --font-wk: "LXGW WenKai Screen", "Kaiti SC", "STKaiti", serif;
+
+  --subject-politics: #c98b7b;
+  --subject-english: #7fa3c7;
+  --subject-math: #8db59a;
+  --subject-major: #c7ae7f;
+  --subject-other: #a3a9b4;
+}
+
+:root,
+[data-theme="night"] {
+  --bg: #10151f;
+  --bg2: #1e2638;
+  --text: #d7dee8;
+  --muted: #7d889b;
+  --accent: #9fb7d9;
+  --line: rgba(215, 222, 232, 0.1);
+}
+
+[data-theme="bamboo"] {
+  --bg: #121b17;
+  --bg2: #1d2a24;
+  --text: #d5e0d8;
+  --muted: #7f9187;
+  --accent: #8fb8a0;
+  --line: rgba(213, 224, 216, 0.1);
+}
+
+[data-theme="mist"] {
+  --bg: #e4e9ef;
+  --bg2: #f1f0ec;
+  --text: #27303d;
+  --muted: #7a8596;
+  --accent: #5b7ba6;
+  --line: rgba(39, 48, 61, 0.1);
+}
+
+[data-theme="dusk"] {
+  --bg: #e9e4ec;
+  --bg2: #f3e9e3;
+  --text: #2f2a36;
+  --muted: #857b8e;
+  --accent: #8a6fa3;
+  --line: rgba(47, 42, 54, 0.1);
+}

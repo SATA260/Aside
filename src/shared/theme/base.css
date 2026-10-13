@@ -1,0 +1,112 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-ui);
+  color: var(--text);
+  background: var(--bg2);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+.wk {
+  font-family: var(--font-wk);
+}
+
+.main-window {
+  display: grid;
+  grid-template-columns: 188px 1fr;
+  height: 100%;
+}
+
+.main-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 46px 14px 20px;
+  background: var(--bg);
+}
+
+.brand {
+  padding: 8px 12px 22px;
+  font-family: var(--font-num);
+  font-size: 19px;
+  font-weight: 500;
+}
+
+.nav-item {
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.nav-item.on {
+  background: var(--line);
+  color: var(--text);
+}
+
+.main-page {
+  padding: 46px 52px;
+}
+
+.main-page h1 {
+  font-size: 28px;
+  font-weight: 400;
+}
+
+.overlay {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  background: linear-gradient(180deg, var(--bg) 35%, var(--bg2) 100%);
+}
+
+.overlay-time {
+  font-family: var(--font-num);
+  font-size: 22vw;
+  font-weight: 200;
+  font-variant-numeric: tabular-nums;
+}
+
+.mini-pill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 100%;
+  padding: 0 18px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--bg) 62%, transparent);
+}
+
+.mini-time,
+.lecture-time {
+  font-family: var(--font-num);
+  font-weight: 300;
+  font-variant-numeric: tabular-nums;
+}
+
+.mini-time {
+  font-size: 26px;
+}
+
+.lecture-panel {
+  height: 100%;
+  padding: 24px 22px;
+  background: var(--bg);
+}
+
+.lecture-time {
+  margin-top: 26px;
+  font-size: 58px;
+  font-weight: 200;
+}

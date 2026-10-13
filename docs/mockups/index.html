@@ -1,0 +1,885 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aside 外观稿</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont/style.css">
+<style>
+  :root {
+    --sans: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    --num: "Manrope", var(--sans);
+    --wk: "LXGW WenKai Screen", "Kaiti SC", "STKaiti", serif;
+
+    --c-politics: #C98B7B;
+    --c-english: #7FA3C7;
+    --c-math: #8DB59A;
+    --c-major: #C7AE7F;
+    --c-other: #A3A9B4;
+  }
+
+  .theme-night {
+    --bg: #10151F; --bg2: #1E2638; --surface: #1A2130; --line: rgba(215, 222, 232, .10);
+    --text: #D7DEE8; --muted: #7D889B; --accent: #9FB7D9;
+  }
+  .theme-mist {
+    --bg: #E4E9EF; --bg2: #F1F0EC; --surface: #F6F7F9; --line: rgba(39, 48, 61, .10);
+    --text: #27303D; --muted: #7A8596; --accent: #5B7BA6;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body { font-family: var(--sans); -webkit-font-smoothing: antialiased; background: #0c0f15; }
+  .wk { font-family: var(--wk); }
+
+  body { overflow: hidden; }
+  .screen {
+    display: none; position: absolute; left: 0; top: 0; width: 1280px; height: 800px;
+    transform-origin: 0 0; overflow: hidden; color: var(--text);
+  }
+  body[data-v="night"] [data-v="night"],
+  body[data-v="mist"] [data-v="mist"],
+  body[data-v="start"] [data-v="start"],
+  body[data-v="mini"] [data-v="mini"],
+  body[data-v="stats"] [data-v="stats"],
+  body[data-v="day"] [data-v="day"],
+  body[data-v="nightmood"] [data-v="nightmood"],
+  body[data-v="lecture"] [data-v="lecture"],
+  body[data-v="video"] [data-v="video"],
+  body[data-v="card"] [data-v="card"],
+  body[data-v="end"] [data-v="end"] { display: block; }
+
+  /* ---------- 全屏计时页 ---------- */
+  .overlay { background: linear-gradient(180deg, var(--bg) 0%, var(--bg) 35%, var(--bg2) 100%); }
+  .overlay .sky {
+    position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(120% 60% at 50% 105%, color-mix(in srgb, var(--accent) 16%, transparent) 0%, transparent 60%);
+  }
+  .ov-top {
+    position: absolute; top: 44px; left: 56px; right: 56px;
+    display: flex; justify-content: space-between; align-items: baseline;
+  }
+  .ov-subject { display: flex; align-items: center; gap: 10px; font-size: 20px; }
+  .ov-subject .task { color: var(--muted); }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c); display: inline-block; }
+  .ov-clock { font-family: var(--num); font-weight: 300; font-size: 18px; color: var(--muted); letter-spacing: .04em; font-variant-numeric: tabular-nums; }
+
+  .ov-center { position: absolute; left: 0; right: 0; top: 44%; transform: translateY(-50%); text-align: center; }
+  .ov-time {
+    font-family: var(--num); font-weight: 200; font-size: 228px; line-height: 1;
+    letter-spacing: -.02em; font-variant-numeric: tabular-nums;
+  }
+  .ov-time .colon {
+    display: inline-block; width: .32em; height: .5em; vertical-align: .1em; opacity: .5;
+    font-size: inherit; color: transparent; overflow: hidden;
+    background:
+      radial-gradient(circle at 50% 12%, var(--text) .028em, transparent .034em),
+      radial-gradient(circle at 50% 88%, var(--text) .028em, transparent .034em);
+  }
+  .ov-note { margin-top: 18px; font-size: 17px; color: var(--muted); letter-spacing: .08em; }
+
+  .ov-bottom { position: absolute; left: 10%; right: 10%; bottom: 64px; }
+  .horizon { position: relative; height: 12px; }
+  .horizon .track { position: absolute; left: 0; right: 0; top: 6px; height: 1px; background: var(--line); }
+  .horizon .fill {
+    position: absolute; left: 0; top: 6px; height: 1px; width: calc(var(--p) * 100%);
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 80%, transparent));
+  }
+  .horizon .glow {
+    position: absolute; top: 6px; left: calc(var(--p) * 100%); width: 6px; height: 6px; border-radius: 50%;
+    transform: translate(-50%, -50%); background: var(--accent);
+    box-shadow: 0 0 12px 3px color-mix(in srgb, var(--accent) 55%, transparent), 0 0 40px 10px color-mix(in srgb, var(--accent) 18%, transparent);
+  }
+  .h-labels { display: flex; justify-content: space-between; margin-top: 14px; font-family: var(--num); font-size: 13px; color: var(--muted); letter-spacing: .04em; }
+  .quote { margin-top: 34px; text-align: center; font-size: 19px; color: var(--muted); letter-spacing: .12em; }
+
+  .ov-ambient { position: absolute; right: 56px; bottom: 30px; font-size: 12px; color: var(--muted); opacity: .7; display: flex; gap: 6px; align-items: center; }
+
+  .controls {
+    position: absolute; left: 50%; bottom: 180px; transform: translateX(-50%);
+    display: flex; gap: 4px; padding: 6px; border-radius: 999px;
+    background: color-mix(in srgb, var(--surface) 75%, transparent);
+    border: 1px solid var(--line); backdrop-filter: blur(18px);
+    box-shadow: 0 10px 40px rgba(20, 30, 50, .10);
+  }
+  .controls button {
+    font: 14px var(--sans); color: var(--text); background: transparent; border: 0;
+    padding: 10px 20px; border-radius: 999px; cursor: pointer;
+  }
+  .controls button:hover { background: var(--line); }
+  .controls .end { color: var(--muted); }
+
+  /* ---------- 结束页 ---------- */
+  .end-wrap { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  .end-title { font-family: var(--wk); font-size: 46px; letter-spacing: .06em; }
+  .end-title em { font-style: normal; font-family: var(--num); font-weight: 300; font-size: 54px; margin: 0 .12em; }
+  .end-sub { margin-top: 18px; font-size: 18px; color: var(--muted); display: flex; gap: 10px; align-items: center; }
+  .end-actions { margin-top: 56px; display: flex; gap: 14px; }
+  .btn {
+    font: 15px var(--sans); padding: 13px 30px; border-radius: 999px; cursor: pointer;
+    border: 1px solid var(--line); background: transparent; color: var(--text);
+  }
+  .btn.primary { background: var(--accent); color: var(--bg); border-color: transparent; font-weight: 500; }
+  .end .quote { position: absolute; bottom: 64px; left: 0; right: 0; }
+
+  /* ---------- 桌面背景 + 主窗口 ---------- */
+  .desk { background: radial-gradient(80% 80% at 20% 10%, #3d4a5e 0%, #232b38 55%, #1a2029 100%); }
+  .window {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+    width: 1040px; height: 680px; border-radius: 14px; overflow: hidden;
+    background: var(--bg2); color: var(--text);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, .45), 0 0 0 1px rgba(255, 255, 255, .06);
+    display: grid; grid-template-columns: 188px 1fr;
+  }
+  .side { background: var(--bg); padding: 46px 14px 20px; display: flex; flex-direction: column; gap: 2px; position: relative; }
+  .traffic { position: absolute; top: 16px; left: 16px; display: flex; gap: 8px; }
+  .traffic i { width: 12px; height: 12px; border-radius: 50%; background: #ff5f57; }
+  .traffic i:nth-child(2) { background: #febc2e; } .traffic i:nth-child(3) { background: #28c840; }
+  .brand { font-family: var(--num); font-weight: 500; font-size: 19px; letter-spacing: .02em; padding: 8px 12px 22px; }
+  .brand span { color: var(--muted); font-weight: 300; }
+  .nav { padding: 9px 12px; border-radius: 8px; font-size: 14px; color: var(--muted); }
+  .nav.on { background: var(--line); color: var(--text); }
+  .side .foot { margin-top: auto; padding: 0 12px; font-size: 12px; color: var(--muted); line-height: 1.7; }
+  .side kbd { font-family: var(--num); font-size: 11px; border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; }
+
+  .main { padding: 46px 52px 40px; overflow: hidden; }
+
+  /* 开始页 */
+  .hello { display: flex; justify-content: space-between; align-items: baseline; }
+  .hello h1 { font-family: var(--wk); font-weight: 400; font-size: 28px; letter-spacing: .04em; }
+  .hello h1 b { font-family: var(--num); font-weight: 300; }
+  .hello .exam { font-size: 13px; color: var(--muted); }
+  .field { margin-top: 26px; }
+  .label { font-size: 13px; color: var(--muted); margin-bottom: 12px; }
+  .chips { display: flex; gap: 10px; flex-wrap: wrap; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px;
+    border: 1px solid var(--line); font-size: 15px; background: transparent; color: var(--text);
+  }
+  .chip.on { border-color: color-mix(in srgb, var(--c, var(--accent)) 70%, transparent); background: color-mix(in srgb, var(--c, var(--accent)) 14%, transparent); }
+  .chip.ghost { color: var(--muted); border-style: dashed; }
+  .chip.num { font-family: var(--num); font-weight: 400; min-width: 54px; padding: 10px 12px; justify-content: center; white-space: nowrap; }
+  .chips.tight { gap: 8px; flex-wrap: nowrap; }
+  .chip.custom { gap: 6px; padding: 6px 14px; }
+  .chip.custom b {
+    font-family: var(--num); font-weight: 400; font-size: 16px; min-width: 34px; text-align: center;
+    padding: 4px 6px; border-radius: 6px; background: color-mix(in srgb, var(--bg) 70%, transparent);
+  }
+  .chip.custom small { font-size: 13px; color: var(--muted); }
+  .input::placeholder { color: var(--muted); opacity: .7; }
+
+  /* 开始页 · 氛围面板 */
+  .start-main { display: grid; grid-template-columns: 1fr 300px; padding: 0; }
+  .start-left { padding: 44px 40px 32px 46px; }
+  .start-left .chips { gap: 8px; }
+  .start-left .chip { padding: 9px 14px; }
+  .mood {
+    background: color-mix(in srgb, var(--bg) 55%, var(--bg2)); border-left: 1px solid var(--line);
+    padding: 26px 22px; display: flex; flex-direction: column;
+  }
+  .mood-preview {
+    position: relative; height: 150px; border-radius: 12px; overflow: hidden;
+    border: 1px solid var(--line); display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  .pv-sub { position: absolute; top: 10px; left: 12px; font-size: 10px; color: rgba(215, 222, 232, .7); font-family: var(--wk); }
+  .pv-time { font-family: var(--num); font-weight: 200; font-size: 40px; color: #E3E8EF; letter-spacing: -.01em; }
+  .pv-line { position: absolute; left: 14%; right: 14%; bottom: 22px; height: 1px; background: rgba(215, 222, 232, .18); }
+  .pv-line::after { content: ""; position: absolute; left: 0; top: 0; height: 1px; width: 30%; background: #9FB7D9; box-shadow: 0 0 6px #9FB7D9; }
+  .mood-h { margin: 20px 0 10px; font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; align-items: center; }
+  .vol { width: 90px; height: 3px; border-radius: 2px; background: var(--line); position: relative; }
+  .vol i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 2px; background: var(--accent); }
+  .vol i::after { content: ""; position: absolute; right: -5px; top: -4px; width: 11px; height: 11px; border-radius: 50%; background: var(--text); }
+  .scenes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .scene { display: flex; flex-direction: column; gap: 5px; font-size: 11px; color: var(--muted); text-align: center; }
+  .scene i { display: grid; place-items: center; height: 46px; border-radius: 8px; border: 1px solid var(--line); font-style: normal; color: var(--muted); }
+  .scene.on i { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .scene.on span { color: var(--text); }
+  .scene-sky { background: radial-gradient(120% 70% at 50% 110%, rgba(159, 183, 217, .35), transparent 60%), linear-gradient(#10151F, #1E2638); }
+  .scene-rain {
+    background:
+      repeating-linear-gradient(100deg, rgba(220, 230, 240, .10) 0 1px, transparent 1px 7px),
+      radial-gradient(60% 50% at 70% 30%, rgba(200, 215, 230, .18), transparent 70%),
+      linear-gradient(#222c39, #334152);
+  }
+  .scene-lamp { background: radial-gradient(70% 70% at 78% 18%, rgba(232, 196, 140, .55), rgba(120, 90, 50, .25) 35%, transparent 70%), linear-gradient(#1d1a17, #15130f); }
+  .scene-star {
+    background:
+      radial-gradient(1px 1px at 20% 30%, #fff, transparent), radial-gradient(1px 1px at 70% 20%, #fff, transparent),
+      radial-gradient(1px 1px at 45% 60%, #dfe7f5, transparent), radial-gradient(1px 1px at 85% 55%, #fff, transparent),
+      radial-gradient(1.5px 1.5px at 30% 75%, #fff, transparent), radial-gradient(1px 1px at 60% 40%, #cfd9ea, transparent),
+      linear-gradient(#070a12, #141b2c);
+  }
+  .scene-mist { background: linear-gradient(#E4E9EF, #F1F0EC); }
+  .scene-add { border-style: dashed !important; font-size: 18px; }
+  .sounds { display: flex; flex-wrap: wrap; gap: 6px; }
+  .sounds span { font-size: 12px; padding: 6px 11px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+  .sounds span.on { color: var(--text); border-color: color-mix(in srgb, var(--accent) 60%, transparent); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+  .themes { display: flex; justify-content: space-between; }
+  .themes span { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+  .themes i { width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line); }
+  .themes span.on { color: var(--text); }
+  .themes span.on i { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* 专注中切换氛围 */
+  .overlay.bg-rain {
+    background:
+      repeating-linear-gradient(100deg, rgba(220, 230, 240, .045) 0 1px, transparent 1px 11px),
+      radial-gradient(50% 40% at 72% 28%, rgba(200, 215, 230, .10), transparent 70%),
+      linear-gradient(180deg, #1a222d 0%, #222c39 55%, #2b3746 100%);
+  }
+  .atmo-on .ov-center { top: 40%; }
+  .atmo-on .ov-bottom { bottom: 112px; }
+  .atmo {
+    position: absolute; left: 10%; right: 10%; top: 516px;
+    display: grid; grid-template-columns: 1.5fr 1.25fr 1fr; gap: 48px;
+  }
+  .atmo h4 { font-weight: 400; font-size: 11px; letter-spacing: .3em; color: var(--muted); opacity: .6; margin-bottom: 12px; }
+  .atmo .opts { display: flex; flex-wrap: wrap; gap: 10px 20px; font-family: var(--wk); font-size: 16px; color: var(--muted); }
+  .atmo .opts span { position: relative; opacity: .7; }
+  .atmo .opts span.on { color: var(--text); opacity: 1; }
+  .atmo .opts span.on::after, .textctl span.on::after {
+    content: ""; position: absolute; left: 50%; bottom: -9px; width: 4px; height: 4px; border-radius: 50%;
+    background: var(--accent); transform: translateX(-50%); box-shadow: 0 0 8px 1px color-mix(in srgb, var(--accent) 60%, transparent);
+  }
+  .atmo .opts span.add { opacity: .45; }
+  .atmo .mid { text-align: center; }
+  .atmo .mid .opts { justify-content: center; }
+  .atmo .right { text-align: right; }
+  .atmo .right .opts { justify-content: flex-end; }
+  .atmo .vol-line { position: relative; width: 150px; height: 1px; margin: 22px auto 0; background: var(--line); }
+  .atmo .vol-line::after { content: ""; position: absolute; left: 0; top: 0; height: 1px; width: 55%; background: color-mix(in srgb, var(--accent) 70%, transparent); }
+  .atmo .vol-line::before { content: ""; position: absolute; left: 55%; top: -2px; width: 5px; height: 5px; border-radius: 50%; background: var(--text); transform: translateX(-50%); }
+  .textctl {
+    position: absolute; left: 0; right: 0; bottom: 56px; display: flex; justify-content: center; gap: 48px;
+    font-size: 14px; letter-spacing: .14em; color: var(--muted);
+  }
+  .textctl span { position: relative; }
+  .textctl span.on { color: var(--text); }
+  .textctl .end { opacity: .7; }
+  .keys-hint { position: absolute; right: 56px; bottom: 26px; font-size: 11px; color: var(--muted); opacity: .55; letter-spacing: .06em; }
+  .keys-hint kbd { font-family: var(--num); font-size: 10px; margin-right: 3px; color: var(--text); opacity: .8; }
+  .change-note { position: absolute; top: 46px; left: 0; right: 0; text-align: center; font-family: var(--wk); font-size: 14px; color: var(--muted); letter-spacing: .12em; }
+
+  /* 网课模式 */
+  .lecture-win {
+    position: absolute; left: 40px; top: 30px; right: 40px; bottom: 30px; border-radius: 14px; overflow: hidden;
+    display: grid; grid-template-columns: 1fr 268px; background: #0f131b;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, .5), 0 0 0 1px rgba(255, 255, 255, .06);
+  }
+  .browser { display: flex; flex-direction: column; min-width: 0; background: #14181f; }
+  .b-bar { height: 46px; display: flex; align-items: center; gap: 12px; padding: 0 14px 0 86px; background: #1a1f28; position: relative; }
+  .b-bar .traffic { top: 17px; }
+  .b-bar .nb { color: #6e7889; font-size: 15px; }
+  .b-url { flex: 1; height: 28px; border-radius: 8px; background: #11151c; color: #8d97a8; font-size: 12px; display: flex; align-items: center; padding: 0 12px; gap: 8px; }
+  .b-url b { color: #c7cfdb; font-weight: 400; }
+  .b-act { font-size: 12px; color: #c7cfdb; padding: 6px 12px; border-radius: 8px; background: rgba(159, 183, 217, .14); white-space: nowrap; }
+  .b-marks { height: 32px; display: flex; align-items: center; gap: 18px; padding: 0 16px; font-size: 12px; color: #7d889b; border-bottom: 1px solid rgba(255, 255, 255, .05); background: #1a1f28; }
+  .b-marks span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 3px; background: #2c3442; vertical-align: -2px; margin-right: 6px; }
+  .b-page { flex: 1; padding: 22px 28px; overflow: hidden; }
+  .video { position: relative; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: #0b0d11; }
+  .chalk { position: absolute; inset: 6% 8% 16% 8%; border-radius: 4px; background: #1f3a33; color: #e3ece6; font-family: var(--wk); font-size: 30px; padding: 6% 7%; line-height: 1.9; }
+  .v-sub { position: absolute; bottom: 9%; left: 0; right: 0; text-align: center; color: #fff; font-size: 16px; text-shadow: 0 1px 3px #000; }
+  .v-ctrl { position: absolute; bottom: 0; left: 0; right: 0; height: 26px; background: linear-gradient(transparent, rgba(0, 0, 0, .6)); }
+  .v-ctrl i { position: absolute; left: 14px; right: 14px; bottom: 10px; height: 3px; border-radius: 2px; background: rgba(255, 255, 255, .2); }
+  .v-ctrl i::after { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 41%; background: #e5e9ef; border-radius: 2px; }
+  .b-title { margin-top: 16px; color: #d7dee8; font-size: 17px; }
+  .b-meta { margin-top: 8px; color: #6e7889; font-size: 12px; }
+  .b-list { margin-top: 16px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .b-list i { height: 54px; border-radius: 6px; background: #1b2029; }
+
+  .panel {
+    background: linear-gradient(180deg, #10151F 0%, #161D2B 60%, #10151F 100%); color: #D7DEE8;
+    border-left: 1px solid rgba(255, 255, 255, .06); padding: 24px 22px; display: flex; flex-direction: column; position: relative; overflow: hidden;
+  }
+  .panel .p-sub { display: flex; align-items: center; gap: 8px; font-family: var(--wk); font-size: 16px; }
+  .panel .p-task { margin-top: 6px; font-family: var(--wk); font-size: 13px; color: #7D889B; }
+  .panel .p-time { margin-top: 26px; font-family: var(--num); font-weight: 200; font-size: 58px; line-height: 1; letter-spacing: -.01em; }
+  .panel .p-note { margin-top: 10px; font-size: 12px; color: #7D889B; }
+  .panel .p-line { position: relative; margin-top: 18px; height: 1px; background: rgba(215, 222, 232, .12); }
+  .panel .p-line::after { content: ""; position: absolute; left: 0; top: 0; height: 1px; width: 27%; background: #9FB7D9; }
+  .panel .p-line::before { content: ""; position: absolute; left: 27%; top: -2px; width: 5px; height: 5px; border-radius: 50%; background: #9FB7D9; box-shadow: 0 0 10px 2px rgba(159, 183, 217, .5); transform: translateX(-50%); }
+  .panel .p-ends { display: flex; justify-content: space-between; margin-top: 8px; font-family: var(--num); font-size: 11px; color: #5f6a7c; }
+  .panel .p-btns { margin-top: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .panel .p-btns span { text-align: center; font-size: 12px; padding: 9px 0; border-radius: 8px; background: rgba(215, 222, 232, .06); color: #c3ccd8; }
+  .panel .p-btns span.wide { grid-column: span 2; background: rgba(159, 183, 217, .16); color: #D7DEE8; }
+  .panel .p-today { margin-top: 22px; padding-top: 16px; border-top: 1px solid rgba(215, 222, 232, .08); font-size: 12px; color: #7D889B; display: flex; justify-content: space-between; }
+  .panel .p-today b { font-family: var(--num); font-weight: 400; color: #D7DEE8; font-size: 14px; }
+  .panel .mascot { position: absolute; left: 50%; bottom: 0; width: 210px; transform: translateX(-50%); }
+  .panel .mascot img { width: 100%; display: block; -webkit-mask-image: radial-gradient(70% 65% at 50% 55%, #000 60%, transparent 100%); mask-image: radial-gradient(70% 65% at 50% 55%, #000 60%, transparent 100%); }
+
+  /* 只看视频 */
+  .vonly { background: #000; }
+  .vonly .chalk { inset: 7% 9% 18% 9%; font-size: 52px; }
+  .vonly .v-sub { font-size: 24px; bottom: 8%; }
+  .strip {
+    position: absolute; right: 0; top: 0; bottom: 0; width: 190px; padding: 30px 22px;
+    background: linear-gradient(90deg, transparent, rgba(10, 13, 19, .78) 22%); color: #D7DEE8;
+    display: flex; flex-direction: column; align-items: flex-end; text-align: right;
+  }
+  .strip .s-sub { font-family: var(--wk); font-size: 15px; display: flex; gap: 8px; align-items: center; }
+  .strip .s-time { margin-top: 14px; font-family: var(--num); font-weight: 200; font-size: 44px; }
+  .strip .s-note { margin-top: 6px; font-size: 12px; color: #7D889B; }
+  .strip .s-bar { margin-top: 14px; width: 120px; height: 1px; background: rgba(215, 222, 232, .15); position: relative; }
+  .strip .s-bar::after { content: ""; position: absolute; right: 0; top: 0; height: 1px; width: 27%; background: #9FB7D9; }
+  .strip .s-hint { margin-top: auto; font-size: 11px; color: #5f6a7c; line-height: 1.7; }
+  .strip .s-hint kbd { font-family: var(--num); border: 1px solid rgba(255, 255, 255, .12); border-radius: 4px; padding: 0 5px; }
+
+  /* 某一天 */
+  .tabs { display: flex; gap: 4px; margin-bottom: 22px; }
+  .tabs span { font-size: 14px; color: var(--muted); padding: 6px 14px; border-radius: 8px; }
+  .tabs span.on { color: var(--text); background: var(--line); }
+  .dayhead { display: flex; align-items: baseline; justify-content: space-between; }
+  .dayhead .nav-date { display: flex; align-items: baseline; gap: 14px; }
+  .dayhead .arrow { color: var(--muted); font-size: 18px; }
+  .dayhead h2 { font-family: var(--wk); font-weight: 400; font-size: 26px; letter-spacing: .04em; }
+  .dayhead h2 small { font-size: 15px; color: var(--muted); margin-left: 8px; }
+  .dayhead .sum { font-size: 13px; color: var(--muted); }
+  .dayhead .sum b { font-family: var(--num); font-weight: 400; color: var(--text); font-size: 15px; }
+  .timeline { position: relative; margin-top: 26px; height: 34px; border-radius: 8px; background: color-mix(in srgb, var(--bg) 45%, transparent); border: 1px solid var(--line); }
+  .timeline i { position: absolute; top: 6px; bottom: 6px; border-radius: 4px; }
+  .ticks { position: relative; height: 18px; margin-top: 6px; font-family: var(--num); font-size: 11px; color: var(--muted); }
+  .ticks span { position: absolute; transform: translateX(-50%); }
+  .sessions { margin-top: 18px; }
+  .sess { display: grid; grid-template-columns: 96px 12px 1fr auto; gap: 12px; padding: 13px 4px; border-top: 1px solid var(--line); align-items: start; }
+  .sess .time { font-family: var(--num); font-size: 13px; color: var(--muted); padding-top: 2px; }
+  .sess .dot { margin-top: 7px; }
+  .sess .what { font-size: 14px; }
+  .sess .what .sub { color: var(--muted); }
+  .sess .note { margin-top: 6px; font-family: var(--wk); font-size: 14px; color: var(--muted); padding-left: 10px; border-left: 2px solid var(--line); }
+  .sess .add { margin-top: 6px; font-size: 12px; color: var(--accent); opacity: .8; }
+  .sess .dur { font-family: var(--num); font-size: 14px; padding-top: 1px; }
+
+  /* 结束页备注 */
+  .note-box { margin-top: 30px; width: 460px; display: flex; gap: 10px; }
+  .note-box input {
+    flex: 1; padding: 12px 16px; border-radius: 10px; border: 1px solid var(--line);
+    background: color-mix(in srgb, var(--surface) 60%, transparent); color: var(--text); font: 16px var(--wk);
+  }
+  .note-box input::placeholder { color: var(--muted); }
+  .note-box .btn { padding: 10px 20px; }
+  .chip.num small { font-family: var(--sans); font-size: 12px; color: var(--muted); }
+  .seg { display: inline-flex; padding: 3px; border-radius: 10px; background: var(--line); }
+  .seg span { padding: 8px 18px; border-radius: 8px; font-size: 14px; color: var(--muted); white-space: nowrap; }
+  .seg span.on { background: var(--bg2); color: var(--text); box-shadow: 0 1px 3px rgba(0, 0, 0, .2); }
+  .input {
+    width: 100%; padding: 13px 16px; border-radius: 10px; border: 1px solid var(--line);
+    background: color-mix(in srgb, var(--bg) 60%, transparent); font-family: var(--wk); font-size: 17px; color: var(--text);
+  }
+  .row { display: flex; gap: 40px; }
+  .go { margin-top: 36px; display: flex; align-items: center; gap: 18px; }
+  .go .btn.primary { padding: 15px 44px; font-size: 16px; }
+  .go .hint { font-size: 13px; color: var(--muted); }
+
+  /* 记录页 */
+  .stats-grid { display: grid; grid-template-columns: 1.25fr 1fr; gap: 16px; }
+  .card { border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; background: color-mix(in srgb, var(--bg) 35%, transparent); }
+  .card h3 { font-weight: 400; font-size: 13px; color: var(--muted); margin-bottom: 10px; display: flex; justify-content: space-between; }
+  .big { font-family: var(--num); font-weight: 300; font-size: 34px; }
+  .big small { font-family: var(--sans); font-size: 15px; color: var(--muted); margin: 0 8px 0 4px; }
+  .split { display: flex; height: 6px; border-radius: 3px; overflow: hidden; margin: 16px 0 12px; gap: 2px; }
+  .legend { display: flex; gap: 12px; font-size: 12px; color: var(--muted); }
+  .legend span { display: inline-flex; gap: 5px; align-items: center; white-space: nowrap; }
+  .bars { display: flex; align-items: flex-end; gap: 14px; height: 120px; position: relative; padding-top: 6px; }
+  .bars .col { flex: 1; display: flex; flex-direction: column-reverse; gap: 2px; height: 100%; }
+  .bars .col i { display: block; border-radius: 2px; }
+  .bars .goal { position: absolute; left: 0; right: 0; border-top: 1px dashed var(--line); }
+  .days { display: flex; gap: 14px; margin-top: 8px; font-size: 11px; color: var(--muted); }
+  .days span { flex: 1; text-align: center; }
+  .heat { display: grid; grid-template-rows: repeat(7, 11px); grid-auto-flow: column; grid-auto-columns: 11px; gap: 3px; }
+  .heat i { border-radius: 2px; background: var(--line); }
+  .list { margin-top: 2px; }
+  .list div { display: grid; grid-template-columns: 16px 1fr auto auto; gap: 10px; align-items: center; padding: 9px 0; border-top: 1px solid var(--line); font-size: 13px; }
+  .list div:first-child { border-top: 0; }
+  .list .t { font-family: var(--num); color: var(--muted); font-size: 12px; }
+  .tag { font-size: 11px; color: var(--muted); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; }
+  .link { font-size: 13px; color: var(--accent); }
+
+  /* ---------- 浮窗 ---------- */
+  .player {
+    position: absolute; left: 70px; top: 60px; right: 70px; bottom: 60px; border-radius: 12px; overflow: hidden;
+    background: linear-gradient(160deg, #2a3140, #151a23); box-shadow: 0 30px 80px rgba(0, 0, 0, .5);
+  }
+  .player .bar { height: 40px; background: rgba(255, 255, 255, .04); display: flex; align-items: center; padding: 0 18px; color: #8d97a8; font-size: 13px; gap: 8px; }
+  .board { position: absolute; left: 60px; top: 90px; right: 360px; bottom: 120px; border-radius: 6px; background: #1f3a33; padding: 40px; color: #dfe9e2; font-family: var(--wk); font-size: 30px; line-height: 1.9; }
+  .subtitle { position: absolute; bottom: 70px; left: 0; right: 0; text-align: center; color: #fff; font-size: 20px; text-shadow: 0 1px 3px #000; }
+  .scrub { position: absolute; bottom: 30px; left: 30px; right: 30px; height: 3px; background: rgba(255, 255, 255, .15); border-radius: 2px; }
+  .scrub i { display: block; width: 42%; height: 100%; background: #e5e9ef; border-radius: 2px; }
+  .teacher { position: absolute; right: 60px; top: 90px; width: 260px; height: 320px; border-radius: 6px; background: linear-gradient(#3a4252, #2a303c); }
+
+  .pill {
+    position: absolute; right: 96px; top: 110px; width: 248px; height: 56px; border-radius: 16px;
+    background: rgba(16, 21, 31, .62); backdrop-filter: blur(20px) saturate(1.2);
+    border: 1px solid rgba(255, 255, 255, .10); box-shadow: 0 12px 30px rgba(0, 0, 0, .35);
+    display: flex; align-items: center; padding: 0 18px; gap: 10px; color: #D7DEE8; overflow: hidden;
+  }
+  .pill .name { font-family: var(--wk); font-size: 15px; }
+  .pill .t { margin-left: auto; font-family: var(--num); font-weight: 300; font-size: 26px; font-variant-numeric: tabular-nums; }
+  .pill .p { position: absolute; left: 0; bottom: 0; height: 2px; width: 27%; background: linear-gradient(90deg, transparent, #9FB7D9); }
+  .pill.hover { top: 214px; }
+  .pill.hover .t { font-size: 20px; }
+  .pill .ico { display: flex; gap: 2px; margin-left: 6px; }
+  .pill .ico span { width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; font-size: 12px; color: #9aa6b8; background: rgba(255, 255, 255, .06); }
+  .pill-cap { position: absolute; right: 96px; width: 248px; font-size: 12px; color: #8d97a8; text-align: right; }
+
+  /* ---------- 周报卡片 ---------- */
+  .card-stage { background: #c9cfd8; align-items: center; justify-content: center; gap: 48px; }
+  body[data-v="card"] .card-stage { display: flex; }
+  .week {
+    width: 380px; height: 660px; border-radius: 22px; padding: 40px 34px; position: relative; overflow: hidden;
+    background: linear-gradient(180deg, #10151F 0%, #161D2B 55%, #1E2638 100%); color: #D7DEE8;
+    box-shadow: 0 30px 70px rgba(16, 21, 31, .35);
+  }
+  .week::after { content: ""; position: absolute; inset: 0; background: radial-gradient(120% 50% at 50% 110%, rgba(159, 183, 217, .18), transparent 60%); pointer-events: none; }
+  .week .range { font-family: var(--num); font-size: 13px; color: #7D889B; letter-spacing: .06em; }
+  .week h2 { font-family: var(--wk); font-weight: 400; font-size: 24px; margin-top: 26px; letter-spacing: .04em; }
+  .week .total { font-family: var(--num); font-weight: 200; font-size: 76px; line-height: 1.05; margin-top: 10px; }
+  .week .total small { font-family: var(--wk); font-size: 22px; color: #7D889B; margin: 0 10px 0 4px; }
+  .week .rows { margin-top: 30px; display: grid; gap: 14px; }
+  .week .r { display: grid; grid-template-columns: 52px 1fr 64px; gap: 12px; align-items: center; font-size: 14px; }
+  .week .r .n { font-family: var(--wk); }
+  .week .r .v { font-family: var(--num); color: #7D889B; text-align: right; font-size: 13px; }
+  .week .r .b { height: 4px; border-radius: 2px; background: rgba(215, 222, 232, .08); overflow: hidden; }
+  .week .r .b i { display: block; height: 100%; border-radius: 2px; }
+  .week .seven { display: flex; justify-content: space-between; margin-top: 36px; }
+  .week .seven div { display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 11px; color: #7D889B; }
+  .week .seven i { width: 26px; height: 26px; border-radius: 50%; background: rgba(159, 183, 217, var(--a)); border: 1px solid rgba(215, 222, 232, .08); }
+  .week .q { position: absolute; left: 34px; right: 34px; bottom: 76px; font-family: var(--wk); font-size: 17px; color: #aab4c4; letter-spacing: .1em; line-height: 1.8; }
+  .week .mark { position: absolute; left: 34px; right: 34px; bottom: 36px; display: flex; justify-content: space-between; font-family: var(--num); font-size: 12px; color: #5f6a7c; }
+  .card-actions { display: flex; flex-direction: column; gap: 12px; }
+  .card-actions .btn { color: #27303D; border-color: rgba(39, 48, 61, .2); }
+  .card-actions .btn.primary { background: #27303D; color: #E4E9EF; }
+  .card-actions p { font-size: 13px; color: #5d6676; max-width: 220px; line-height: 1.7; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .horizon .glow { animation: breathe 6s ease-in-out infinite; }
+    @keyframes breathe { 50% { opacity: .65; } }
+  }
+</style>
+</head>
+<body data-v="night">
+
+<!-- 全屏计时页 · 夜读 · 倒计时 -->
+<section class="screen overlay theme-night" data-v="night">
+  <div class="sky"></div>
+  <header class="ov-top">
+    <div class="ov-subject"><i class="dot" style="--c: var(--c-math)"></i><span class="wk">数学</span><span class="wk task">二重积分 · 第三章习题</span></div>
+    <div class="ov-clock">21:14</div>
+  </header>
+  <main class="ov-center">
+    <div class="ov-time">32<span class="colon">:</span>48</div>
+    <div class="ov-note">已学 12 分钟</div>
+  </main>
+  <footer class="ov-bottom">
+    <div class="horizon" style="--p: .27"><div class="track"></div><div class="fill"></div><div class="glow"></div></div>
+    <div class="h-labels"><span>21:02</span><span>21:47</span></div>
+    <p class="quote wk">慢慢来，比较快。</p>
+  </footer>
+  <div class="ov-ambient">♪ 雨声</div>
+</section>
+
+<!-- 全屏计时页 · 专注中打开氛围面板 -->
+<section class="screen overlay theme-night bg-rain atmo-on" data-v="nightmood">
+  <header class="ov-top">
+    <div class="ov-subject"><i class="dot" style="--c: var(--c-math)"></i><span class="wk">数学</span><span class="wk task">二重积分 · 第三章习题</span></div>
+    <div class="ov-clock">21:14</div>
+  </header>
+  <p class="change-note">换成了 雨窗</p>
+  <main class="ov-center">
+    <div class="ov-time">32<span class="colon">:</span>48</div>
+    <div class="ov-note">已学 12 分钟</div>
+  </main>
+  <div class="atmo">
+    <div class="left">
+      <h4>画面</h4>
+      <div class="opts"><span>天色</span><span class="on">雨窗</span><span>台灯</span><span>星夜</span><span>晨雾</span><span class="add">＋ 图片</span></div>
+    </div>
+    <div class="mid">
+      <h4>声音</h4>
+      <div class="opts"><span>关</span><span class="on">雨声</span><span>图书馆</span><span>咖啡馆</span><span>篝火</span><span>白噪音</span><span>宿舍风扇</span><span class="add">＋ 导入</span></div>
+      <div class="vol-line"></div>
+    </div>
+    <div class="right">
+      <h4>风格</h4>
+      <div class="opts"><span class="on">夜读</span><span>竹青</span><span>雾蓝</span><span>暮紫</span><span>跟随天色</span></div>
+    </div>
+  </div>
+  <footer class="ov-bottom">
+    <div class="horizon" style="--p: .27"><div class="track"></div><div class="fill"></div><div class="glow"></div></div>
+    <div class="h-labels"><span>21:02</span><span>21:47</span></div>
+  </footer>
+  <div class="textctl"><span>暂停</span><span class="on">氛围</span><span>缩成浮窗</span><span class="end">结束</span></div>
+  <div class="keys-hint"><kbd>B</kbd>画面 &nbsp; <kbd>N</kbd>声音 &nbsp; <kbd>T</kbd>风格 &nbsp; <kbd>↑↓</kbd>音量</div>
+</section>
+
+<!-- 全屏计时页 · 雾蓝 · 模考，鼠标移动时出现控制条 -->
+<section class="screen overlay theme-mist" data-v="mist">
+  <div class="sky"></div>
+  <header class="ov-top">
+    <div class="ov-subject"><i class="dot" style="--c: var(--c-math)"></i><span class="wk">模考</span><span class="wk task">数学一 · 2023 真题</span></div>
+    <div class="ov-clock">10:08</div>
+  </header>
+  <main class="ov-center">
+    <div class="ov-time">1<span class="colon">:</span>51<span class="colon">:</span>56</div>
+    <div class="ov-note">已作答 1 小时 8 分</div>
+  </main>
+  <div class="textctl" style="bottom: 196px"><span>暂停</span><span>氛围</span><span>缩成浮窗</span><span class="end">结束</span></div>
+  <footer class="ov-bottom">
+    <div class="horizon" style="--p: .38"><div class="track"></div><div class="fill"></div><div class="glow"></div></div>
+    <div class="h-labels"><span>09:00</span><span>12:00</span></div>
+    <p class="quote wk">题会做完的，不急在这一道。</p>
+  </footer>
+</section>
+
+<!-- 结束页 -->
+<section class="screen overlay theme-night end" data-v="end">
+  <div class="sky" style="background: radial-gradient(130% 80% at 50% 100%, color-mix(in srgb, var(--accent) 26%, transparent) 0%, transparent 70%);"></div>
+  <div class="end-wrap">
+    <p class="end-title">这一段学了<em>45</em>分钟，已经记下了。</p>
+    <p class="end-sub wk"><i class="dot" style="--c: var(--c-math)"></i>数学 · 二重积分 · 第三章习题</p>
+    <div class="end-actions">
+      <button class="btn primary">再来一段</button>
+      <button class="btn">回到电脑</button>
+    </div>
+    <div class="note-box">
+      <input value="" placeholder="加个备注，比如：第 3 题没想通，明天问">
+      <button class="btn">记下</button>
+    </div>
+  </div>
+  <p class="quote wk">今天也坐下来了，这就很好。</p>
+</section>
+
+<!-- 主窗口 · 开始 -->
+<section class="screen desk" data-v="start">
+  <div class="window theme-night">
+    <aside class="side">
+      <div class="traffic"><i></i><i></i><i></i></div>
+      <div class="brand">Aside<span> 一旁</span></div>
+      <div class="nav on">开始</div>
+      <div class="nav">记录</div>
+      <div class="nav">科目</div>
+      <div class="nav">设置</div>
+      <div class="foot">随时开始 <kbd>⌥⌘S</kbd><br>全屏 / 浮窗 <kbd>⌥⌘M</kbd></div>
+    </aside>
+    <div class="main start-main">
+      <div class="start-left">
+        <div class="hello">
+          <h1>今天学了 <b>3</b> 小时 <b>12</b> 分</h1>
+        </div>
+
+        <div class="field">
+          <div class="label">科目</div>
+          <div class="chips">
+            <span class="chip" style="--c: var(--c-politics)"><i class="dot" style="--c: var(--c-politics)"></i>政治</span>
+            <span class="chip" style="--c: var(--c-english)"><i class="dot" style="--c: var(--c-english)"></i>英语</span>
+            <span class="chip" style="--c: var(--c-math)"><i class="dot" style="--c: var(--c-math)"></i>数学</span>
+            <span class="chip" style="--c: var(--c-major)"><i class="dot" style="--c: var(--c-major)"></i>专业课</span>
+            <span class="chip on" style="--c: var(--c-other)"><i class="dot" style="--c: var(--c-other)"></i>其他</span>
+            <span class="chip ghost">＋</span>
+          </div>
+        </div>
+
+        <div class="row" style="gap: 28px">
+          <div class="field">
+            <div class="label">方式</div>
+            <div class="seg"><span class="on">倒计时</span><span>正计时</span><span>模考</span></div>
+          </div>
+          <div class="field">
+            <div class="label">显示</div>
+            <div class="seg"><span>全屏</span><span>浮窗</span><span class="on">网课</span></div>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="label">时长（最长 24 小时）</div>
+          <div class="chips tight">
+            <span class="chip num">25</span>
+            <span class="chip num">45</span>
+            <span class="chip num">60</span>
+            <span class="chip num">90</span>
+            <span class="chip custom on"><b>2</b><small>小时</small><b>30</b><small>分</small></span>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="label">这一段要做什么（可以不填）</div>
+          <input class="input" placeholder="比如：高数基础 第 12 讲">
+        </div>
+
+        <div class="go">
+          <button class="btn primary">开始专注</button>
+          <span class="hint">⌥⌘S 也可以随时开始</span>
+        </div>
+      </div>
+
+      <aside class="mood">
+        <div class="mood-preview scene-rain">
+          <span class="pv-sub">● 其他</span>
+          <span class="pv-time">2:30:00</span>
+          <i class="pv-line"></i>
+        </div>
+
+        <div class="mood-h">背景画面</div>
+        <div class="scenes">
+          <div class="scene"><i class="scene-sky"></i><span>天色</span></div>
+          <div class="scene on"><i class="scene-rain"></i><span>雨窗</span></div>
+          <div class="scene"><i class="scene-lamp"></i><span>台灯</span></div>
+          <div class="scene"><i class="scene-star"></i><span>星夜</span></div>
+          <div class="scene"><i class="scene-mist"></i><span>晨雾</span></div>
+          <div class="scene"><i class="scene-add">＋</i><span>我的图片</span></div>
+        </div>
+
+        <div class="mood-h">背景音 <span class="vol"><i style="width: 55%"></i></span></div>
+        <div class="sounds">
+          <span>关</span><span class="on">雨声</span><span>图书馆</span><span>咖啡馆</span><span>篝火</span><span>白噪音</span>
+        </div>
+
+        <div class="mood-h">软件风格</div>
+        <div class="themes">
+          <span class="on"><i style="background: linear-gradient(135deg, #10151F 50%, #9FB7D9 50%)"></i>夜读</span>
+          <span><i style="background: linear-gradient(135deg, #121B17 50%, #8FB8A0 50%)"></i>竹青</span>
+          <span><i style="background: linear-gradient(135deg, #E4E9EF 50%, #5B7BA6 50%)"></i>雾蓝</span>
+          <span><i style="background: linear-gradient(135deg, #E9E4EC 50%, #8A6FA3 50%)"></i>暮紫</span>
+          <span><i style="background: conic-gradient(#E4E9EF, #E9E4EC, #1E2638, #10151F, #E4E9EF)"></i>跟随天色</span>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- 浮窗 · 看网课时 -->
+<section class="screen desk" data-v="mini">
+  <div class="player">
+    <div class="bar">● ● ●&nbsp;&nbsp;&nbsp;高数基础 · 第 12 讲 二重积分的计算</div>
+    <div class="board">∬<sub>D</sub> f(x, y) dσ<br>= ∫<sub>a</sub><sup>b</sup> dx ∫<sub>φ₁(x)</sub><sup>φ₂(x)</sup> f(x, y) dy</div>
+    <div class="teacher"></div>
+    <div class="subtitle">先确定积分区域，再决定是先对 x 还是先对 y 积分</div>
+    <div class="scrub"><i></i></div>
+  </div>
+  <div class="pill"><i class="dot" style="--c: var(--c-math)"></i><span class="name">数学</span><span class="t">32:48</span><i class="p"></i></div>
+  <p class="pill-cap" style="top: 172px">平时</p>
+  <div class="pill hover"><i class="dot" style="--c: var(--c-math)"></i><span class="t">32:48</span><span class="ico"><span>❙❙</span><span>⤢</span><span>✕</span></span><i class="p"></i></div>
+  <p class="pill-cap" style="top: 276px">鼠标悬停：暂停 · 展开到全屏 · 结束</p>
+</section>
+
+<!-- 网课模式 · 内置浏览器 + 侧栏 -->
+<section class="screen desk" data-v="lecture">
+  <div class="lecture-win">
+    <div class="browser">
+      <div class="b-bar">
+        <div class="traffic"><i></i><i></i><i></i></div>
+        <span class="nb">‹</span><span class="nb">›</span><span class="nb">↻</span>
+        <div class="b-url">🔒 <b>bilibili.com</b>/video/高数基础-第12讲</div>
+        <span class="b-act">只看视频</span>
+      </div>
+      <div class="b-marks"><span>哔哩哔哩</span><span>中国大学MOOC</span><span>学堂在线</span><span>研招网</span><span style="opacity: .6">＋ 添加</span></div>
+      <div class="b-page">
+        <div class="video">
+          <div class="chalk">∬<sub>D</sub> f(x, y) dσ<br>= ∫<sub>a</sub><sup>b</sup> dx ∫<sub>φ₁(x)</sub><sup>φ₂(x)</sup> f(x, y) dy</div>
+          <div class="v-sub">先确定积分区域，再决定是先对 x 还是先对 y 积分</div>
+          <div class="v-ctrl"><i></i></div>
+        </div>
+        <div class="b-title">高数基础 · 第 12 讲 二重积分的计算</div>
+        <div class="b-meta">P12 / 36 · 58:21</div>
+        <div class="b-list"><i></i><i></i><i></i><i></i></div>
+      </div>
+    </div>
+    <aside class="panel">
+      <div class="p-sub"><i class="dot" style="--c: var(--c-math)"></i>数学</div>
+      <div class="p-task">高数基础 第 12 讲</div>
+      <div class="p-time">32:48</div>
+      <div class="p-note">已学 12 分钟</div>
+      <div class="p-line"></div>
+      <div class="p-ends"><span>21:02</span><span>21:47</span></div>
+      <div class="p-btns"><span>暂停</span><span>结束</span><span class="wide">只看视频</span></div>
+      <div class="p-today"><span>今天一共</span><b>3:24</b></div>
+      <div class="mascot"><img src="assets/mascot-read.jpg" alt=""></div>
+    </aside>
+  </div>
+</section>
+
+<!-- 网课模式 · 只看视频 -->
+<section class="screen vonly" data-v="video">
+  <div class="chalk">∬<sub>D</sub> f(x, y) dσ<br>= ∫<sub>a</sub><sup>b</sup> dx ∫<sub>φ₁(x)</sub><sup>φ₂(x)</sup> f(x, y) dy</div>
+  <div class="v-sub">先确定积分区域，再决定是先对 x 还是先对 y 积分</div>
+  <div class="strip">
+    <div class="s-sub"><i class="dot" style="--c: var(--c-math)"></i>数学</div>
+    <div class="s-time">32:48</div>
+    <div class="s-note">已学 12 分钟</div>
+    <div class="s-bar"></div>
+    <div class="s-hint">鼠标离开 3 秒后侧栏收起，<br>只留右上角一行小字时间<br><kbd>Esc</kbd> 退出只看视频</div>
+  </div>
+</section>
+
+<!-- 主窗口 · 记录 · 某一天 -->
+<section class="screen desk" data-v="day">
+  <div class="window theme-night">
+    <aside class="side">
+      <div class="traffic"><i></i><i></i><i></i></div>
+      <div class="brand">Aside<span> 一旁</span></div>
+      <div class="nav">开始</div>
+      <div class="nav on">记录</div>
+      <div class="nav">科目</div>
+      <div class="nav">设置</div>
+      <div class="foot">随时开始 <kbd>⌥⌘S</kbd><br>全屏 / 浮窗 <kbd>⌥⌘M</kbd></div>
+    </aside>
+    <div class="main" style="padding-top: 36px">
+      <div class="tabs"><span class="on">按天</span><span>总览</span></div>
+      <div class="dayhead">
+        <div class="nav-date"><span class="arrow">‹</span><h2>10 月 13 日<small>周二 · 今天</small></h2><span class="arrow">›</span></div>
+        <div class="sum">学了 <b>6</b> 小时 <b>25</b> 分 · 5 段 &nbsp; <span class="link">＋ 补记一段</span></div>
+      </div>
+      <div class="timeline">
+        <i style="left: 31.94%; width: 3.47%; background: var(--c-english)"></i>
+        <i style="left: 36.46%; width: 10.42%; background: var(--c-math)"></i>
+        <i style="left: 58.33%; width: 6.25%; background: var(--c-major)"></i>
+        <i style="left: 66.67%; width: 3.47%; background: var(--c-english); opacity: .7"></i>
+        <i style="left: 81.25%; width: 3.13%; background: var(--c-politics)"></i>
+      </div>
+      <div class="ticks"><span style="left: 1%">0</span><span style="left: 25%">6</span><span style="left: 50%">12</span><span style="left: 75%">18</span><span style="left: 98%">24</span></div>
+      <div class="sessions">
+        <div class="sess"><span class="time">07:40 – 08:30</span><i class="dot" style="--c: var(--c-english)"></i><div class="what">英语 <span class="sub">· 背单词 Unit 12</span></div><span class="dur">50 分</span></div>
+        <div class="sess"><span class="time">08:45 – 11:15</span><i class="dot" style="--c: var(--c-math)"></i><div class="what">数学 <span class="sub">· 二重积分 · 第三章习题</span><div class="note">第 3 题没想通，明天问</div></div><span class="dur">2 时 30 分</span></div>
+        <div class="sess"><span class="time">14:00 – 15:30</span><i class="dot" style="--c: var(--c-major)"></i><div class="what">专业课 <span class="sub">· 数据结构 · 图的遍历</span></div><span class="dur">1 时 30 分</span></div>
+        <div class="sess"><span class="time">16:00 – 16:50</span><i class="dot" style="--c: var(--c-english)"></i><div class="what">英语 <span class="sub">· 阅读 2012 Text 3</span> <span class="tag">补记</span><div class="note">长难句还是读得慢</div></div><span class="dur">50 分</span></div>
+        <div class="sess"><span class="time">19:30 – 20:15</span><i class="dot" style="--c: var(--c-politics)"></i><div class="what">政治 <span class="sub">· 马原 第一章</span><div class="add">＋ 加个备注</div></div><span class="dur">45 分</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 主窗口 · 记录 -->
+<section class="screen desk" data-v="stats">
+  <div class="window theme-night">
+    <aside class="side">
+      <div class="traffic"><i></i><i></i><i></i></div>
+      <div class="brand">Aside<span> 一旁</span></div>
+      <div class="nav">开始</div>
+      <div class="nav on">记录</div>
+      <div class="nav">科目</div>
+      <div class="nav">设置</div>
+      <div class="foot">随时开始 <kbd>⌥⌘S</kbd><br>全屏 / 浮窗 <kbd>⌥⌘M</kbd></div>
+    </aside>
+    <div class="main" style="padding-top: 40px">
+      <div class="stats-grid">
+        <div class="card">
+          <h3>今天</h3>
+          <div class="big">3<small>小时</small>12<small>分</small></div>
+          <div class="split">
+            <i style="flex: 38; background: var(--c-math)"></i>
+            <i style="flex: 26; background: var(--c-english)"></i>
+            <i style="flex: 20; background: var(--c-major)"></i>
+            <i style="flex: 16; background: var(--c-politics)"></i>
+          </div>
+          <div class="legend">
+            <span><i class="dot" style="--c: var(--c-math)"></i>数学 1:13</span>
+            <span><i class="dot" style="--c: var(--c-english)"></i>英语 0:50</span>
+            <span><i class="dot" style="--c: var(--c-major)"></i>专业课 0:38</span>
+            <span><i class="dot" style="--c: var(--c-politics)"></i>政治 0:31</span>
+          </div>
+        </div>
+        <div class="card">
+          <h3>这一周 <span class="link">查看周报</span></h3>
+          <div class="big">21<small>小时</small>40<small>分</small></div>
+          <p style="margin-top: 14px; font-size: 13px; color: var(--muted); line-height: 1.7">学了 5 天。数学花的时间最多，英语这周少一些。</p>
+        </div>
+        <div class="card">
+          <h3>最近 7 天 <span>每日目标 6 小时</span></h3>
+          <div class="bars" id="bars"></div>
+          <div class="days"><span>周三</span><span>周四</span><span>周五</span><span>周六</span><span>周日</span><span>周一</span><span>今天</span></div>
+        </div>
+        <div class="card">
+          <h3>最近 16 周</h3>
+          <div class="heat" id="heat"></div>
+          <p style="margin-top: 12px; font-size: 12px; color: var(--muted)">这个月学了 21 天</p>
+        </div>
+      </div>
+      <div class="card" style="margin-top: 16px; padding-top: 12px; padding-bottom: 6px">
+        <h3>今天的记录 <span class="link">＋ 补记一段</span></h3>
+        <div class="list">
+          <div><i class="dot" style="--c: var(--c-math)"></i><span>数学 · 二重积分 · 第三章习题</span><span class="t">19:30–20:15</span><span class="t">45 分</span></div>
+          <div><i class="dot" style="--c: var(--c-english)"></i><span>英语 · 阅读 2012 Text 3 <span class="tag">补记</span></span><span class="t">16:00–16:50</span><span class="t">50 分</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 周报卡片 -->
+<section class="screen card-stage" data-v="card">
+  <div class="week">
+    <div class="range">10.05 — 10.11</div>
+    <h2>这一周，你坐下来了 5 天</h2>
+    <div class="total">21<small>小时</small>40<small>分</small></div>
+    <div class="rows">
+      <div class="r"><span class="n">数学</span><span class="b"><i style="width: 82%; background: var(--c-math)"></i></span><span class="v">8:50</span></div>
+      <div class="r"><span class="n">专业课</span><span class="b"><i style="width: 48%; background: var(--c-major)"></i></span><span class="v">5:10</span></div>
+      <div class="r"><span class="n">英语</span><span class="b"><i style="width: 40%; background: var(--c-english)"></i></span><span class="v">4:20</span></div>
+      <div class="r"><span class="n">政治</span><span class="b"><i style="width: 31%; background: var(--c-politics)"></i></span><span class="v">3:20</span></div>
+    </div>
+    <div class="seven">
+      <div><i style="--a: .55"></i>一</div>
+      <div><i style="--a: .8"></i>二</div>
+      <div><i style="--a: 0"></i>三</div>
+      <div><i style="--a: .7"></i>四</div>
+      <div><i style="--a: .45"></i>五</div>
+      <div><i style="--a: .9"></i>六</div>
+      <div><i style="--a: 0"></i>日</div>
+    </div>
+    <p class="q">累了就歇一歇，<br>路还在，人也还在。</p>
+    <div class="mark"><span>Aside · 一旁</span><span>2027 考研</span></div>
+  </div>
+  <div class="card-actions">
+    <button class="btn primary">保存为图片</button>
+    <button class="btn">换一句话</button>
+    <p>卡片只包含时长和科目，不包含任务内容，可以放心分享。</p>
+  </div>
+</section>
+
+<script>
+  const v = new URLSearchParams(location.search).get("v");
+  if (v) document.body.dataset.v = v;
+  const fit = () => {
+    const k = Math.min(innerWidth / 1280, innerHeight / 800);
+    document.querySelectorAll(".screen").forEach(el => {
+      el.style.transform = `translate(${(innerWidth - 1280 * k) / 2}px, ${(innerHeight - 800 * k) / 2}px) scale(${k})`;
+    });
+  };
+  fit();
+  addEventListener("resize", fit);
+
+  const subj = ["--c-math", "--c-english", "--c-major", "--c-politics"];
+  const week = [[2.1, 1.2, 1.4, 0.9], [2.6, 1.0, 1.6, 1.1], [0, 0, 0, 0], [1.8, 1.5, 1.2, 0.6], [1.2, 0.8, 0.9, 0.7], [2.9, 1.4, 1.8, 1.2], [1.2, 0.8, 0.6, 0.5]];
+  const max = 9, bars = document.getElementById("bars");
+  week.forEach(day => {
+    const col = document.createElement("div");
+    col.className = "col";
+    day.forEach((h, i) => {
+      if (!h) return;
+      const seg = document.createElement("i");
+      seg.style.height = (h / max * 100) + "%";
+      seg.style.background = `var(${subj[i]})`;
+      col.appendChild(seg);
+    });
+    bars.appendChild(col);
+  });
+  const goal = document.createElement("div");
+  goal.className = "goal";
+  goal.style.bottom = (6 / max * 100) + "%";
+  bars.appendChild(goal);
+
+  const heat = document.getElementById("heat");
+  let s = 7;
+  const rnd = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+  for (let d = 0; d < 16 * 7; d++) {
+    const cell = document.createElement("i");
+    const r = rnd();
+    const ramp = Math.min(1, d / 120);
+    const lvl = r < 0.18 ? 0 : Math.ceil(rnd() * 4 * (0.45 + ramp * 0.55));
+    if (lvl) cell.style.background = `color-mix(in srgb, var(--accent) ${lvl * 22}%, transparent)`;
+    heat.appendChild(cell);
+  }
+</script>
+</body>
+</html>

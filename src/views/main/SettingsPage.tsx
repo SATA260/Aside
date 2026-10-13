@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { ShortcutField } from "../../features/shortcuts/ShortcutField";
 import { api } from "../../shared/api";
 import { configureSfx, play } from "../../shared/sfx";
 import { useApp } from "../../shared/state";
@@ -84,6 +85,24 @@ export function SettingsPage() {
               void update({ sfx_volume: v });
             }}
           />
+        </div>
+      </section>
+
+      <section className="settings-group">
+        <h3>快捷键</h3>
+        <div className="settings-row">
+          <div>
+            <div>开始或结束</div>
+            <div className="hint">在别的软件里也能按，沿用上一次的选择</div>
+          </div>
+          <ShortcutField action="toggle" label="开始或结束" accel={settings.shortcut_toggle} />
+        </div>
+        <div className="settings-row">
+          <div>
+            <div>全屏和浮窗切换</div>
+            <div className="hint">专注中才有用</div>
+          </div>
+          <ShortcutField action="display" label="全屏和浮窗切换" accel={settings.shortcut_display} />
         </div>
       </section>
     </div>

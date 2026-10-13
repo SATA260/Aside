@@ -79,11 +79,11 @@ impl Aside {
         self.settings.read().unwrap_or_else(|e| e.into_inner()).clone()
     }
 
-    /// 用 `patch` 里的字段覆盖当前设置，类型不对的字段整体拒绝。
+    /// 用 `patch` 里的字段覆盖当前设置，类型不对的字段整体拒绝。快捷键要先注册成功，不走这里。
     pub fn settings_update(&self, patch: Value) -> AppResult<Settings> {
         let mut merged = serde_json::to_value(self.settings())?;
         if let (Some(target), Some(patch)) = (merged.as_object_mut(), patch.as_object()) {
-            for (k, v) in patch {
+            for (k, v) in patch.iter().filter(|(k, _)| !k.starts_with("shortcut_")) {
                 target.insert(k.clone(), v.clone());
             }
         }

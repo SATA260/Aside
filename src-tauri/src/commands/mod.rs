@@ -61,6 +61,17 @@ struct DisplayArg {
 }
 
 #[derive(Deserialize)]
+struct Paused {
+    paused: bool,
+}
+
+#[derive(Deserialize)]
+struct ShortcutArg {
+    action: String,
+    accel: String,
+}
+
+#[derive(Deserialize)]
 struct Note {
     id: i64,
     note: String,
@@ -82,6 +93,11 @@ pub fn dispatch(app: &Aside, cmd: &str, input: Value, _caller: &str) -> AppResul
 
         "settings_get" => ok(app.settings()),
         "settings_update" => ok(app.settings_update(input)?),
+        "shortcut_set" => {
+            let a: ShortcutArg = args(input)?;
+            ok(app.shortcut_set(&a.action, &a.accel)?)
+        }
+        "shortcuts_pause" => ok(app.shortcuts_pause(args::<Paused>(input)?.paused)),
 
         "subjects_list" => ok(app.subjects_list(args::<IncludeArchived>(input)?.include_archived)?),
         "subject_create" => {

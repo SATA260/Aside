@@ -79,6 +79,15 @@ impl Shell for DevShell {
     fn keep_awake(&self, on: bool) {
         self.hub.emit("dev:awake", json!({ "on": on }));
     }
+
+    fn bind_shortcut(&self, action: &str, accel: &str) -> Result<(), String> {
+        self.hub.emit("dev:shortcut", json!({ "action": action, "accel": accel }));
+        Ok(())
+    }
+
+    fn pause_shortcuts(&self, paused: bool) {
+        self.hub.emit("dev:shortcuts-paused", json!({ "paused": paused }));
+    }
 }
 
 fn json_response(value: Value) -> Response<std::io::Cursor<Vec<u8>>> {

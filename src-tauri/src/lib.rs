@@ -9,6 +9,7 @@ mod lecture;
 mod media;
 pub mod settings;
 pub mod shell;
+pub mod shortcuts;
 pub mod stats;
 pub mod store;
 mod system;
@@ -19,10 +20,12 @@ use std::sync::Arc;
 
 use serde_json::Value;
 use tauri::{AppHandle, Emitter, Manager, RunEvent, WindowEvent};
+use tauri_plugin_global_shortcut::ShortcutState;
 
 use crate::app::Aside;
 use crate::clock::SystemClock;
 use crate::events::{EventSink, TIMER_TICK};
+use crate::system::hotkeys::Hotkeys;
 use crate::system::power::Power;
 use crate::system::tray;
 use crate::windows::{TauriShell, show_main};
@@ -48,17 +51,32 @@ pub fn run() {
             let _ = show_main(app);
         }))
         .plugin(tauri_plugin_opener::init())
+        .plugin(
+            tauri_plugin_global_shortcut::Builder::new()
+                .with_handler(|app, shortcut, event| {
+                    if event.state != ShortcutState::Pressed {
+                        return;
+                    }
+                    if let Some(action) = app.state::<Arc<Hotkeys>>().action_of(shortcut) {
+                        tray::in_background(app, move |a| a.shortcut_pressed(&action));
+                    }
+                })
+                .build(),
+        )
         .setup(|app| {
             let handle = app.handle().clone();
             let data_dir = app.path().app_data_dir()?;
+            let hotkeys = Arc::new(Hotkeys::default());
+            app.manage(hotkeys.clone());
             let aside = Aside::open(
                 data_dir,
                 Arc::new(SystemClock),
                 Arc::new(TauriEvents { app: handle.clone() }),
-                Arc::new(TauriShell { app: handle.clone(), power: Power::spawn() }),
+                Arc::new(TauriShell { app: handle.clone(), power: Power::spawn(), hotkeys }),
             )?;
             app.manage(aside.clone());
             tray::setup(&handle)?;
+            aside.shortcuts_bind_all();
             Aside::spawn_ticker(aside.clone());
             #[cfg(all(debug_assertions, feature = "devserver"))]
             if std::env::var_os("ASIDE_DEV_BRIDGE").is_some() {

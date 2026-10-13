@@ -1,4 +1,5 @@
 import { type ComponentType, useEffect, useRef, useState } from "react";
+import { formatAccel } from "../../features/shortcuts/keys";
 import { play } from "../../shared/sfx";
 import { useApp } from "../../shared/state";
 import "./main.css";
@@ -18,6 +19,7 @@ const PAGES: { name: PageName; label: string; component: ComponentType }[] = [
 export function MainView() {
   const [page, setPage] = useState<PageName>("start");
   const phase = useApp((s) => s.timer?.phase);
+  const settings = useApp((s) => s.settings);
 
   // 一段专注结束、回到电脑时，主窗口总是回到开始页
   const prevPhase = useRef(phase);
@@ -46,6 +48,13 @@ export function MainView() {
             {p.label}
           </button>
         ))}
+        {settings && (
+          <div className="nav-foot">
+            随时开始 <kbd>{formatAccel(settings.shortcut_toggle)}</kbd>
+            <br />
+            全屏 / 浮窗 <kbd>{formatAccel(settings.shortcut_display)}</kbd>
+          </div>
+        )}
       </nav>
       <main className="main-content">
         <div className="drag-strip" data-tauri-drag-region />

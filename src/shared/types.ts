@@ -58,8 +58,13 @@ export interface Settings {
   last_countdown_ms: number;
   last_mock_ms: number;
   last_display: DisplayMode;
+  last_subject_id: number | null;
   mini_pos: { x: number; y: number } | null;
+  shortcut_toggle: string;
+  shortcut_display: string;
 }
+
+export type ShortcutAction = "toggle" | "display";
 
 export interface StartArgs {
   subject_id: number;

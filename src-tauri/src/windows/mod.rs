@@ -9,6 +9,7 @@ use tauri::{AppHandle, Manager, Monitor, WebviewUrl, WebviewWindow, WebviewWindo
 
 use crate::app::Aside;
 use crate::shell::Shell;
+use crate::system::hotkeys::Hotkeys;
 use crate::system::power::Power;
 use layout::{MINI_H, MINI_W, OverlaySpot, Rect, mini_spot, overlay_spots};
 
@@ -19,6 +20,7 @@ const BACKDROP: Color = Color(16, 21, 31, 255);
 pub struct TauriShell {
     pub app: AppHandle,
     pub power: Power,
+    pub hotkeys: Arc<Hotkeys>,
 }
 
 impl Shell for TauriShell {
@@ -60,6 +62,14 @@ impl Shell for TauriShell {
 
     fn keep_awake(&self, on: bool) {
         self.power.set(on);
+    }
+
+    fn bind_shortcut(&self, action: &str, accel: &str) -> Result<(), String> {
+        self.hotkeys.bind(&self.app, action, accel)
+    }
+
+    fn pause_shortcuts(&self, paused: bool) {
+        self.hotkeys.pause(&self.app, paused);
     }
 }
 

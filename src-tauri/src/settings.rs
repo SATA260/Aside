@@ -46,6 +46,10 @@ pub struct Settings {
     pub last_subject_id: Option<i64>,
     /// 浮窗上次关掉时的位置，没拖过时为空
     pub mini_pos: Option<Point>,
+    /// 全局快捷键：开始或结束。只能经由 `shortcut_set` 修改，因为要先注册成功
+    pub shortcut_toggle: String,
+    /// 全局快捷键：全屏和浮窗互相切换
+    pub shortcut_display: String,
 }
 
 impl Default for Settings {
@@ -61,6 +65,8 @@ impl Default for Settings {
             last_display: Display::Fullscreen,
             last_subject_id: None,
             mini_pos: None,
+            shortcut_toggle: "CommandOrControl+Alt+S".into(),
+            shortcut_display: "CommandOrControl+Alt+M".into(),
         }
     }
 }

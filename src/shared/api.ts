@@ -1,5 +1,5 @@
 import { call } from "./ipc";
-import type { DisplayMode, Outcome, Settings, StartArgs, Subject, TimerView } from "./types";
+import type { DisplayMode, Outcome, Settings, ShortcutAction, StartArgs, Subject, TimerView } from "./types";
 
 export const api = {
   timer: {
@@ -15,6 +15,8 @@ export const api = {
   settings: {
     get: () => call<Settings>("settings_get"),
     update: (patch: Partial<Settings>) => call<Settings>("settings_update", patch),
+    setShortcut: (action: ShortcutAction, accel: string) => call<Settings>("shortcut_set", { action, accel }),
+    pauseShortcuts: (paused: boolean) => call<null>("shortcuts_pause", { paused }),
   },
   subjects: {
     list: (includeArchived = false) => call<Subject[]>("subjects_list", { include_archived: includeArchived }),

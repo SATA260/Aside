@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatAccel } from "../../features/shortcuts/keys";
 import { DISPLAYS } from "../../features/timer/displays";
 import {
   COUNTDOWN_PRESETS,
@@ -134,6 +135,7 @@ function StartFormView({ init, timer, settings }: { init: StartForm; timer: Time
         <Button variant="primary" cue={null} disabled={!!error || active || busy} onClick={() => void start()}>
           开始专注
         </Button>
+        <span className="hint">{formatAccel(settings.shortcut_toggle)} 也可以随时开始</span>
       </div>
     </div>
   );

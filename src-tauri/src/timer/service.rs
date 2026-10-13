@@ -159,9 +159,13 @@ impl Aside {
         })
     }
 
+    pub fn timer_is_active(&self) -> bool {
+        self.timer_state().timer.is_active()
+    }
+
     /// 开始或结束：正在专注就结束这一段，否则按上一次的选择开始。
     pub fn timer_toggle(&self) -> AppResult<TimerView> {
-        if self.timer_state().timer.is_active() {
+        if self.timer_is_active() {
             self.timer_finish()?;
             Ok(self.timer_view())
         } else {

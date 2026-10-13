@@ -9,7 +9,7 @@ use crate::clock::Clock;
 use crate::error::AppResult;
 use crate::events::EventSink;
 use crate::shell::Shell;
-use crate::timer::Snapshot;
+use crate::timer::{Snapshot, Timer};
 
 pub struct Aside {
     pub data_dir: PathBuf,
@@ -30,6 +30,6 @@ impl Aside {
     }
 
     pub fn timer_snapshot(&self) -> Snapshot {
-        Snapshot::idle()
+        Timer::default().snapshot(self.clock.now_ms())
     }
 }

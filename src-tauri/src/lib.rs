@@ -1,6 +1,8 @@
 pub mod app;
 pub mod clock;
 pub mod commands;
+#[cfg(feature = "devserver")]
+pub mod devbridge;
 pub mod error;
 pub mod events;
 mod lecture;
@@ -47,6 +49,11 @@ pub fn run() {
                 Arc::new(TauriShell { app: handle.clone() }),
             )?;
             Aside::spawn_ticker(aside.clone());
+            #[cfg(all(debug_assertions, feature = "devserver"))]
+            if std::env::var_os("ASIDE_DEV_BRIDGE").is_some() {
+                let bridge = aside.clone();
+                std::thread::spawn(move || devbridge::serve(bridge, "127.0.0.1:1431", None, None));
+            }
             app.manage(aside);
             if let Some(main) = app.get_webview_window("main") {
                 main.show()?;

@@ -39,6 +39,15 @@ pnpm dev                 # 前端，localhost:1420，/__dev 代理到后端
 
 ## 真机（`pnpm tauri dev`）
 
+会弹出真实的全屏窗口，先跟用户说一声再跑。
+
+```bash
+ASIDE_DEV_BRIDGE=1 pnpm tauri dev --features devserver      # 真机后端同时听 127.0.0.1:1431
+curl -s -X POST localhost:1431/call -d '{"cmd":"timer_start","args":{"subject_id":5,"mode":"countdown","planned_ms":60000,"task":"","display":"fullscreen"}}'
+swift scripts/windows.swift                                  # 看窗口的位置、大小和层级
+```
+
+- 开始后 `windows.swift` 只列出一个窗口，位置 0,0，大小等于主屏的逻辑分辨率（盖住菜单栏和程序坞），主窗口不在列表里。
 - 点“开始专注”后主窗口消失，全屏页盖住整个主屏，包括菜单栏和程序坞，没有新开一个桌面空间。
 - 结束页点“回到电脑”，全屏页关闭，主窗口回到开始页。
 - 计时中强制退出 app 再打开，开始页提示“上次有一段专注已记下：……”，点“知道了”提示消失。

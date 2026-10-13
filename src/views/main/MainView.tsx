@@ -3,12 +3,13 @@ import { play } from "../../shared/sfx";
 import { useApp } from "../../shared/state";
 import "./main.css";
 import { SettingsPage } from "./SettingsPage";
+import { StartPage } from "./StartPage";
 import { SubjectsPage } from "./SubjectsPage";
 
 export type PageName = "start" | "records" | "subjects" | "settings";
 
 const PAGES: { name: PageName; label: string; component: ComponentType }[] = [
-  { name: "start", label: "开始", component: () => <div className="page" /> },
+  { name: "start", label: "开始", component: StartPage },
   { name: "records", label: "记录", component: () => <div className="page" /> },
   { name: "subjects", label: "科目", component: SubjectsPage },
   { name: "settings", label: "设置", component: SettingsPage },

@@ -1,0 +1,103 @@
+.start-page {
+  padding: 44px 46px 32px;
+}
+
+.start-page .input {
+  max-width: 560px;
+}
+
+.hello h1 {
+  font-family: var(--font-wk);
+  font-weight: 400;
+  font-size: 28px;
+  letter-spacing: 0.04em;
+}
+
+.hello h1 b {
+  font-family: var(--font-num);
+  font-weight: 300;
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 18px;
+  padding: 11px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.notice .wk {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.notice .num {
+  color: var(--text);
+}
+
+.start-page .chip {
+  padding: 9px 14px;
+}
+
+.chips.tight {
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.chip.custom {
+  gap: 6px;
+  padding: 6px 14px;
+  cursor: text;
+}
+
+.chip.custom input {
+  width: 38px;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 6px;
+  outline: none;
+  text-align: center;
+  font-family: var(--font-num);
+  font-size: 16px;
+  color: var(--text);
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
+}
+
+.chip.custom small {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.countup-hint {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.field-error {
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--accent);
+}
+
+.go {
+  margin-top: 36px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.go .btn.primary {
+  padding: 15px 44px;
+  font-size: 16px;
+}
+
+.go .hint {
+  font-size: 13px;
+  color: var(--muted);
+}

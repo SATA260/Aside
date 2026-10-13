@@ -9,7 +9,7 @@ export const api = {
     resume: () => call<TimerView>("timer_resume"),
     finish: () => call<Outcome>("timer_finish"),
     close: (again: boolean) => call<TimerView>("timer_close", { again }),
-    dismissRecovered: () => call<null>("timer_dismiss_recovered"),
+    dismissRecovered: () => call<TimerView>("timer_dismiss_recovered"),
   },
   settings: {
     get: () => call<Settings>("settings_get"),

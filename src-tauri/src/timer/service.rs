@@ -182,8 +182,14 @@ impl Aside {
         Ok(view)
     }
 
-    pub fn timer_dismiss_recovered(&self) {
-        self.timer_state().recovered = None;
+    pub fn timer_dismiss_recovered(&self) -> TimerView {
+        let view = {
+            let mut st = self.timer_state();
+            st.recovered = None;
+            self.view_of(&st, self.clock.now_ms())
+        };
+        self.broadcast(&view);
+        view
     }
 
     /// 每秒调用一次：到点自动结束，按时写心跳，向所有窗口广播当前时间。

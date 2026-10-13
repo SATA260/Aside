@@ -200,6 +200,19 @@ fn recovery_notice_is_shown_once() {
 }
 
 #[test]
+fn dismissing_the_recovery_notice_tells_every_window() {
+    let r = rig();
+    start(&r.app, "数学", 90);
+    run_until(&r, T0 + 3 * MIN);
+    let app = reopen(&r);
+    let before = r.events.names().len();
+    app.timer_dismiss_recovered();
+    let names = r.events.names();
+    assert_eq!(&names[before..], ["timer:tick"], "应该广播一次新的计时状态");
+    assert!(r.events.last("timer:tick").unwrap()["recovered"].is_null());
+}
+
+#[test]
 fn starting_with_an_archived_or_unknown_subject_is_rejected() {
     let r = rig();
     let english = subject_id(&r.app, "英语");

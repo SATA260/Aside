@@ -1,0 +1,13 @@
+/* Manrope 和霞鹜文楷都是 SIL OFL 1.1 授权；文楷只打包常用字子集，见 scripts/subset-wenkai.py */
+@font-face {
+  font-family: "Manrope";
+  font-weight: 200 600;
+  font-display: block;
+  src: url("../../assets/fonts/manrope-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "LXGW WenKai Screen";
+  font-display: block;
+  src: url("../../assets/fonts/lxgw-wenkai-screen.woff2") format("woff2");
+}

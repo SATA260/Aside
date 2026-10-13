@@ -8,41 +8,63 @@
   --subject-math: #8db59a;
   --subject-major: #c7ae7f;
   --subject-other: #a3a9b4;
+
+  --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
 :root,
 [data-theme="night"] {
   --bg: #10151f;
   --bg2: #1e2638;
+  --surface: #1a2130;
   --text: #d7dee8;
   --muted: #7d889b;
   --accent: #9fb7d9;
   --line: rgba(215, 222, 232, 0.1);
+  color-scheme: dark;
 }
 
 [data-theme="bamboo"] {
   --bg: #121b17;
   --bg2: #1d2a24;
+  --surface: #18231e;
   --text: #d5e0d8;
   --muted: #7f9187;
   --accent: #8fb8a0;
   --line: rgba(213, 224, 216, 0.1);
+  color-scheme: dark;
 }
 
 [data-theme="mist"] {
   --bg: #e4e9ef;
   --bg2: #f1f0ec;
+  --surface: #f6f7f9;
   --text: #27303d;
   --muted: #7a8596;
   --accent: #5b7ba6;
   --line: rgba(39, 48, 61, 0.1);
+  color-scheme: light;
 }
 
 [data-theme="dusk"] {
   --bg: #e9e4ec;
   --bg2: #f3e9e3;
+  --surface: #f7f2f4;
   --text: #2f2a36;
   --muted: #857b8e;
   --accent: #8a6fa3;
   --line: rgba(47, 42, 54, 0.1);
+  color-scheme: light;
+}
+
+/* 晴灰：只在“跟随天色”的白天出现 */
+[data-theme="clear"] {
+  --bg: #e6e8eb;
+  --bg2: #f2f2f0;
+  --surface: #f7f7f6;
+  --text: #2a2f36;
+  --muted: #7b828c;
+  --accent: #6c7f96;
+  --line: rgba(42, 47, 54, 0.1);
+  color-scheme: light;
 }

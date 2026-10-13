@@ -118,3 +118,14 @@ swift /tmp/status.swift | sort -n
   - 专注中按 ⌥⌘M：全屏和浮窗来回切；没在专注时按，什么也不发生。
   - 在设置里录新快捷键时按 ⌥⌘S：不会开始专注（录制期间全局快捷键暂停了）。
 - macOS 注册快捷键时不独占，别的软件已经用了的组合一般也能注册上，两边都会响应，所以“被别的软件占用了”主要出现在 Windows：在 Windows 上把快捷键设成别的软件已占用的组合（比如某输入法的 `Ctrl+Alt+S`），应提示“这个组合被别的软件占用了，还在用原来的”。
+
+## 开机自启（M2）
+
+- 浏览器里：设置 → 启动 → 开机自启，默认关着；提示写“开机后只待在菜单栏里”（Windows 是“托盘”）。打开后刷新页面仍是开着。
+- 真机打开：`curl -X POST localhost:1431/call -d '{"cmd":"autostart_set","args":{"on":true}}'` 返回 `true`；`plutil -p ~/Library/LaunchAgents/Aside.plist` 里 `ProgramArguments` 是 aside 的路径加 `--autostart`，`RunAtLoad` 为真。
+- 模拟开机：退出 Aside，用后台进程运行 `ASIDE_DEV_BRIDGE=1 src-tauri/target/debug/aside --autostart`（不要放进一条会结束的 shell 命令里跑，命令结束时进程会被一起杀掉）。
+  - `swift /tmp/allwin.swift` 里主窗口 `onscreen nil`，没有弹出来；`swift /tmp/status.swift` 多了一个宽约 34 的菜单栏项。
+  - `lsappinfo list | grep "pid = <aside 的 pid>"` 显示 `type="UIElement"`：程序坞里没有图标。
+- 再运行一次 `src-tauri/target/debug/aside`：它立刻退出，原来那个的主窗口出现，`type` 变成 `"Foreground"`，程序坞出现图标。
+- 关掉：`autostart_set {"on":false}` 返回 `false`，`~/Library/LaunchAgents/Aside.plist` 被删掉。检查完一定要关，不然用户开机时会启动 debug 版。
+- Windows：打开后注册表 `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` 有一项 `Aside`，值是 exe 路径加 `--autostart`；重启后只有托盘图标，没有窗口。

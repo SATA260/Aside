@@ -1,4 +1,5 @@
-import type { CSSProperties } from "react";
+import { type CSSProperties, useEffect, useState } from "react";
+import { isMac } from "../../features/shortcuts/keys";
 import { ShortcutField } from "../../features/shortcuts/ShortcutField";
 import { api } from "../../shared/api";
 import { configureSfx, play } from "../../shared/sfx";
@@ -18,6 +19,10 @@ const THEMES: { value: ThemeName; label: string; swatch: string }[] = [
 
 export function SettingsPage() {
   const settings = useApp((s) => s.settings);
+  const [autostart, setAutostart] = useState<boolean | null>(null);
+  useEffect(() => {
+    void attempt(api.autostart.get()).then((on) => on !== undefined && setAutostart(on));
+  }, []);
   if (!settings) return <div className="page" />;
   const update = (patch: Partial<Settings>) => attempt(api.settings.update(patch));
 
@@ -103,6 +108,23 @@ export function SettingsPage() {
             <div className="hint">专注中才有用</div>
           </div>
           <ShortcutField action="display" label="全屏和浮窗切换" accel={settings.shortcut_display} />
+        </div>
+      </section>
+
+      <section className="settings-group">
+        <h3>启动</h3>
+        <div className="settings-row">
+          <div>
+            <div>开机自启</div>
+            <div className="hint">开机后只待在{isMac ? "菜单栏" : "托盘"}里，不弹出窗口</div>
+          </div>
+          {autostart !== null && (
+            <Switch
+              label="开机自启"
+              on={autostart}
+              onChange={(on) => void attempt(api.autostart.set(on)).then((now) => now !== undefined && setAutostart(now))}
+            />
+          )}
         </div>
       </section>
     </div>

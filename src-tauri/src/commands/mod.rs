@@ -66,6 +66,11 @@ struct Paused {
 }
 
 #[derive(Deserialize)]
+struct On {
+    on: bool,
+}
+
+#[derive(Deserialize)]
 struct ShortcutArg {
     action: String,
     accel: String,
@@ -98,6 +103,8 @@ pub fn dispatch(app: &Aside, cmd: &str, input: Value, _caller: &str) -> AppResul
             ok(app.shortcut_set(&a.action, &a.accel)?)
         }
         "shortcuts_pause" => ok(app.shortcuts_pause(args::<Paused>(input)?.paused)),
+        "autostart_get" => ok(app.autostart_enabled()),
+        "autostart_set" => ok(app.autostart_set(args::<On>(input)?.on)?),
 
         "subjects_list" => ok(app.subjects_list(args::<IncludeArchived>(input)?.include_archived)?),
         "subject_create" => {

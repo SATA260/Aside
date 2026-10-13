@@ -14,7 +14,7 @@ fn main() {
         .unwrap_or_else(|_| PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../.devdata"));
     let hub = Arc::new(Hub::default());
     let clock = Arc::new(OffsetClock::default());
-    let app = Aside::open(data_dir.clone(), clock.clone(), hub.clone(), Arc::new(DevShell { hub: hub.clone() }))
+    let app = Aside::open(data_dir.clone(), clock.clone(), hub.clone(), Arc::new(DevShell { hub: hub.clone(), autostart: Default::default() }))
         .expect("无法初始化 Aside");
     Aside::spawn_ticker(app.clone());
 

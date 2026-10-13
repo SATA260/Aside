@@ -6,6 +6,7 @@ use std::sync::Arc;
 
 use tauri::window::Color;
 use tauri::{AppHandle, Manager, Monitor, WebviewUrl, WebviewWindow, WebviewWindowBuilder};
+use tauri_plugin_autostart::ManagerExt;
 
 use crate::app::Aside;
 use crate::shell::Shell;
@@ -70,6 +71,16 @@ impl Shell for TauriShell {
 
     fn pause_shortcuts(&self, paused: bool) {
         self.hotkeys.pause(&self.app, paused);
+    }
+
+    fn autostart(&self) -> bool {
+        self.app.autolaunch().is_enabled().unwrap_or(false)
+    }
+
+    fn set_autostart(&self, on: bool) -> Result<(), String> {
+        let launcher = self.app.autolaunch();
+        let done = if on { launcher.enable() } else { launcher.disable() };
+        done.map_err(|e| e.to_string())
     }
 }
 

@@ -1,4 +1,5 @@
 pub mod app;
+pub mod autostart;
 pub mod clock;
 pub mod commands;
 #[cfg(feature = "devserver")]
@@ -51,6 +52,7 @@ pub fn run() {
             let _ = show_main(app);
         }))
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_autostart::Builder::new().app_name("Aside").args([autostart::ARG]).build())
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()
                 .with_handler(|app, shortcut, event| {
@@ -83,7 +85,13 @@ pub fn run() {
                 let bridge = aside.clone();
                 std::thread::spawn(move || devbridge::serve(bridge, "127.0.0.1:1431", None, None));
             }
-            show_main(&handle)?;
+            if autostart::launched_at_login(std::env::args()) {
+                // 开机自启时只待在托盘或菜单栏里，程序坞也不出现，打开主窗口时再出现
+                #[cfg(target_os = "macos")]
+                app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+            } else {
+                show_main(&handle)?;
+            }
             Ok(())
         })
         .on_window_event(|window, event| {

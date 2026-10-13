@@ -13,6 +13,8 @@ pub trait Shell: Send + Sync {
     fn bind_shortcut(&self, action: &str, accel: &str) -> Result<(), String>;
     /// 录新快捷键时先让已有的全局快捷键歇一下，不然按下旧组合会直接触发。
     fn pause_shortcuts(&self, paused: bool);
+    fn autostart(&self) -> bool;
+    fn set_autostart(&self, on: bool) -> Result<(), String>;
 }
 
 /// 只把调用记下来，测试用。
@@ -23,6 +25,8 @@ pub struct RecordingShell {
     bound: Mutex<HashMap<String, String>>,
     taken: Mutex<Vec<String>>,
     shortcuts_paused: Mutex<bool>,
+    autostart: Mutex<bool>,
+    autostart_refused: Mutex<bool>,
 }
 
 impl RecordingShell {
@@ -40,6 +44,15 @@ impl RecordingShell {
 
     pub fn shortcuts_paused(&self) -> bool {
         *self.shortcuts_paused.lock().unwrap()
+    }
+
+    pub fn autostart(&self) -> bool {
+        *self.autostart.lock().unwrap()
+    }
+
+    /// 模拟系统不让改登录项。
+    pub fn refuse_autostart(&self) {
+        *self.autostart_refused.lock().unwrap() = true;
     }
 
     /// 模拟别的软件已经占用了这个快捷键。
@@ -71,5 +84,17 @@ impl Shell for RecordingShell {
 
     fn pause_shortcuts(&self, paused: bool) {
         *self.shortcuts_paused.lock().unwrap() = paused;
+    }
+
+    fn autostart(&self) -> bool {
+        *self.autostart.lock().unwrap()
+    }
+
+    fn set_autostart(&self, on: bool) -> Result<(), String> {
+        if *self.autostart_refused.lock().unwrap() {
+            return Err("没有权限".into());
+        }
+        *self.autostart.lock().unwrap() = on;
+        Ok(())
     }
 }

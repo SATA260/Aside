@@ -18,6 +18,10 @@ export const api = {
     setShortcut: (action: ShortcutAction, accel: string) => call<Settings>("shortcut_set", { action, accel }),
     pauseShortcuts: (paused: boolean) => call<null>("shortcuts_pause", { paused }),
   },
+  autostart: {
+    get: () => call<boolean>("autostart_get"),
+    set: (on: boolean) => call<boolean>("autostart_set", { on }),
+  },
   subjects: {
     list: (includeArchived = false) => call<Subject[]>("subjects_list", { include_archived: includeArchived }),
     create: (name: string, color: string) => call<Subject>("subject_create", { name, color }),

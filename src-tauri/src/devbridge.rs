@@ -8,6 +8,7 @@
 //! - `POST /dev/advance` `{ms}` 让时钟快进（只有浏览器开发时有）
 
 use std::collections::VecDeque;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Condvar, Mutex};
 use std::time::Duration;
 
@@ -65,6 +66,7 @@ impl EventSink for Hub {
 /// 浏览器里只有一个标签页，打开某个界面就让页面跳到对应的 `?view=`。
 pub struct DevShell {
     pub hub: Arc<Hub>,
+    pub autostart: AtomicBool,
 }
 
 impl Shell for DevShell {
@@ -87,6 +89,16 @@ impl Shell for DevShell {
 
     fn pause_shortcuts(&self, paused: bool) {
         self.hub.emit("dev:shortcuts-paused", json!({ "paused": paused }));
+    }
+
+    fn autostart(&self) -> bool {
+        self.autostart.load(Ordering::Relaxed)
+    }
+
+    fn set_autostart(&self, on: bool) -> Result<(), String> {
+        self.autostart.store(on, Ordering::Relaxed);
+        self.hub.emit("dev:autostart", json!({ "on": on }));
+        Ok(())
     }
 }
 

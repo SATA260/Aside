@@ -24,6 +24,13 @@ export default defineConfig(() => ({
           port: 1421,
         }
       : undefined,
+    // 浏览器调试时转发到开发桥（src-tauri/src/bin/devserver.rs）
+    proxy: {
+      "/__dev": {
+        target: "http://127.0.0.1:1430",
+        rewrite: (path: string) => path.replace(/^\/__dev/, ""),
+      },
+    },
     watch: {
       // 3. tell Vite to ignore watching `src-tauri`
       ignored: ["**/src-tauri/**"],

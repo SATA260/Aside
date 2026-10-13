@@ -23,6 +23,7 @@ use tauri::{AppHandle, Emitter, Manager};
 use crate::app::Aside;
 use crate::clock::SystemClock;
 use crate::events::EventSink;
+use crate::system::power::Power;
 use crate::windows::TauriShell;
 
 struct TauriEvents {
@@ -46,7 +47,7 @@ pub fn run() {
                 data_dir,
                 Arc::new(SystemClock),
                 Arc::new(TauriEvents { app: handle.clone() }),
-                Arc::new(TauriShell { app: handle.clone() }),
+                Arc::new(TauriShell { app: handle.clone(), power: Power::spawn() }),
             )?;
             Aside::spawn_ticker(aside.clone());
             #[cfg(all(debug_assertions, feature = "devserver"))]

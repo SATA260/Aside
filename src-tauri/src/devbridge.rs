@@ -75,6 +75,10 @@ impl Shell for DevShell {
     fn close_view(&self, view: &str) {
         self.hub.emit("dev:close", json!({ "view": view }));
     }
+
+    fn keep_awake(&self, on: bool) {
+        self.hub.emit("dev:awake", json!({ "on": on }));
+    }
 }
 
 fn json_response(value: Value) -> Response<std::io::Cursor<Vec<u8>>> {

@@ -124,6 +124,7 @@ impl Aside {
             }
         })?;
         self.broadcast(&view);
+        self.shell.keep_awake(true);
         self.shell.open_view(view_name(plan.display));
         self.shell.close_view("main");
         Ok(view)
@@ -251,6 +252,7 @@ impl Aside {
     }
 
     fn after_finish(&self, outcome: &Outcome, view: &TimerView) {
+        self.shell.keep_awake(false);
         self.broadcast(view);
         if let Ok(payload) = serde_json::to_value(outcome) {
             self.events.emit(TIMER_FINISHED, payload);

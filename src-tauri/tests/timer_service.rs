@@ -238,6 +238,28 @@ fn starting_fullscreen_hides_main_and_opens_the_overlay() {
 }
 
 #[test]
+fn computer_stays_awake_through_pauses_until_the_session_ends() {
+    let r = rig();
+    assert!(!r.shell.awake());
+    start(&r.app, "数学", 45);
+    assert!(r.shell.awake());
+    r.clock.set(T0 + 5 * MIN);
+    r.app.timer_pause().unwrap();
+    assert!(r.shell.awake());
+    r.app.timer_finish().unwrap();
+    assert!(!r.shell.awake());
+}
+
+#[test]
+fn computer_may_sleep_again_after_an_automatic_finish() {
+    let r = rig();
+    start(&r.app, "数学", 1);
+    run_until(&r, T0 + MIN + 2_000);
+    assert_eq!(r.app.timer_view().snapshot.phase, Phase::Finished);
+    assert!(!r.shell.awake());
+}
+
+#[test]
 fn closing_the_end_page_returns_to_the_main_window() {
     let r = rig();
     start(&r.app, "数学", 45);

@@ -75,3 +75,27 @@ swift scripts/windows.swift
 - 胶囊四周透明，看不到方形的窗口底色。
 - 没点过 Aside、别的 app 在前台时，鼠标移到胶囊上按钮照样出现，第一次点按钮就生效。
 - 拖动胶囊换个位置，展开到全屏再缩回浮窗：出现在刚才拖到的位置；拔掉那块屏幕后回到主屏右上角。
+
+## 托盘和菜单栏（M2）
+
+macOS 26 的菜单栏图标归“控制中心”所有，看不到是谁的，只能比较宽度：
+
+```bash
+cat > /tmp/status.swift <<'EOF'
+import CoreGraphics
+let list = CGWindowListCopyWindowInfo([.optionAll], kCGNullWindowID) as? [[String: Any]] ?? []
+for w in list where (w[kCGWindowLayer as String] as? Int ?? 0) == 25 {
+  let b = w[kCGWindowBounds as String] as? [String: Double] ?? [:]
+  print(Int(b["X"] ?? 0), Int(b["Width"] ?? 0))
+}
+EOF
+swift /tmp/status.swift | sort -n
+```
+
+- 没在专注时，Aside 的图标宽约 34（只有一个圈）；专注中变宽到约 77，多出来的是“44:12”这样的剩余时间。退出后这一项消失。
+- 再运行一次 `src-tauri/target/debug/aside`：第二个进程立刻退出，`pgrep -f target/debug/aside` 仍只有一个，主窗口出现在前面。
+- 点菜单栏图标：菜单是“开始专注 / 显示主窗口 / 退出 Aside”；专注中第一项变成“结束这一段”。
+- 用“开始专注”开始时，沿用上一段的科目、方式、时长和显示方式，任务为空。
+- 点主窗口的关闭按钮：窗口消失，app 没退出，菜单栏图标还在；点程序坞图标主窗口回来。
+- 专注中点“退出 Aside”：下次打开没有“上次有一段专注已记下”的提示，记录里已经有这一段。
+- Windows：托盘图标在专注时变成一圈进度，暂停时变灰，悬停提示“数学 · 还剩 32:48”；左键点图标打开主窗口，右键出菜单。

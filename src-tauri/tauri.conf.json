@@ -19,6 +19,7 @@
         "height": 680,
         "minWidth": 880,
         "minHeight": 600,
+        "center": true,
         "visible": false,
         "titleBarStyle": "Overlay",
         "hiddenTitle": true

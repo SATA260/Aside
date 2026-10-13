@@ -328,6 +328,90 @@ fn floating_window_position_is_remembered() {
     assert_eq!((pos.x, pos.y), (1180.0, 64.5));
 }
 
+fn start_mock_in_mini(app: &Aside, subject: &str) {
+    app.timer_start(StartArgs {
+        subject_id: subject_id(app, subject),
+        mode: Mode::Mock,
+        planned_ms: Some(150 * MIN),
+        task: "2023 真题".into(),
+        display: Display::Mini,
+    })
+    .unwrap();
+}
+
+#[test]
+fn quick_start_reuses_the_last_subject_mode_length_and_display() {
+    let r = rig();
+    start_mock_in_mini(&r.app, "数学");
+    r.clock.set(T0 + 5 * MIN);
+    r.app.timer_finish().unwrap();
+    r.app.timer_close(false).unwrap();
+
+    let view = r.app.timer_quick_start().unwrap();
+    let plan = view.snapshot.plan.unwrap();
+    assert_eq!(plan.subject_id, subject_id(&r.app, "数学"));
+    assert_eq!((plan.mode, plan.planned_ms, plan.display), (Mode::Mock, Some(150 * MIN), Display::Mini));
+    assert_eq!(plan.task, "");
+    assert_eq!(view.snapshot.phase, Phase::Running);
+}
+
+#[test]
+fn quick_start_uses_other_before_any_session_or_after_archiving() {
+    let r = rig();
+    let first = r.app.timer_quick_start().unwrap().snapshot.plan.unwrap();
+    assert_eq!(first.subject_id, subject_id(&r.app, "其他"));
+    assert_eq!((first.mode, first.planned_ms), (Mode::Countdown, Some(45 * MIN)));
+    r.app.timer_finish().unwrap();
+
+    start(&r.app, "英语", 45);
+    r.app.timer_finish().unwrap();
+    r.app.subject_archive(subject_id(&r.app, "英语")).unwrap();
+    let after = r.app.timer_quick_start().unwrap().snapshot.plan.unwrap();
+    assert_eq!(after.subject_id, subject_id(&r.app, "其他"));
+}
+
+#[test]
+fn toggle_ends_a_session_in_progress_and_starts_one_otherwise() {
+    let r = rig();
+    assert_eq!(r.app.timer_toggle().unwrap().snapshot.phase, Phase::Running);
+    r.clock.set(T0 + 5 * MIN);
+    let ended = r.app.timer_toggle().unwrap();
+    assert_eq!(ended.snapshot.phase, Phase::Finished);
+    assert_eq!(ended.last.unwrap().focused_ms, 5 * MIN);
+    assert_eq!(session_count(&r.app), 1);
+}
+
+#[test]
+fn starting_again_from_the_end_page_in_another_display_closes_it() {
+    let r = rig();
+    start(&r.app, "数学", 45);
+    r.clock.set(T0 + 5 * MIN);
+    r.app.timer_finish().unwrap();
+    start_mock_in_mini(&r.app, "数学");
+    assert_eq!(r.shell.calls()[2..], ["open:mini", "close:main", "close:overlay"]);
+}
+
+#[test]
+fn quitting_records_a_session_in_progress_without_opening_windows() {
+    let r = rig();
+    start(&r.app, "数学", 45);
+    r.clock.set(T0 + 20 * MIN);
+    r.app.shutdown();
+    assert_eq!(session_count(&r.app), 1);
+    assert!(!has_active_row(&r.app));
+    assert!(!r.shell.awake());
+    assert_eq!(r.shell.calls(), ["open:overlay", "close:main"]);
+    assert!(reopen(&r).timer_view().recovered.is_none());
+}
+
+#[test]
+fn quitting_while_idle_changes_nothing() {
+    let r = rig();
+    r.app.shutdown();
+    assert_eq!(session_count(&r.app), 0);
+    assert!(r.shell.calls().is_empty());
+}
+
 #[test]
 fn closing_the_end_page_returns_to_the_main_window() {
     let r = rig();

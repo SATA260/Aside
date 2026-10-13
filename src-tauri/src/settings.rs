@@ -42,6 +42,8 @@ pub struct Settings {
     pub last_countdown_ms: i64,
     pub last_mock_ms: i64,
     pub last_display: Display,
+    /// 上一段的科目，快捷键和托盘开始时沿用
+    pub last_subject_id: Option<i64>,
     /// 浮窗上次关掉时的位置，没拖过时为空
     pub mini_pos: Option<Point>,
 }
@@ -57,6 +59,7 @@ impl Default for Settings {
             last_countdown_ms: 45 * MINUTE_MS,
             last_mock_ms: 180 * MINUTE_MS,
             last_display: Display::Fullscreen,
+            last_subject_id: None,
             mini_pos: None,
         }
     }

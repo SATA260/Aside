@@ -12,7 +12,7 @@ use crate::events::{TIMER_FINISHED, TIMER_TICK};
 use crate::stats;
 use crate::store::subjects::{self, Subject};
 use crate::store::sessions;
-use crate::timer::{Display, EndReason, Finished, MINUTE_MS, Mode, Plan, Snapshot, Timer, TimerError};
+use crate::timer::{Display, EndReason, Finished, MINUTE_MS, Mode, Phase, Plan, Snapshot, Timer, TimerError};
 
 const HEARTBEAT_MS: i64 = 30_000;
 
@@ -102,8 +102,9 @@ impl Aside {
             display: args.display,
         };
         let now = self.clock.now_ms();
-        let view = {
+        let (view, end_page_open) = {
             let mut st = self.timer_state();
+            let end_page_open = st.timer.phase() == Phase::Finished;
             let mut timer = st.timer.clone();
             timer.start(plan.clone(), now)?;
             self.store.write(|c| sessions::save_active(c, &timer, now))?;
@@ -112,9 +113,10 @@ impl Aside {
             st.last = None;
             st.again = false;
             st.heartbeat_at = now;
-            self.view_of(&st, now)
+            (self.view_of(&st, now), end_page_open)
         };
         self.edit_settings(|s| {
+            s.last_subject_id = Some(plan.subject_id);
             s.last_mode = plan.mode;
             s.last_display = plan.display;
             match (plan.mode, plan.planned_ms) {
@@ -127,7 +129,57 @@ impl Aside {
         self.shell.keep_awake(true);
         self.shell.open_view(view_name(plan.display));
         self.shell.close_view("main");
+        if end_page_open && view_name(plan.display) != "overlay" {
+            self.shell.close_view("overlay");
+        }
         Ok(view)
+    }
+
+    /// 快捷键和托盘用：不打开开始页，直接沿用上一次的科目、方式、时长和显示方式。
+    /// 上一次的科目已经归档或从没开始过时用“其他”。
+    pub fn timer_quick_start(&self) -> AppResult<TimerView> {
+        let s = self.settings();
+        let active = self.store.read(|c| subjects::list(c, false))?;
+        let subject = active
+            .iter()
+            .find(|x| Some(x.id) == s.last_subject_id)
+            .or_else(|| active.iter().find(|x| x.is_fallback))
+            .ok_or_else(|| crate::error::AppError::Invalid("没有可用的科目".into()))?;
+        let planned_ms = match s.last_mode {
+            Mode::Countdown => Some(s.last_countdown_ms),
+            Mode::Mock => Some(s.last_mock_ms),
+            Mode::Countup => None,
+        };
+        self.timer_start(StartArgs {
+            subject_id: subject.id,
+            mode: s.last_mode,
+            planned_ms,
+            task: String::new(),
+            display: s.last_display,
+        })
+    }
+
+    /// 开始或结束：正在专注就结束这一段，否则按上一次的选择开始。
+    pub fn timer_toggle(&self) -> AppResult<TimerView> {
+        if self.timer_state().timer.is_active() {
+            self.timer_finish()?;
+            Ok(self.timer_view())
+        } else {
+            self.timer_quick_start()
+        }
+    }
+
+    /// 退出 app 时调用：进行中的这一段按现在结束并记下，不再打开任何窗口。
+    pub fn shutdown(&self) {
+        let now = self.clock.now_ms();
+        let mut st = self.timer_state();
+        if !st.timer.is_active() {
+            return;
+        }
+        match st.timer.finish(now).map_err(Into::into).and_then(|done| self.complete(&mut st, done)) {
+            Ok(_) => self.shell.keep_awake(false),
+            Err(e) => eprintln!("退出时记下这一段失败：{e}"),
+        }
     }
 
     pub fn timer_pause(&self) -> AppResult<TimerView> {

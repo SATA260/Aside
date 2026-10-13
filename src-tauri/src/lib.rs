@@ -6,7 +6,7 @@ pub mod events;
 mod lecture;
 mod media;
 pub mod shell;
-mod store;
+pub mod store;
 mod system;
 pub mod timer;
 mod windows;

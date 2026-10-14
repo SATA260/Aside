@@ -108,6 +108,17 @@ fn the_chime_grows_louder_and_the_alarm_rings_three_times() {
 }
 
 #[test]
+fn the_quack_is_two_short_calls() {
+    let tone = aside_lib::audio::quack();
+    let rms = |slice: &[f32]| (slice.iter().map(|s| s * s).sum::<f32>() / slice.len() as f32).sqrt();
+    let first = rms(&tone[..(SAMPLE_RATE as f32 * 0.12) as usize]);
+    let gap = rms(&tone[(SAMPLE_RATE as f32 * 0.18) as usize..(SAMPLE_RATE as f32 * 0.22) as usize]);
+    let second = rms(&tone[(SAMPLE_RATE as f32 * 0.28) as usize..(SAMPLE_RATE as f32 * 0.38) as usize]);
+    assert!(first > gap * 3.0, "{first} should be louder than the gap {gap}");
+    assert!(second > gap * 3.0, "{second} should be louder than the gap {gap}");
+    assert!(aside_lib::settings::Settings::default().quack == false);
+}
+
 fn opening_the_player_works_even_without_a_sound_device() {
     let player = aside_lib::audio::Player::open();
     player.set_volume(0.4);

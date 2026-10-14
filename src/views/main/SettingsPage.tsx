@@ -212,6 +212,13 @@ export function SettingsPage() {
               </button>
             </div>
           </div>
+          <div className="settings-row">
+            <div>
+              <div>时间到叫一声</div>
+              <div className="hint">默认关闭。打开后，到点时形象会先叫一声，再响铃声</div>
+            </div>
+            <Switch label="时间到叫一声" on={!!settings.quack} onChange={(quack) => void update({ quack })} />
+          </div>
         </section>
 
         <section className="settings-group">

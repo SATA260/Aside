@@ -83,6 +83,9 @@ export const api = {
     list: () => call<CharacterInfo[]>("characters_list"),
     import: (path: string) => call<CharacterInfo>("character_import", { url: path }),
   },
+  mini: {
+    hits: (rects: { x: number; y: number; w: number; h: number }[]) => call<null>("mini_hits", { rects }),
+  },
   lecture: {
     bookmarks: () => call<Bookmark[]>("lecture_bookmarks"),
     go: (url: string) => call<string>("lecture_go", { url }),

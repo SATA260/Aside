@@ -1,6 +1,8 @@
 //! 窗口摆在哪里的纯计算，不碰 Tauri，方便单测。坐标都是逻辑像素。
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub struct Rect {
     pub x: f64,
     pub y: f64,
@@ -32,6 +34,11 @@ pub fn overlay_spots(screens: &[Rect], primary: Option<Rect>) -> Vec<OverlaySpot
 /// 浮窗窗口的逻辑大小：胶囊 248×56，四周留出阴影的位置。
 pub const MINI_W: f64 = 280.0;
 pub const MINI_H: f64 = 88.0;
+
+/// 胶囊是一条小横条。带形象时窗口要装下企鹅和气泡。
+pub fn mini_size(character: &str) -> (f64, f64) {
+    if character == "capsule" { (MINI_W, MINI_H) } else { (220.0, 320.0) }
+}
 const MINI_RIGHT: f64 = 24.0;
 const MINI_TOP: f64 = 56.0;
 
@@ -86,6 +93,13 @@ mod tests {
         assert!(capture_click((20.0, 20.0), &[pill]));
         assert!(!capture_click((2.0, 2.0), &[pill]));
         assert!(!capture_click((300.0, 40.0), &[pill]));
+        assert!(!capture_click((40.0, 40.0), &[]));
+    }
+
+    #[test]
+    fn a_character_window_is_taller_than_the_capsule() {
+        assert_eq!(mini_size("capsule"), (MINI_W, MINI_H));
+        assert_eq!(mini_size("gaga").1, 320.0);
     }
 
     #[test]

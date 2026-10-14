@@ -35,6 +35,8 @@ pub struct Aside {
     ambient_id: Mutex<String>,
     /// 网课窗口正在“只看视频”
     video_only: std::sync::atomic::AtomicBool,
+    /// 浮窗里形象、气泡和按钮的位置。空着时整窗都能点，避免页面还没报上来就穿透。
+    mini_hits: Mutex<Vec<crate::windows::layout::Rect>>,
 }
 
 enum AmbientCmd {
@@ -113,6 +115,7 @@ impl Aside {
             ambient_tx: Mutex::new(None),
             ambient_id: Mutex::new(String::new()),
             video_only: std::sync::atomic::AtomicBool::new(false),
+            mini_hits: Mutex::new(Vec::new()),
         };
         app.sync_ambient(&settings);
         app.recover_timer()?;
@@ -157,13 +160,19 @@ impl Aside {
     }
 
     fn save_settings(&self, next: Settings) -> AppResult<Settings> {
-        let was_linked = self.settings().video_pause;
+        let previous = self.settings();
+        let was_linked = previous.video_pause;
+        let character_changed = previous.character != next.character;
         self.store.write(|c| store::settings::put(c, SETTINGS_KEY, &next))?;
         *self.settings.write().unwrap_or_else(|e| e.into_inner()) = next.clone();
         self.events.emit(SETTINGS_CHANGED, serde_json::to_value(&next)?);
         self.sync_ambient(&next);
         if next.video_pause && !was_linked {
             self.shell.eval_course(crate::lecture::PAUSE_SCRIPT);
+        }
+        if character_changed {
+            let (width, height) = crate::windows::mini_size(&next.character);
+            self.shell.resize_mini(width, height);
         }
         Ok(next)
     }
@@ -198,6 +207,17 @@ impl Aside {
 
     pub fn ring(&self) {
         self.send_ambient(AmbientCmd::Once(audio::alarm()));
+    }
+
+    /// 倒计时到点：先按设置决定要不要叫一声，再接上渐强的铃声。
+    pub fn celebrate(&self) {
+        if self.settings().quack {
+            let mut voice = audio::quack();
+            voice.extend(audio::alarm());
+            self.send_ambient(AmbientCmd::Once(voice));
+        } else {
+            self.ring();
+        }
     }
 
     pub fn silence_alarm(&self) {
@@ -277,6 +297,14 @@ impl Aside {
     pub fn picture_file(&self, id: i64) -> AppResult<PathBuf> {
         let row = self.store.read(|c| store::media::picture_file(c, id))?;
         Ok(self.data_dir.join(row.file))
+    }
+
+    pub fn set_mini_hits(&self, hits: Vec<crate::windows::layout::Rect>) {
+        *self.mini_hits.lock().unwrap_or_else(|e| e.into_inner()) = hits;
+    }
+
+    pub fn mini_hits(&self) -> Vec<crate::windows::layout::Rect> {
+        self.mini_hits.lock().unwrap_or_else(|e| e.into_inner()).clone()
     }
 
     pub fn characters(&self) -> Vec<crate::character::Character> {

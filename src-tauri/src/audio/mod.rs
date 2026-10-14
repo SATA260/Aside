@@ -150,6 +150,23 @@ pub fn chime() -> Vec<f32> {
         .collect()
 }
 
+/// 时间到时可选的一声“嘎嘎”：两下短促的叫声，默认不播。
+pub fn quack() -> Vec<f32> {
+    let mut out = Vec::new();
+    for (freq, gain) in [(380.0_f32, 0.35), (540.0, 0.55)] {
+        let count = (SAMPLE_RATE as f32 * 0.16) as usize;
+        let step = freq / SAMPLE_RATE as f32 * std::f32::consts::TAU;
+        let mut phase = 0.0f32;
+        for i in 0..count {
+            let env = (i as f32 / count as f32 * std::f32::consts::PI).sin();
+            out.push((phase.sin() * env * gain).clamp(-1.0, 1.0));
+            phase = (phase + step) % std::f32::consts::TAU;
+        }
+        out.extend(std::iter::repeat(0.0).take(SAMPLE_RATE as usize / 12));
+    }
+    out
+}
+
 /// 同一声连响三次，一次比一次响。
 pub fn alarm() -> Vec<f32> {
     let tone = chime();

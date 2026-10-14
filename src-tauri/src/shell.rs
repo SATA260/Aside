@@ -21,6 +21,8 @@ pub trait Shell: Send + Sync {
     fn open_course(&self, url: &str);
     /// 往课程网页里注入一段脚本。没有课程网页时什么都不做。
     fn eval_course(&self, script: &str);
+    /// 浮窗换成胶囊或形象时，窗口大小跟着变。
+    fn resize_mini(&self, width: f64, height: f64);
 }
 
 /// 只把调用记下来，测试用。
@@ -125,5 +127,9 @@ impl Shell for RecordingShell {
 
     fn eval_course(&self, script: &str) {
         self.calls.lock().unwrap().push(format!("eval:{script}"));
+    }
+
+    fn resize_mini(&self, width: f64, height: f64) {
+        self.calls.lock().unwrap().push(format!("resize:{width}x{height}"));
     }
 }

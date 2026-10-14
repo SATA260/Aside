@@ -89,6 +89,13 @@ export interface Settings {
   video_pause: boolean;
   /** 浮窗样式：gaga、capsule，或导入形象的 id */
   character: string;
+  /** 时间到时形象叫一声。默认关闭 */
+  quack: boolean;
+}
+
+export interface CharacterClip {
+  frames: number;
+  ms: number;
 }
 
 export interface CharacterInfo {
@@ -96,6 +103,7 @@ export interface CharacterInfo {
   name: string;
   builtin: boolean;
   dir: string;
+  clips: Record<string, CharacterClip>;
 }
 
 export type ShortcutAction = "toggle" | "display";

@@ -112,7 +112,15 @@ export function LecturePanel() {
               <i style={{ width: `${line.p * 100}%` }} />
             </div>
             <p className="today">今天 {durationText(timer.today_ms)}</p>
-            {pack.show && <Penguin pose={pose(timer.phase, timer.remaining_ms, reduce)} size={120} pack={pack.id} dir={pack.dir} />}
+            {pack.show && (
+              <Penguin
+                pose={pose(timer.phase, timer.remaining_ms, reduce)}
+                size={120}
+                pack={pack.id}
+                dir={pack.dir}
+                clip={pack.clips?.[pose(timer.phase, timer.remaining_ms, reduce)]}
+              />
+            )}
             <div className="lecture-actions">
               <button type="button" onClick={() => void togglePause()}>
                 {paused ? "继续" : "暂停"}

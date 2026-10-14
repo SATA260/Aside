@@ -354,6 +354,22 @@ html[data-view="overlay"] body {
   }
 }
 
+.end-pet {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.bubble {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: #f4ecdc;
+  color: #1c2430;
+  font-family: var(--font-wk);
+  font-size: 16px;
+}
+
 .end-title {
   font-size: calc(46 * var(--u));
   letter-spacing: 0.06em;

@@ -356,7 +356,7 @@ impl Aside {
             self.data_changed();
         }
         if outcome.reason == crate::timer::EndReason::Completed {
-            self.ring();
+            self.celebrate();
         }
         if outcome.plan.display != Display::Fullscreen {
             self.shell.open_view("overlay");

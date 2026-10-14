@@ -1,6 +1,8 @@
 //! 窗口管理：每个显示器一个全屏计时窗口、浮窗、网课窗口，以及它们之间的切换。
 
-mod layout;
+pub(crate) mod layout;
+
+pub(crate) use layout::mini_size;
 
 use std::sync::Arc;
 
@@ -104,6 +106,12 @@ impl Shell for TauriShell {
     fn open_course(&self, url: &str) {
         if let Some(window) = self.app.get_window("lecture") {
             let _ = crate::windows::show_course(&window, url);
+        }
+    }
+
+    fn resize_mini(&self, width: f64, height: f64) {
+        if let Some(window) = self.app.get_webview_window("mini") {
+            let _ = window.set_size(tauri::LogicalSize::new(width, height));
         }
     }
 
@@ -217,19 +225,28 @@ fn open_overlay(app: &AppHandle) -> tauri::Result<()> {
 /// 置顶的透明小窗，胶囊画在网页里。出现在上次拖到的位置。
 fn open_mini(app: &AppHandle) -> tauri::Result<()> {
     if let Some(w) = app.get_webview_window("mini") {
+        let (mini_w, mini_h) = app
+            .try_state::<Arc<Aside>>()
+            .map(|aside| mini_size(&aside.settings().character))
+            .unwrap_or((MINI_W, MINI_H));
+        let _ = w.set_size(tauri::LogicalSize::new(mini_w, mini_h));
         return w.show();
     }
     let (all, primary) = screens(app)?;
     let scale = native_scale(app);
+    let (mini_w, mini_h) = app
+        .try_state::<Arc<Aside>>()
+        .map(|aside| mini_size(&aside.settings().character))
+        .unwrap_or((MINI_W, MINI_H));
     let saved = app.try_state::<Arc<Aside>>().and_then(|a| a.settings().mini_pos).map(|p| (p.x, p.y));
-    let (x, y) = mini_spot(saved, (MINI_W * scale, MINI_H * scale), &all, primary);
+    let (x, y) = mini_spot(saved, (mini_w * scale, mini_h * scale), &all, primary);
     // macOS 只让没有程序坞图标的 app 把窗口放进别的 app 的全屏空间，而且窗口要在切换之后才创建。
     // 主窗口再出现时恢复程序坞图标，见 `show_main`。
     #[cfg(target_os = "macos")]
     app.set_activation_policy(tauri::ActivationPolicy::Accessory)?;
     let w = WebviewWindowBuilder::new(app, "mini", WebviewUrl::App("index.html?view=mini".into()))
         .title("Aside")
-        .inner_size(MINI_W, MINI_H)
+        .inner_size(mini_w, mini_h)
         .decorations(false)
         .transparent(true)
         .shadow(false)
@@ -248,18 +265,29 @@ fn open_mini(app: &AppHandle) -> tauri::Result<()> {
     w.show()
 }
 
-/// 鼠标不在胶囊上时，让点击穿透到下面的窗口。
+/// 鼠标不在形象、气泡或按钮上时，让点击穿透到下面的窗口。
 fn watch_click_through(window: WebviewWindow) {
     std::thread::spawn(move || {
         let mut ignoring = false;
-        let pill = layout::Rect { x: 16.0, y: 16.0, w: 248.0, h: 56.0 };
         loop {
-            let (Ok(cursor), Ok(origin), Ok(scale)) = (window.cursor_position(), window.outer_position(), window.scale_factor()) else {
+            let (Ok(cursor), Ok(origin), Ok(scale), Ok(inner)) =
+                (window.cursor_position(), window.outer_position(), window.scale_factor(), window.inner_size())
+            else {
                 break;
             };
             let x = (cursor.x - origin.x as f64) / scale;
             let y = (cursor.y - origin.y as f64) / scale;
-            let capture = layout::capture_click((x, y), &[pill]);
+            let width = inner.width as f64 / scale;
+            let height = inner.height as f64 / scale;
+            let inside = x >= 0.0 && y >= 0.0 && x < width && y < height;
+            let hits = window.app_handle().try_state::<Arc<Aside>>().map(|aside| aside.mini_hits()).unwrap_or_default();
+            let capture = if !inside {
+                false
+            } else if hits.is_empty() {
+                true
+            } else {
+                layout::capture_click((x, y), &hits)
+            };
             if capture == ignoring {
                 if window.set_ignore_cursor_events(!capture).is_err() {
                     break;

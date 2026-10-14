@@ -44,10 +44,25 @@ export function MiniView() {
     return () => window.removeEventListener("keydown", onKey);
   });
 
+  useEffect(() => {
+    const send = () => {
+      const rects = [...document.querySelectorAll("[data-hit]")].map((node) => {
+        const box = node.getBoundingClientRect();
+        return { x: box.x, y: box.y, w: box.width, h: box.height };
+      });
+      void api.mini.hits(rects);
+    };
+    send();
+    const id = window.setInterval(send, 400);
+    return () => window.clearInterval(id);
+  }, [pack.show, atmo, confirmEnd]);
+
   if (!timer || !settings || (timer.phase !== "running" && timer.phase !== "paused")) return null;
 
   const big = bigTime(timer, settings.time_display);
   const name = timer.plan?.mode === "mock" ? "模考" : timer.subject?.name;
+  const look = pose(timer.phase, timer.remaining_ms, reduce);
+  const clip = pack.clips?.[look];
 
   const end = () => {
     if (!confirmEnd) {
@@ -58,15 +73,68 @@ export function MiniView() {
     void attempt(api.timer.finish());
   };
 
+  if (pack.show) {
+    return (
+      <div className="mini pet">
+        <div className="pet-stack">
+          <div data-hit>
+            <Penguin pose={look} size={180} pack={pack.id} dir={pack.dir} clip={clip} />
+          </div>
+          <div className="pet-controls" data-hit>
+            <span className="t num">{confirmEnd ? "再点一次结束" : clock(big.ms, big.round)}</span>
+            <IconButton title={paused ? "继续" : "暂停"} onClick={() => void togglePause()}>
+              {paused ? <path d="M5 3.5v9l7.5-4.5z" /> : <path d="M5 3.5h2v9H5zM9 3.5h2v9H9z" />}
+            </IconButton>
+            <IconButton title="氛围" className={atmo ? "on" : ""} onClick={() => setAtmo((v) => !v)}>
+              <circle cx="8" cy="8" r="3.2" fill="none" stroke="currentColor" strokeWidth="1.4" />
+            </IconButton>
+            <IconButton title="结束" className={confirmEnd ? "end on" : "end"} onClick={end}>
+              <rect x="4" y="4" width="8" height="8" rx="1.5" />
+            </IconButton>
+          </div>
+          {atmo && (
+            <div className="mini-atmo wk" data-hit>
+              <SoundChoices ambient={settings.ambient} onPick={(ambient) => void attempt(api.settings.update({ ambient }))} />
+              {pack.rows.map((item) => (
+                <button
+                  type="button"
+                  key={item.id}
+                  className={pack.id === item.id ? "on" : ""}
+                  onClick={() => void attempt(api.settings.update({ character: item.id }))}
+                >
+                  {item.name}
+                </button>
+              ))}
+              <button type="button" className={pack.id === "capsule" ? "on" : ""} onClick={() => void attempt(api.settings.update({ character: "capsule" }))}>
+                胶囊
+              </button>
+              {(["night", "bamboo", "mist", "dusk", "sky"] as ThemeName[]).map((theme) => (
+                <button
+                  type="button"
+                  key={theme}
+                  className={settings.theme === theme ? "on" : ""}
+                  onClick={() => void attempt(api.settings.update({ theme }))}
+                >
+                  {theme === "night" ? "夜读" : theme === "bamboo" ? "竹影" : theme === "mist" ? "晨雾" : theme === "dusk" ? "暮色" : "天色"}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mini">
       <div
         className={`pill${paused ? " paused" : ""}${confirmEnd ? " confirming" : ""}`}
         style={{ "--p": horizon(timer).p } as CSSProperties}
         data-tauri-drag-region
+        data-hit
       >
         <Dot color={timer.subject?.color} />
-        {pack.show && <Penguin pose={pose(timer.phase, timer.remaining_ms, reduce)} size={40} pack={pack.id} dir={pack.dir} />}
+        {pack.show && <Penguin pose={look} size={40} pack={pack.id} dir={pack.dir} clip={clip} />}
         <span className="name wk" data-tauri-drag-region>
           {name}
         </span>
@@ -96,11 +164,28 @@ export function MiniView() {
         <i className="p" data-tauri-drag-region />
       </div>
       {atmo && (
-        <div className="mini-atmo wk">
+        <div className="mini-atmo wk" data-hit>
           <SoundChoices
             ambient={settings.ambient}
             onPick={(ambient) => void attempt(api.settings.update({ ambient }))}
           />
+          {pack.rows.map((item) => (
+            <button
+              type="button"
+              key={item.id}
+              className={pack.id === item.id ? "on" : ""}
+              onClick={() => void attempt(api.settings.update({ character: item.id }))}
+            >
+              {item.name}
+            </button>
+          ))}
+          <button
+            type="button"
+            className={pack.id === "capsule" ? "on" : ""}
+            onClick={() => void attempt(api.settings.update({ character: "capsule" }))}
+          >
+            胶囊
+          </button>
           {(["night", "bamboo", "mist", "dusk", "sky"] as ThemeName[]).map((theme) => (
             <button
               type="button"

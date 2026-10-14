@@ -122,6 +122,11 @@ struct UrlArg {
 }
 
 #[derive(Deserialize)]
+struct HitArg {
+    rects: Vec<crate::windows::layout::Rect>,
+}
+
+#[derive(Deserialize)]
 struct VideoOnly {
     on: bool,
     #[serde(default)]
@@ -231,6 +236,10 @@ pub fn dispatch(app: &Aside, cmd: &str, input: Value, caller: &str) -> AppResult
         "stats_overview" => ok(app.stats_overview()?),
         "stats_week" => ok(app.stats_week(args::<DateArg>(input)?.date)?),
         "week_prompt" => ok(app.week_prompt()?),
+        "mini_hits" => {
+            app.set_mini_hits(args::<HitArg>(input)?.rects);
+            ok(())
+        }
         "characters_list" => ok(app.characters()),
         "character_import" => ok(app.import_character(Path::new(&args::<UrlArg>(input)?.url))?),
         "lecture_bookmarks" => ok(app.lecture_bookmarks()),

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Penguin, usePack } from "../../features/character/Penguin";
 import { fullScore, scoreError } from "../../features/timer/mock";
 import { quoteFor } from "../../features/atmosphere/quotes";
 import { toDateStr } from "../../features/records/dates";
@@ -12,6 +13,7 @@ import { attempt } from "../../shared/ui/toast";
 const NOTE_MAX = 200;
 
 export function EndScreen({ outcome, subject }: { outcome: Outcome; subject: Subject | null }) {
+  const pack = usePack();
   const [note, setNote] = useState("");
   const [saved, setSaved] = useState("");
   const [busy, setBusy] = useState(false);
@@ -57,6 +59,13 @@ export function EndScreen({ outcome, subject }: { outcome: Outcome; subject: Sub
           .filter(Boolean)
           .join(" · ")}
       </p>
+
+      {pack.show && outcome.reason === "completed" && (
+        <div className="end-pet">
+          <span className="bubble">嘎嘎！</span>
+          <Penguin pose="done" size={160} pack={pack.id} dir={pack.dir} clip={pack.clips?.done} />
+        </div>
+      )}
 
       <div className="end-actions">
         <Button variant="primary" disabled={busy} onClick={() => void close()}>

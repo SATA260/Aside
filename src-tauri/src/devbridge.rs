@@ -113,6 +113,10 @@ impl Shell for DevShell {
     fn eval_course(&self, script: &str) {
         self.hub.emit("dev:eval", json!({ "script": script }));
     }
+
+    fn resize_mini(&self, width: f64, height: f64) {
+        self.hub.emit("dev:mini-size", json!({ "width": width, "height": height }));
+    }
 }
 
 fn json_response(value: Value) -> Response<std::io::Cursor<Vec<u8>>> {

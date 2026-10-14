@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { api } from "../../shared/api";
 import { inTauri } from "../../shared/ipc";
 import { useApp } from "../../shared/state";
+import type { CharacterClip, CharacterInfo } from "../../shared/types";
 import type { Pose } from "./pose";
 import "./penguin.css";
 
@@ -19,19 +20,33 @@ function sheetUrl(pack: string, dir: string, pose: Pose): string {
   return convertFileSrc(`${dir}/${pose}.png`);
 }
 
-/** 嘎嘎。序列图按帧横排，显示时缩小。导入的形象把文件夹传进来。 */
-export function Penguin({ pose, size = 64, pack = "gaga", dir = "" }: { pose: Pose; size?: number; pack?: string; dir?: string }) {
-  const frames = pose === "blink" ? 2 : 4;
+/** 嘎嘎。序列图按帧横排，显示时缩小。导入的形象把文件夹和帧数传进来。 */
+export function Penguin({
+  pose,
+  size = 64,
+  pack = "gaga",
+  dir = "",
+  clip,
+}: {
+  pose: Pose;
+  size?: number;
+  pack?: string;
+  dir?: string;
+  clip?: CharacterClip;
+}) {
+  const frames = clip?.frames || (pose === "blink" ? 2 : 4);
+  const ms = clip?.ms || (pose === "done" || pose === "blink" ? 160 : 180);
   const frameW = Math.round((size * 180) / 220);
   return (
     <i
-      className={`penguin frames-${frames}`}
+      className="penguin"
       aria-hidden
       style={{
         width: frameW,
         height: size,
         backgroundImage: `url(${sheetUrl(pack, dir, pose)})`,
         backgroundSize: `${frameW * frames}px ${size}px`,
+        animation: `penguin-shift ${frames * ms}ms steps(${frames}) infinite`,
         ["--shift" as string]: `-${frameW * frames}px`,
       }}
     />
@@ -41,15 +56,18 @@ export function Penguin({ pose, size = 64, pack = "gaga", dir = "" }: { pose: Po
 export function usePack() {
   const id = useApp((s) => s.settings?.character) || "gaga";
   const version = useApp((s) => s.dataVersion);
-  const [dir, setDir] = useState("");
+  const [rows, setRows] = useState<CharacterInfo[]>([]);
   useEffect(() => {
-    if (id === "gaga" || id === "capsule") {
-      setDir("");
-      return;
-    }
-    void api.character.list().then((rows) => setDir(rows.find((row) => row.id === id)?.dir ?? ""));
-  }, [id, version]);
-  return { id, dir, show: id !== "capsule" };
+    void api.character.list().then(setRows).catch(() => setRows([]));
+  }, [version]);
+  const current = rows.find((row) => row.id === id);
+  return {
+    id,
+    dir: current?.dir ?? "",
+    clips: current?.clips,
+    rows,
+    show: id !== "capsule",
+  };
 }
 
 export function useReduceMotion() {

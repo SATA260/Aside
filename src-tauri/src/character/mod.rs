@@ -17,7 +17,7 @@ const MAX_BYTES: u64 = 8 * 1024 * 1024;
 
 const STATES: &[&str] = &["focus", "pause", "last5", "done", "blink"];
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StateClip {
     pub frames: u32,
     pub ms: u32,
@@ -36,6 +36,7 @@ pub struct Pack {
     pub name: String,
     pub author: String,
     pub dir: String,
+    pub states: std::collections::BTreeMap<String, StateClip>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -45,6 +46,23 @@ pub struct Character {
     pub builtin: bool,
     /// 导入形象的文件夹。内置形象为空，界面用自己打包的图。
     pub dir: String,
+    pub clips: std::collections::BTreeMap<String, StateClip>,
+}
+
+fn gaga_clips() -> std::collections::BTreeMap<String, StateClip> {
+    ["focus", "pause", "last5", "done", "blink"]
+        .into_iter()
+        .map(|state| {
+            let clip = if state == "blink" {
+                StateClip { frames: 2, ms: 160 }
+            } else if state == "done" {
+                StateClip { frames: 4, ms: 160 }
+            } else {
+                StateClip { frames: 4, ms: 180 }
+            };
+            (state.to_string(), clip)
+        })
+        .collect()
 }
 
 const BUILTIN_ID: &str = "gaga";
@@ -61,7 +79,13 @@ const ALLOWED: &[&str] = &[
 const MAX_UNPACK: u64 = 30 * 1024 * 1024;
 
 pub fn list(data_dir: &Path) -> Vec<Character> {
-    let mut out = vec![Character { id: BUILTIN_ID.into(), name: "嘎嘎".into(), builtin: true, dir: String::new() }];
+    let mut out = vec![Character {
+        id: BUILTIN_ID.into(),
+        name: "嘎嘎".into(),
+        builtin: true,
+        dir: String::new(),
+        clips: gaga_clips(),
+    }];
     let root = data_dir.join("characters");
     let Ok(entries) = std::fs::read_dir(&root) else {
         return out;
@@ -86,6 +110,7 @@ pub fn list(data_dir: &Path) -> Vec<Character> {
             name: pack.name,
             builtin: false,
             dir: path.to_string_lossy().into_owned(),
+            clips: pack.states,
         });
     }
     found.sort_by(|a, b| a.id.cmp(&b.id));
@@ -118,7 +143,13 @@ pub fn install(data_dir: &Path, src: &Path) -> AppResult<Character> {
         std::fs::rename(&root, &dest)?;
         let _ = std::fs::remove_dir_all(&stage);
     }
-    Ok(Character { id, name: pack.name, builtin: false, dir: dest.to_string_lossy().into_owned() })
+    Ok(Character {
+        id,
+        name: pack.name,
+        builtin: false,
+        dir: dest.to_string_lossy().into_owned(),
+        clips: pack.states,
+    })
 }
 
 fn folder_id(name: &str, data_dir: &Path) -> String {
@@ -230,7 +261,12 @@ pub fn load_pack(dir: &Path) -> AppResult<Pack> {
     if len == 0 || len > MAX_BYTES {
         return invalid("preview.png 太大");
     }
-    Ok(Pack { name: file.name, author: file.author, dir: dir.to_string_lossy().into_owned() })
+    Ok(Pack {
+        name: file.name,
+        author: file.author,
+        dir: dir.to_string_lossy().into_owned(),
+        states: file.states,
+    })
 }
 
 fn check_sheet(path: &Path, frames: u32, state: &str) -> AppResult<()> {

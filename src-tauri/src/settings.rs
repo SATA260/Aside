@@ -88,6 +88,8 @@ pub struct Settings {
     pub video_pause: bool,
     /// 浮窗样式：gaga、capsule，或导入形象的文件夹名
     pub character: String,
+    /// 时间到时形象叫一声。默认关闭
+    pub quack: bool,
 }
 
 impl Default for Settings {
@@ -120,6 +122,7 @@ impl Default for Settings {
             lecture_url: String::new(),
             video_pause: false,
             character: "gaga".into(),
+            quack: false,
         }
     }
 }

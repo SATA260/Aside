@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { SoundChoices } from "../../features/atmosphere/library";
+import { Penguin, useReduceMotion } from "../../features/character/Penguin";
+import { pose } from "../../features/character/pose";
 import { bigTime, horizon } from "../../features/timer/overlay";
 import { api } from "../../shared/api";
 import { on } from "../../shared/ipc";
@@ -20,6 +22,7 @@ export function LecturePanel() {
   const [atmo, setAtmo] = useState(false);
   const [only, setOnly] = useState(false);
   const [confirmEnd, setConfirmEnd] = useState(false);
+  const reduce = useReduceMotion();
 
   useEffect(() => on<{ on: boolean }>("lecture:video", (payload) => setOnly(payload.on)), []);
   useEffect(() => {
@@ -108,6 +111,7 @@ export function LecturePanel() {
               <i style={{ width: `${line.p * 100}%` }} />
             </div>
             <p className="today">今天 {durationText(timer.today_ms)}</p>
+            <Penguin pose={pose(timer.phase, timer.remaining_ms, reduce)} size={120} />
             <div className="lecture-actions">
               <button type="button" onClick={() => void togglePause()}>
                 {paused ? "继续" : "暂停"}

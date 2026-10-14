@@ -1,0 +1,26 @@
+.penguin {
+  display: inline-block;
+  background-repeat: no-repeat;
+  background-position: 0 0;
+  flex: none;
+}
+
+.penguin.frames-4 {
+  animation: penguin-shift 720ms steps(4) infinite;
+}
+
+.penguin.frames-2 {
+  animation: penguin-shift 320ms steps(2) infinite;
+}
+
+@keyframes penguin-shift {
+  to {
+    background-position: var(--shift) 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .penguin {
+    animation: none;
+  }
+}

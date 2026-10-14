@@ -71,16 +71,21 @@
 .atmo-picks button {
   padding: 6px 10px;
   border-radius: 8px;
-  border: 0;
+  border: 1px solid var(--line);
   background: transparent;
-  color: var(--muted);
+  color: var(--text);
   font-size: 13px;
   cursor: pointer;
+}
+
+.atmo-picks button:hover {
+  background: color-mix(in srgb, var(--text) 8%, transparent);
 }
 
 .atmo-picks button.on {
   color: var(--text);
   background: var(--line);
+  border-color: transparent;
 }
 
 .atmo .slider {

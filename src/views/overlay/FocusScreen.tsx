@@ -2,7 +2,7 @@ import { type CSSProperties, Fragment, useEffect, useState } from "react";
 import { backdrops, nextOf, soundOptions } from "../../features/atmosphere/catalog";
 import { SceneChoices, SoundChoices, useLibrary } from "../../features/atmosphere/library";
 import { useAtmoPreview } from "../../features/atmosphere/preview";
-import { bigTime, horizon } from "../../features/timer/overlay";
+import { bigTime, focusChrome, horizon } from "../../features/timer/overlay";
 import { quoteFor } from "../../features/atmosphere/quotes";
 import { toDateStr } from "../../features/records/dates";
 import { api } from "../../shared/api";
@@ -109,7 +109,7 @@ export function FocusScreen({ timer, settings }: { timer: TimerView; settings: S
 
   return (
     <div
-      className={idle ? "focus idle" : atmo ? "focus atmo-open" : "focus"}
+      className={focusChrome(idle, atmo)}
       style={{ transform: `translate(${drift.x}px, ${drift.y}px)` }}
     >
       <header className="ov-top">

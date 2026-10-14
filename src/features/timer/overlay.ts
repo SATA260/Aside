@@ -17,3 +17,8 @@ export function horizon(view: TimerView): { p: number; from: number; to: number 
   const p = span > 0 ? Math.min(1, view.focused_ms / span) : 0;
   return { p, from, to: view.now + Math.max(0, span - view.focused_ms) };
 }
+
+/** 氛围面板打开时，画面和声音要留在可点的状态，不能跟控制条一起淡成点不了。 */
+export function focusChrome(idle: boolean, atmo: boolean): string {
+  return ["focus", atmo && "atmo-open", idle && !atmo && "idle"].filter(Boolean).join(" ");
+}

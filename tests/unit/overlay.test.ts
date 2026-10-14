@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bigTime, horizon } from "../../src/features/timer/overlay";
+import { bigTime, focusChrome, horizon } from "../../src/features/timer/overlay";
 import { HOUR, MINUTE } from "../../src/shared/format";
 import type { Mode, TimerView } from "../../src/shared/types";
 
@@ -62,5 +62,13 @@ describe("horizon", () => {
 
   it("is full when the time is up", () => {
     expect(horizon(view("countdown", 45 * MINUTE, 45 * MINUTE)).p).toBe(1);
+  });
+});
+
+describe("focus chrome", () => {
+  it("keeps the atmosphere choices clickable while that panel is open", () => {
+    expect(focusChrome(true, true)).toBe("focus atmo-open");
+    expect(focusChrome(false, true)).toBe("focus atmo-open");
+    expect(focusChrome(true, false)).toBe("focus idle");
   });
 });

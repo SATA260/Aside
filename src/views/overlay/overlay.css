@@ -218,8 +218,8 @@ html[data-view="overlay"] body {
   transition: opacity 0.6s var(--ease);
 }
 
-.focus.idle .textctl,
-.focus.idle .atmo-live,
+.focus.idle:not(.atmo-open) .textctl,
+.focus.idle:not(.atmo-open) .atmo-live,
 .focus.idle .keys-hint {
   opacity: 0;
   pointer-events: none;
@@ -246,21 +246,25 @@ html[data-view="overlay"] body {
   max-width: 34%;
 }
 
-.atmo-live span,
+.atmo-live span {
+  color: var(--muted);
+  font-size: calc(15 * var(--u));
+  cursor: default;
+}
+
 .atmo-live button {
   background: none;
   border: 0;
-  color: var(--muted);
+  color: var(--text);
+  opacity: 0.8;
   font-family: var(--font-wk);
   font-size: calc(15 * var(--u));
   cursor: pointer;
 }
 
-.atmo-live span {
-  cursor: default;
-}
-
+.atmo-live button:hover,
 .atmo-live button.on {
+  opacity: 1;
   color: var(--text);
 }
 

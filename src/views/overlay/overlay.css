@@ -207,8 +207,9 @@ html[data-view="overlay"] body {
 /* 文字按钮：直接写在背景上，鼠标静止 3 秒淡出 */
 .textctl {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
-  gap: calc(48 * var(--u));
+  gap: clamp(18px, 4vw, calc(48 * var(--u)));
   margin-bottom: calc(30 * var(--u));
   transition: opacity 0.6s var(--ease);
 }
@@ -264,7 +265,10 @@ html[data-view="overlay"] body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 0 6vw;
+  justify-content: safe center;
+  gap: calc(8 * var(--u));
+  padding: calc(40 * var(--u)) max(24px, 6vw) calc(32 * var(--u));
+  overflow-y: auto;
   text-align: center;
   animation: end-in 0.8s var(--ease) both;
 }
@@ -302,8 +306,10 @@ html[data-view="overlay"] body {
 }
 
 .end-actions {
-  margin-top: calc(56 * var(--u));
+  margin-top: calc(36 * var(--u));
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: calc(14 * var(--u));
 }
 
@@ -313,9 +319,11 @@ html[data-view="overlay"] body {
 }
 
 .note-box {
-  margin-top: calc(30 * var(--u));
+  margin-top: calc(24 * var(--u));
   width: min(calc(460 * var(--u)), 100%);
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: calc(10 * var(--u));
 }
 
@@ -369,10 +377,8 @@ html[data-view="overlay"] body {
 }
 
 .end-wrap .quote {
-  position: absolute;
-  bottom: calc(64 * var(--u));
-  left: 0;
-  right: 0;
+  position: static;
+  margin-top: calc(36 * var(--u));
 }
 
 @media (prefers-reduced-motion: reduce) {

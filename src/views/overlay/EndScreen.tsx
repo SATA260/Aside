@@ -22,11 +22,11 @@ export function EndScreen({ outcome, subject }: { outcome: Outcome; subject: Sub
     return true;
   };
 
-  const close = async (again: boolean) => {
+  const close = async () => {
     setBusy(true);
     // 写了备注没点“记下”就离开，也帮他记下
     if (await saveNote()) {
-      const view = await attempt(api.timer.close(again));
+      const view = await attempt(api.timer.close(false));
       if (view) setTimer(view);
     }
     setBusy(false);
@@ -57,10 +57,7 @@ export function EndScreen({ outcome, subject }: { outcome: Outcome; subject: Sub
       </p>
 
       <div className="end-actions">
-        <Button variant="primary" disabled={busy} onClick={() => void close(true)}>
-          再来一段
-        </Button>
-        <Button disabled={busy} onClick={() => void close(false)}>
+        <Button variant="primary" disabled={busy} onClick={() => void close()}>
           回到电脑
         </Button>
       </div>

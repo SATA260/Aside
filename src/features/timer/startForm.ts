@@ -22,15 +22,18 @@ export function initialForm(
   displays: DisplayMode[] = ["fullscreen", "mini", "lecture"],
 ): StartForm {
   const fallback = subjects.find((s) => s.is_fallback) ?? subjects[0];
-  const last = timer.again ? timer.last?.plan.subject_id : undefined;
-  const subject = subjects.find((s) => s.id === last) ?? fallback;
-  const mode = settings.last_mode;
+  // 再来一段沿用刚结束这一段的科目、方式、时长、显示和任务；回到电脑则回到平时的开始页
+  const plan = timer.again ? timer.last?.plan : undefined;
+  const subject = subjects.find((s) => s.id === plan?.subject_id) ?? fallback;
+  const mode = plan?.mode ?? settings.last_mode;
+  const remembered = mode === "mock" ? settings.last_mock_ms : settings.last_countdown_ms;
+  const display = plan?.display ?? settings.last_display;
   return {
     subjectId: subject?.id ?? 0,
     mode,
-    lengthMs: mode === "mock" ? settings.last_mock_ms : settings.last_countdown_ms,
-    display: displays.includes(settings.last_display) ? settings.last_display : "fullscreen",
-    task: "",
+    lengthMs: plan?.planned_ms ?? remembered,
+    display: displays.includes(display) ? display : "fullscreen",
+    task: plan?.task ?? "",
   };
 }
 

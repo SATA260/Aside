@@ -129,7 +129,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
+  gap: 12px 24px;
+  flex-wrap: wrap;
   padding: 14px 0;
   border-top: 1px solid var(--line);
   font-size: 14px;
@@ -147,7 +148,9 @@
 
 .themes {
   display: flex;
-  gap: 18px;
+  flex-wrap: wrap;
+  gap: 14px 18px;
+  justify-content: flex-end;
 }
 
 .theme-pick {

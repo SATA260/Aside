@@ -10,8 +10,49 @@
   margin-block: auto;
 }
 
-.start-page .input {
-  max-width: 560px;
+/* 每一组选项铺满表单宽度，组内按钮等宽 */
+.start-form .field > .chips:not(.tight) {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+}
+
+.start-form .field > .chips:not(.tight) > .chip {
+  justify-content: center;
+}
+
+.start-form .row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 28px;
+}
+
+.start-form .row .field {
+  min-width: 0;
+}
+
+.start-form .seg {
+  display: flex;
+  width: 100%;
+}
+
+.start-form .seg button {
+  flex: 1 1 0;
+  text-align: center;
+}
+
+.start-form .chips.tight {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.start-form .chips.tight > .chip {
+  flex: 1 1 64px;
+  justify-content: center;
+}
+
+.start-form .chips.tight > .chip.custom {
+  flex: 2 1 148px;
 }
 
 .hello h1 {
@@ -55,7 +96,7 @@
 
 .chips.tight {
   gap: 8px;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
 }
 
 .chip.custom {
@@ -96,8 +137,29 @@
 .go {
   margin-top: 36px;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 18px;
+}
+
+/* 窗口矮的时候收紧间距，开始按钮留在第一屏里，不用滚一下才点得到 */
+@media (max-height: 760px) {
+  .start-page {
+    padding-top: 28px;
+    padding-bottom: 24px;
+  }
+
+  .start-page .field {
+    margin-top: 16px;
+  }
+
+  .hello h1 {
+    font-size: 24px;
+  }
+
+  .go {
+    margin-top: 22px;
+  }
 }
 
 .go .btn.primary {

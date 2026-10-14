@@ -82,6 +82,26 @@ describe("initialForm", () => {
     expect(f.subjectId).toBe(5);
   });
 
+  it("再来一段 restores the mode, length, display and task from that session", () => {
+    const last = outcome(3);
+    last.plan = { subject_id: 3, mode: "mock", planned_ms: 120 * MINUTE, task: "2023 真题", display: "mini" };
+    const f = initialForm(settings, subjects, view({ again: true, last }));
+    expect(f).toMatchObject({
+      subjectId: 3,
+      mode: "mock",
+      lengthMs: 120 * MINUTE,
+      display: "mini",
+      task: "2023 真题",
+    });
+  });
+
+  it("回到电脑 drops the task even when the session had one", () => {
+    const last = outcome(3);
+    last.plan = { ...last.plan, task: "2023 真题", display: "mini" };
+    const f = initialForm(settings, subjects, view({ again: false, last }));
+    expect(f).toMatchObject({ subjectId: 5, mode: "countdown", task: "", display: "fullscreen" });
+  });
+
   it("uses the mock length for mock exams", () => {
     const f = initialForm({ ...settings, last_mode: "mock" }, subjects, view());
     expect(f.lengthMs).toBe(180 * MINUTE);

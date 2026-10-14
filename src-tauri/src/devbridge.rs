@@ -100,6 +100,11 @@ impl Shell for DevShell {
         self.hub.emit("dev:autostart", json!({ "on": on }));
         Ok(())
     }
+
+    fn focus_shortcut(&self, name: &str) -> Result<(), String> {
+        self.hub.emit("dev:focus", json!({ "name": name }));
+        Ok(())
+    }
 }
 
 fn json_response(value: Value) -> Response<std::io::Cursor<Vec<u8>>> {

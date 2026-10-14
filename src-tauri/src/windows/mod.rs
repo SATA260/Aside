@@ -82,6 +82,18 @@ impl Shell for TauriShell {
         let done = if on { launcher.enable() } else { launcher.disable() };
         done.map_err(|e| e.to_string())
     }
+
+    fn focus_shortcut(&self, name: &str) -> Result<(), String> {
+        let output = std::process::Command::new("shortcuts")
+            .args(["run", name])
+            .output()
+            .map_err(|_| crate::system::dnd::missing_shortcut(name))?;
+        if output.status.success() {
+            Ok(())
+        } else {
+            Err(crate::system::dnd::missing_shortcut(name))
+        }
+    }
 }
 
 pub fn show_main(app: &AppHandle) -> tauri::Result<()> {

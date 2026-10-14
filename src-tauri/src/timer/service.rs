@@ -127,6 +127,7 @@ impl Aside {
         })?;
         self.broadcast(&view);
         self.shell.keep_awake(true);
+        self.apply_focus(true);
         self.shell.open_view(view_name(plan.display));
         self.shell.close_view("main");
         if end_page_open && view_name(plan.display) != "overlay" {
@@ -346,6 +347,7 @@ impl Aside {
 
     fn after_finish(&self, outcome: &Outcome, view: &TimerView) {
         self.shell.keep_awake(false);
+        self.apply_focus(false);
         self.broadcast(view);
         if let Ok(payload) = serde_json::to_value(outcome) {
             self.events.emit(TIMER_FINISHED, payload);
@@ -373,6 +375,8 @@ impl Aside {
                 let outcome = self.complete(&mut st, done)?;
                 st.last = None;
                 st.recovered = Some(outcome);
+                drop(st);
+                self.apply_focus(false);
             }
             Err(_) => self.store.write(sessions::clear_active)?,
         }

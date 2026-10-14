@@ -18,6 +18,7 @@ use crate::media::{self, LoopMode};
 use crate::settings::{Point, Settings};
 use crate::shell::Shell;
 use crate::store::{self, Store, subjects};
+use crate::system::dnd::{self, FocusStep};
 use crate::timer::service::TimerState;
 use crate::timer::{Display, Mode};
 
@@ -269,6 +270,29 @@ impl Aside {
     pub fn picture_file(&self, id: i64) -> AppResult<PathBuf> {
         let row = self.store.read(|c| store::media::picture_file(c, id))?;
         Ok(self.data_dir.join(row.file))
+    }
+
+    /// 开始或结束专注时，按系统去开、关勿扰。名字没填就什么都不做。
+    pub(crate) fn apply_focus(&self, starting: bool) {
+        let settings = self.settings();
+        let step = dnd::focus_step(
+            std::env::consts::OS,
+            starting,
+            &settings.dnd_on,
+            &settings.dnd_off,
+            settings.dnd_hint,
+        );
+        match step {
+            Some(FocusStep::Run(name)) => {
+                if let Err(message) = self.shell.focus_shortcut(&name) {
+                    self.events.emit("dnd:error", json!({ "message": message }));
+                }
+            }
+            Some(FocusStep::Hint) => {
+                self.events.emit("dnd:hint", json!({ "message": dnd::WIN_HINT }));
+            }
+            None => {}
+        }
     }
 
     fn send_ambient(&self, cmd: AmbientCmd) {

@@ -76,6 +76,11 @@ export interface Settings {
   scene_image: number | null;
   /** 导入声音时自动对齐响度 */
   loudness_match: boolean;
+  /** macOS 快捷指令名。空着表示不调用 */
+  dnd_on: string;
+  dnd_off: string;
+  /** Windows 开始专注时还要不要提示 Win+N */
+  dnd_hint: boolean;
 }
 
 export type ShortcutAction = "toggle" | "display";

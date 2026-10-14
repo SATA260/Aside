@@ -15,6 +15,8 @@ pub trait Shell: Send + Sync {
     fn pause_shortcuts(&self, paused: bool);
     fn autostart(&self) -> bool;
     fn set_autostart(&self, on: bool) -> Result<(), String>;
+    /// 运行用户在“快捷指令”里建好的专注模式指令。找不到时返回能给用户看的原因。
+    fn focus_shortcut(&self, name: &str) -> Result<(), String>;
 }
 
 /// 只把调用记下来，测试用。
@@ -27,6 +29,7 @@ pub struct RecordingShell {
     shortcuts_paused: Mutex<bool>,
     autostart: Mutex<bool>,
     autostart_refused: Mutex<bool>,
+    focus_fail: Mutex<bool>,
 }
 
 impl RecordingShell {
@@ -53,6 +56,11 @@ impl RecordingShell {
     /// 模拟系统不让改登录项。
     pub fn refuse_autostart(&self) {
         *self.autostart_refused.lock().unwrap() = true;
+    }
+
+    /// 模拟快捷指令不存在。
+    pub fn fail_focus(&self) {
+        *self.focus_fail.lock().unwrap() = true;
     }
 
     /// 模拟别的软件已经占用了这个快捷键。
@@ -96,5 +104,14 @@ impl Shell for RecordingShell {
         }
         *self.autostart.lock().unwrap() = on;
         Ok(())
+    }
+
+    fn focus_shortcut(&self, name: &str) -> Result<(), String> {
+        self.calls.lock().unwrap().push(format!("focus:{name}"));
+        if *self.focus_fail.lock().unwrap() {
+            Err(crate::system::dnd::missing_shortcut(name))
+        } else {
+            Ok(())
+        }
     }
 }

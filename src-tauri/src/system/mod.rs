@@ -1,5 +1,6 @@
 //! 和操作系统打交道的能力：托盘或菜单栏、全局快捷键、开机自启、阻止休眠、勿扰快捷指令。
 
+pub mod dnd;
 pub mod hotkeys;
 pub mod power;
 pub mod tray;

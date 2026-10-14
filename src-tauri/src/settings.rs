@@ -74,6 +74,12 @@ pub struct Settings {
     pub loudness_match: bool,
     /// 用导入的图片当背景。有值时盖过 `scene`
     pub scene_image: Option<i64>,
+    /// macOS 快捷指令：开始专注时运行
+    pub dnd_on: String,
+    /// macOS 快捷指令：结束专注时运行
+    pub dnd_off: String,
+    /// Windows 开始专注时还要不要提示 Win+N
+    pub dnd_hint: bool,
 }
 
 impl Default for Settings {
@@ -99,6 +105,9 @@ impl Default for Settings {
             exam_date: String::new(),
             loudness_match: true,
             scene_image: None,
+            dnd_on: String::new(),
+            dnd_off: String::new(),
+            dnd_hint: true,
         }
     }
 }

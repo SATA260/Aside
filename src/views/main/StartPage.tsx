@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { formatAccel } from "../../features/shortcuts/keys";
 import { DISPLAYS } from "../../features/timer/displays";
 import {
@@ -17,6 +17,7 @@ import {
 import { daysUntilExam } from "../../features/atmosphere/quotes";
 import { toDateStr } from "../../features/records/dates";
 import { api } from "../../shared/api";
+import { on } from "../../shared/ipc";
 import { clock, durationParts, durationText, hm, MINUTE } from "../../shared/format";
 import { play } from "../../shared/sfx";
 import { setTimer, useApp } from "../../shared/state";
@@ -78,6 +79,7 @@ function StartFormView({ init, timer, settings }: { init: StartForm; timer: Time
       <div className="start-layout">
         <div className="start-form">
         <ExamLine now={timer.now} settings={settings} />
+        <FocusNotice />
         <Greeting todayMs={timer.today_ms} />
         {timer.recovered && <RecoveredNotice outcome={timer.recovered} />}
         {active && <ActiveNotice timer={timer} />}
@@ -179,6 +181,30 @@ function Greeting({ todayMs }: { todayMs: number }) {
           </span>
         ))}
       </h1>
+    </div>
+  );
+}
+
+function FocusNotice() {
+  const [hint, setHint] = useState("");
+  const [problem, setProblem] = useState("");
+  useEffect(() => on<{ message: string }>("dnd:hint", (payload) => setHint(payload.message)), []);
+  useEffect(() => on<{ message: string }>("dnd:error", (payload) => setProblem(payload.message)), []);
+  if (!hint && !problem) return null;
+  return (
+    <div className="notice">
+      <span>{problem || hint}</span>
+      {hint && !problem && (
+        <TextButton
+          onClick={() => {
+            setHint("");
+            void attempt(api.settings.update({ dnd_hint: false }));
+          }}
+        >
+          不再提示
+        </TextButton>
+      )}
+      {problem && <TextButton onClick={() => setProblem("")}>知道了</TextButton>}
     </div>
   );
 }

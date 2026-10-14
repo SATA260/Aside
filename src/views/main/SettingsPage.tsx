@@ -144,6 +144,39 @@ export function SettingsPage() {
         </section>
 
         <section className="settings-group">
+          <h3>勿扰</h3>
+          {isMac ? (
+            <>
+              <p className="hint">
+                系统不让应用直接打开专注模式。在“快捷指令”里建两个指令，一个打开、一个关闭，把名字填在下面。开始专注时运行打开的那个，结束时运行关闭的那个。
+              </p>
+              <div className="settings-row">
+                <div>打开时运行</div>
+                <input
+                  className="input small"
+                  aria-label="打开专注模式的指令"
+                  value={settings.dnd_on ?? ""}
+                  placeholder="打开专注模式"
+                  onChange={(e) => void update({ dnd_on: e.target.value })}
+                />
+              </div>
+              <div className="settings-row">
+                <div>结束时运行</div>
+                <input
+                  className="input small"
+                  aria-label="关闭专注模式的指令"
+                  value={settings.dnd_off ?? ""}
+                  placeholder="关闭专注模式"
+                  onChange={(e) => void update({ dnd_off: e.target.value })}
+                />
+              </div>
+            </>
+          ) : (
+            <p className="hint">开始专注时提示一次“可以按 Win+N 打开勿扰”，可以点“不再提示”。</p>
+          )}
+        </section>
+
+        <section className="settings-group">
           <h3>启动</h3>
           <div className="settings-row">
             <div>

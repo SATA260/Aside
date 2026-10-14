@@ -1,0 +1,7 @@
+{"name":"嘎嘎","author":"Aside","version":1,"states":{
+                "focus":{"frames":4,"ms":180},
+                "pause":{"frames":4,"ms":180},
+                "last5":{"frames":4,"ms":180},
+                "done":{"frames":4,"ms":160},
+                "blink":{"frames":2,"ms":160}
+            }}

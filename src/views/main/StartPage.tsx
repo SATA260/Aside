@@ -7,6 +7,7 @@ import {
   joinHm,
   lengthError,
   MOCK_PRESETS,
+  pickSubject,
   type StartForm,
   splitHm,
   switchMode,
@@ -80,7 +81,7 @@ function StartFormView({ init, timer, settings }: { init: StartForm; timer: Time
           <div className="label">科目</div>
           <div className="chips">
             {subjects.map((s) => (
-              <Chip key={s.id} on={s.id === subjectId} color={s.color} onClick={() => set({ subjectId: s.id })}>
+              <Chip key={s.id} on={s.id === subjectId} color={s.color} onClick={() => setForm((f) => pickSubject(f, s))}>
                 <Dot color={s.color} />
                 <span className="wk">{s.name}</span>
               </Chip>
@@ -94,7 +95,9 @@ function StartFormView({ init, timer, settings }: { init: StartForm; timer: Time
             <Segmented
               value={form.mode}
               options={MODES}
-              onChange={(mode) => setForm((f) => switchMode(f, mode, settings))}
+              onChange={(mode) =>
+                setForm((f) => switchMode(f, mode, settings, subjects.find((s) => s.id === subjectId)?.name))
+              }
             />
           </div>
           {DISPLAYS.length > 1 && (

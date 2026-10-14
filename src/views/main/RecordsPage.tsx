@@ -206,6 +206,12 @@ function EntryRow({ entry, day, onEdit }: { entry: DayEntry; day: DayView; onEdi
         {entry.task && <span className="sub"> · {entry.task}</span>}
         {crossesMidnight(entry, day.start, day.end) && <span className="tag">跨零点</span>}
         {entry.source === "manual" && <span className="tag">补记</span>}
+        {entry.mode === "mock" && <span className="tag">模考</span>}
+        {entry.mock && (
+          <span className="tag">
+            {entry.mock.score}/{entry.mock.full_score}
+          </span>
+        )}
         {entry.note ? <div className="note">{entry.note}</div> : <div className="add">＋ 加个备注</div>}
       </div>
       <span className="dur">{durationShort(entry.focused_ms)}</span>

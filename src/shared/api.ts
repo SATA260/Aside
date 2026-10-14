@@ -46,6 +46,8 @@ export const api = {
   },
   sessions: {
     setNote: (id: number, note: string) => call<null>("session_set_note", { id, note }),
+    setScore: (id: number, score: number, fullScore: number) =>
+      call<Session>("session_set_score", { id, score, full_score: fullScore }),
     day: (date: DateStr) => call<DayView>("day_view", { date }),
     add: (entry: { subject_id: number; started_at: number; ended_at: number; task?: string; note?: string }) =>
       call<Session>("session_add", entry),

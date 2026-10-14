@@ -4,10 +4,12 @@ import {
   initialForm,
   joinHm,
   lengthError,
+  pickSubject,
   splitHm,
   switchMode,
   toStartArgs,
 } from "../../src/features/timer/startForm";
+import { examLengthMs, fullScore, scoreError } from "../../src/features/timer/mock";
 import { HOUR, MINUTE } from "../../src/shared/format";
 import type { Outcome, Settings, Subject, TimerView } from "../../src/shared/types";
 
@@ -94,8 +96,17 @@ describe("initialForm", () => {
 describe("switchMode", () => {
   const base = initialForm(settings, subjects, view());
 
-  it("uses the remembered mock length when switching to mock", () => {
-    expect(switchMode(base, "mock", settings)).toMatchObject({ mode: "mock", lengthMs: 180 * MINUTE });
+  it("fills the exam length when switching to mock, even if a shorter one was remembered", () => {
+    expect(switchMode(base, "mock", { ...settings, last_mock_ms: 120 * MINUTE })).toMatchObject({
+      mode: "mock",
+      lengthMs: 180 * MINUTE,
+    });
+  });
+
+  it("resets a mock to the exam length when the subject changes", () => {
+    const mock = { ...base, mode: "mock" as const, subjectId: 5, lengthMs: 120 * MINUTE };
+    expect(pickSubject(mock, subjects[1])).toMatchObject({ subjectId: 3, lengthMs: 180 * MINUTE });
+    expect(pickSubject({ ...base, subjectId: 5, lengthMs: 25 * MINUTE }, subjects[1]).lengthMs).toBe(25 * MINUTE);
   });
 
   it("uses the remembered countdown length when switching back", () => {
@@ -148,6 +159,18 @@ describe("toStartArgs", () => {
   it("sends no length for count-up", () => {
     expect(toStartArgs({ ...base, mode: "countup" }).planned_ms).toBeNull();
   });
+});
+
+it("knows the exam length and the full mark of each subject", () => {
+  expect(["政治", "英语", "数学", "专业课", "其他"].map(examLengthMs)).toEqual([180, 180, 180, 180, 180].map((m) => m * MINUTE));
+  expect(fullScore("政治")).toBe(100);
+  expect(fullScore("英语")).toBe(100);
+  expect(fullScore("数学")).toBe(150);
+  expect(fullScore("专业课")).toBe(150);
+  expect(scoreError(112, 150)).toBeNull();
+  expect(scoreError(151, 150)).toBe("分数要在 0 到 150 之间");
+  expect(scoreError(-1, 100)).toBe("分数要在 0 到 100 之间");
+  expect(scoreError(1.5, 100)).toBe("分数要在 0 到 100 之间");
 });
 
 it("offers the usual countdown presets", () => {

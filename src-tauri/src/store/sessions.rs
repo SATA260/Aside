@@ -255,6 +255,30 @@ pub fn clean_note(note: &str) -> AppResult<String> {
     Ok(note.to_string())
 }
 
+pub fn set_score(c: &Connection, id: i64, score: i64, full_score: i64) -> AppResult<()> {
+    let mode: String = c
+        .query_row("SELECT mode FROM sessions WHERE id = ?1", [id], |r| {
+            r.get(0)
+        })
+        .optional()?
+        .ok_or_else(|| crate::error::AppError::Invalid("找不到这条记录".into()))?;
+    if mode != "mock" {
+        return invalid("只有模考可以记分数");
+    }
+    if full_score <= 0 {
+        return invalid("满分要大于 0");
+    }
+    if !(0..=full_score).contains(&score) {
+        return invalid(format!("分数要在 0 到 {full_score} 之间"));
+    }
+    c.execute(
+        "INSERT INTO mock_scores (session_id, score, full_score) VALUES (?1, ?2, ?3)
+         ON CONFLICT (session_id) DO UPDATE SET score = excluded.score, full_score = excluded.full_score",
+        params![id, score, full_score],
+    )?;
+    Ok(())
+}
+
 pub fn set_note(c: &Connection, id: i64, note: &str) -> AppResult<()> {
     let note = clean_note(note)?;
     if c.execute(

@@ -556,6 +556,93 @@ fn a_manual_entry_cannot_overlap_the_session_in_progress() {
     assert!(e.app.day_view(date(13)).unwrap().entries.is_empty());
 }
 
+fn mock_minute(e: &Env, subject_id: i64) -> i64 {
+    e.clock.set(at(13, 9, 0));
+    e.app
+        .timer_start(StartArgs {
+            subject_id,
+            mode: Mode::Mock,
+            planned_ms: Some(MIN),
+            task: "数学一 · 2023".into(),
+            display: Display::Fullscreen,
+        })
+        .unwrap();
+    e.clock.set(at(13, 9, 1));
+    e.finish()
+}
+
+#[test]
+fn a_mock_score_is_stored_on_the_session_and_can_be_replaced() {
+    let e = setup(at(13, 12, 0));
+    let math = subject(&e.app, "数学");
+    let id = mock_minute(&e, math);
+
+    let s = e.app.session_set_score(id, 112, 150).unwrap();
+    assert_eq!(s.mode, "mock");
+    assert_eq!(
+        s.mock.as_ref().map(|m| (m.score, m.full_score)),
+        Some((112, 150))
+    );
+    let again = e.app.session_set_score(id, 100, 150).unwrap();
+    assert_eq!(again.mock.as_ref().map(|m| m.score), Some(100));
+    assert_eq!(
+        e.app.day_view(date(13)).unwrap().entries[0]
+            .session
+            .mock
+            .as_ref()
+            .map(|m| m.score),
+        Some(100)
+    );
+}
+
+#[test]
+fn a_score_outside_the_full_mark_or_on_an_ordinary_session_is_refused() {
+    let e = setup(at(13, 12, 0));
+    let math = subject(&e.app, "数学");
+    let id = mock_minute(&e, math);
+    assert!(
+        e.app
+            .session_set_score(id, 151, 150)
+            .unwrap_err()
+            .to_string()
+            .contains("0 到 150")
+    );
+    assert!(e.app.session_set_score(id, -1, 150).is_err());
+    assert!(
+        e.app
+            .session_set_score(id, 10, 0)
+            .unwrap_err()
+            .to_string()
+            .contains("满分")
+    );
+    assert!(
+        e.app
+            .session_set_score(id, 0, 150)
+            .unwrap()
+            .mock
+            .unwrap()
+            .score
+            == 0
+    );
+
+    let ordinary = e.record(math, "", at(13, 10, 0), 30);
+    assert!(
+        e.app
+            .session_set_score(ordinary, 10, 150)
+            .unwrap_err()
+            .to_string()
+            .contains("只有模考")
+    );
+    assert!(
+        e.app
+            .day_view(date(13))
+            .unwrap()
+            .entries
+            .iter()
+            .any(|r| r.session.id == id && r.session.mock.as_ref().map(|m| m.score) == Some(0))
+    );
+}
+
 #[test]
 fn deleting_an_entry_removes_it_from_the_day_and_the_stats() {
     let e = setup(at(13, 9, 0));

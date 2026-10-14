@@ -172,6 +172,15 @@ impl Aside {
         Ok(session)
     }
 
+    pub fn session_set_score(&self, id: i64, score: i64, full_score: i64) -> AppResult<Session> {
+        let session = self.store.write(|c| {
+            sessions::set_score(c, id, score, full_score)?;
+            sessions::get(c, id)
+        })?;
+        self.data_changed();
+        Ok(session)
+    }
+
     pub fn session_set_note(&self, id: i64, note: &str) -> AppResult<()> {
         self.store.write(|c| sessions::set_note(c, id, note))?;
         self.data_changed();

@@ -85,6 +85,13 @@ struct Note {
 }
 
 #[derive(Deserialize)]
+struct Score {
+    id: i64,
+    score: i64,
+    full_score: i64,
+}
+
+#[derive(Deserialize)]
 struct Patch {
     id: i64,
     #[serde(flatten)]
@@ -143,6 +150,10 @@ pub fn dispatch(app: &Aside, cmd: &str, input: Value, _caller: &str) -> AppResul
         "subject_restore" => ok(app.subject_restore(args::<Id>(input)?.id)?),
         "subjects_reorder" => ok(app.subjects_reorder(&args::<Ids>(input)?.ids)?),
 
+        "session_set_score" => {
+            let a: Score = args(input)?;
+            ok(app.session_set_score(a.id, a.score, a.full_score)?)
+        }
         "session_set_note" => {
             let a: Note = args(input)?;
             ok(app.session_set_note(a.id, &a.note)?)

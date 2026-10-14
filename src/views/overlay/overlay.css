@@ -343,6 +343,31 @@ html[data-view="overlay"] body {
   padding: calc(10 * var(--u)) calc(20 * var(--u));
 }
 
+.score-box {
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.score-box input {
+  flex: none;
+  width: calc(88 * var(--u));
+  text-align: center;
+}
+
+.score-full {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(6 * var(--u));
+  color: var(--muted);
+  font-family: var(--font-num);
+}
+
+.score-box .field-error {
+  flex-basis: 100%;
+  font-size: calc(12 * var(--u));
+  color: var(--accent);
+}
+
 .end-wrap .quote {
   position: absolute;
   bottom: calc(64 * var(--u));

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { fullScore, scoreError } from "../../features/timer/mock";
 import { api } from "../../shared/api";
 import { durationParts } from "../../shared/format";
 import { setTimer } from "../../shared/state";
@@ -64,6 +65,10 @@ export function EndScreen({ outcome, subject }: { outcome: Outcome; subject: Sub
         </Button>
       </div>
 
+      {outcome.recorded && outcome.session_id && outcome.plan.mode === "mock" && (
+        <ScoreBox sessionId={outcome.session_id} subjectName={subject?.name ?? ""} />
+      )}
+
       {outcome.recorded && outcome.session_id && (
         <div className="note-box">
           <input
@@ -81,6 +86,57 @@ export function EndScreen({ outcome, subject }: { outcome: Outcome; subject: Sub
       )}
 
       <p className="quote wk">今天也坐下来了，这就很好。</p>
+    </div>
+  );
+}
+
+function ScoreBox({ sessionId, subjectName }: { sessionId: number; subjectName: string }) {
+  const [score, setScore] = useState("");
+  const [full, setFull] = useState(String(fullScore(subjectName)));
+  const [saved, setSaved] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const parsedScore = score.trim() === "" ? null : Number(score);
+  const parsedFull = Number(full);
+  const error = parsedScore == null ? null : scoreError(parsedScore, parsedFull);
+
+  const save = async () => {
+    if (parsedScore == null || error) return;
+    setBusy(true);
+    const row = await attempt(api.sessions.setScore(sessionId, parsedScore, parsedFull));
+    setBusy(false);
+    if (row) setSaved(true);
+  };
+
+  return (
+    <div className="note-box score-box">
+      <input
+        className="num"
+        inputMode="numeric"
+        aria-label="分数"
+        placeholder="分数，可以不填"
+        value={score}
+        onChange={(e) => {
+          setSaved(false);
+          setScore(e.target.value.replace(/[^\d]/g, ""));
+        }}
+      />
+      <span className="score-full">
+        /
+        <input
+          className="num"
+          inputMode="numeric"
+          aria-label="满分"
+          value={full}
+          onChange={(e) => {
+            setSaved(false);
+            setFull(e.target.value.replace(/[^\d]/g, ""));
+          }}
+        />
+      </span>
+      <Button size="small" disabled={busy || parsedScore == null || !!error || saved} onClick={() => void save()}>
+        {saved ? "已记下" : "记下分数"}
+      </Button>
+      {error && <p className="field-error">{error}</p>}
     </div>
   );
 }

@@ -62,6 +62,8 @@ export interface Settings {
   mini_pos: { x: number; y: number } | null;
   shortcut_toggle: string;
   shortcut_display: string;
+  /** 0 表示不设每日目标 */
+  daily_goal_ms: number;
 }
 
 export type ShortcutAction = "toggle" | "display";

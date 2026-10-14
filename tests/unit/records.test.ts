@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { addDays, dayLabel, dayTitle, monthGrid, toDateStr } from "../../src/features/records/dates";
+import { axisMax, barPercent, heatLevel } from "../../src/features/records/charts";
 import { atLocal, rangeFrom, wallMinutes } from "../../src/features/records/span";
 import { blocks, crossesMidnight } from "../../src/features/records/timeline";
 
@@ -55,6 +56,24 @@ describe("span", () => {
     });
     expect(rangeFrom("2026-10-13", "19:30", 24 * 60 + 1)).toBeNull();
     expect(rangeFrom("2026-10-13", "19:30", 1.5)).toBeNull();
+  });
+});
+
+describe("charts", () => {
+  it("leaves an empty day blank and steps the rest by how full the busiest day was", () => {
+    expect(heatLevel(0, 4 * 60 * MIN)).toBe(0);
+    expect(heatLevel(30 * MIN, 0)).toBe(0);
+    expect(heatLevel(60 * MIN, 4 * 60 * MIN)).toBe(1);
+    expect(heatLevel(2 * 60 * MIN, 4 * 60 * MIN)).toBe(2);
+    expect(heatLevel(3 * 60 * MIN, 4 * 60 * MIN)).toBe(3);
+    expect(heatLevel(4 * 60 * MIN, 4 * 60 * MIN)).toBe(4);
+  });
+
+  it("sizes the axis to the taller of the days and the daily goal", () => {
+    expect(axisMax([60 * MIN, 2 * 60 * MIN], 6 * 60 * MIN)).toBe(6 * 60 * MIN);
+    expect(axisMax([8 * 60 * MIN], 6 * 60 * MIN)).toBe(8 * 60 * MIN);
+    expect(barPercent(3 * 60 * MIN, 6 * 60 * MIN)).toBe(50);
+    expect(barPercent(0, 6 * 60 * MIN)).toBe(0);
   });
 });
 

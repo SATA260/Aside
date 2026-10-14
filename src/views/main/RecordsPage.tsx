@@ -11,6 +11,7 @@ import { attempt } from "../../shared/ui/toast";
 import { Calendar } from "./Calendar";
 import { EntryEditor } from "./EntryEditor";
 import { ManualForm } from "./ManualForm";
+import { Overview } from "./Overview";
 import "./records.css";
 
 const TICKS = [0, 6, 12, 18, 24];
@@ -22,10 +23,39 @@ export function useToday(): DateStr {
 
 export function RecordsPage() {
   const today = useToday();
+  const [tab, setTab] = useState<"day" | "overview">("day");
   const [date, setDate] = useState<DateStr>(today);
+  const openDay = (d: DateStr) => {
+    setDate(d);
+    setTab("day");
+  };
   return (
     <div className="page records-page">
-      <DayPanel date={date} today={today} onDate={setDate} />
+      <div className="tabs" role="tablist">
+        {(
+          [
+            ["day", "按天"],
+            ["overview", "总览"],
+          ] as const
+        ).map(([name, label]) => (
+          <button
+            type="button"
+            key={name}
+            className={tab === name ? "on" : ""}
+            onClick={() => {
+              if (tab !== name) play("tap");
+              setTab(name);
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {tab === "day" ? (
+        <DayPanel date={date} today={today} onDate={setDate} />
+      ) : (
+        <Overview today={today} onOpen={openDay} />
+      )}
     </div>
   );
 }

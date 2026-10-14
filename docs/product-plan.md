@@ -332,7 +332,7 @@ settings(key, value)
 
 - Tauri 官方插件：global-shortcut、autostart、window-state、dialog、fs、opener。
 - Rust：rusqlite（自带 SQLite）、keepawake（阻止休眠）。
-- 前端：React、Vite、Zustand（状态管理）、ECharts（柱状图）、热力图自己用 SVG 画、html-to-image（导出周报）。
+- 前端：React、Vite、Zustand（状态管理）、柱状图和热力图都用 SVG 和色块画、html-to-image（导出周报）。
 - 资源：环境音和铃声使用 CC0 授权的素材，打包进 app。
 
 ## 7. 里程碑

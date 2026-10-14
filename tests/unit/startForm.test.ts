@@ -26,6 +26,7 @@ const settings: Settings = {
   last_countdown_ms: 45 * MINUTE,
   last_mock_ms: 180 * MINUTE,
   last_display: "fullscreen",
+  daily_goal_ms: 0,
 };
 
 function view(patch: Partial<TimerView> = {}): TimerView {

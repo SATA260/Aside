@@ -3,7 +3,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::timer::{Display, MINUTE_MS, Mode};
+use crate::timer::{DAY_MS, Display, MINUTE_MS, Mode};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -50,6 +50,8 @@ pub struct Settings {
     pub shortcut_toggle: String,
     /// 全局快捷键：全屏和浮窗互相切换
     pub shortcut_display: String,
+    /// 每日目标。0 表示不设，柱状图上也就没有参考线
+    pub daily_goal_ms: i64,
 }
 
 impl Default for Settings {
@@ -67,6 +69,7 @@ impl Default for Settings {
             mini_pos: None,
             shortcut_toggle: "CommandOrControl+Alt+S".into(),
             shortcut_display: "CommandOrControl+Alt+M".into(),
+            daily_goal_ms: 0,
         }
     }
 }
@@ -75,6 +78,29 @@ impl Settings {
     /// 把音量这类数值限制在合法范围内。
     pub fn normalized(mut self) -> Self {
         self.sfx_volume = self.sfx_volume.clamp(0.0, 1.0);
+        self.daily_goal_ms = self.daily_goal_ms.clamp(0, DAY_MS);
         self
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_daily_goal_stays_between_nothing_and_one_day() {
+        let low = Settings {
+            daily_goal_ms: -1,
+            ..Settings::default()
+        }
+        .normalized();
+        let high = Settings {
+            daily_goal_ms: DAY_MS + 1,
+            ..Settings::default()
+        }
+        .normalized();
+        assert_eq!(low.daily_goal_ms, 0);
+        assert_eq!(high.daily_goal_ms, DAY_MS);
+        assert_eq!(Settings::default().normalized().daily_goal_ms, 0);
     }
 }

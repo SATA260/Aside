@@ -244,7 +244,31 @@ fn open_mini(app: &AppHandle) -> tauri::Result<()> {
     move_to(&w, x, y)?;
     #[cfg(target_os = "macos")]
     float_over_fullscreen_apps(&w)?;
+    watch_click_through(w.clone());
     w.show()
+}
+
+/// 鼠标不在胶囊上时，让点击穿透到下面的窗口。
+fn watch_click_through(window: WebviewWindow) {
+    std::thread::spawn(move || {
+        let mut ignoring = false;
+        let pill = layout::Rect { x: 16.0, y: 16.0, w: 248.0, h: 56.0 };
+        loop {
+            let (Ok(cursor), Ok(origin), Ok(scale)) = (window.cursor_position(), window.outer_position(), window.scale_factor()) else {
+                break;
+            };
+            let x = (cursor.x - origin.x as f64) / scale;
+            let y = (cursor.y - origin.y as f64) / scale;
+            let capture = layout::capture_click((x, y), &[pill]);
+            if capture == ignoring {
+                if window.set_ignore_cursor_events(!capture).is_err() {
+                    break;
+                }
+                ignoring = !capture;
+            }
+            std::thread::sleep(std::time::Duration::from_millis(40));
+        }
+    });
 }
 
 const COURSE_BAR: f64 = 52.0;

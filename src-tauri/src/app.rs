@@ -279,6 +279,17 @@ impl Aside {
         Ok(self.data_dir.join(row.file))
     }
 
+    pub fn characters(&self) -> Vec<crate::character::Character> {
+        crate::character::list(&self.data_dir)
+    }
+
+    pub fn import_character(&self, path: &std::path::Path) -> AppResult<crate::character::Character> {
+        let character = crate::character::install(&self.data_dir, path)?;
+        self.edit_settings(|s| s.character = character.id.clone())?;
+        self.data_changed();
+        Ok(character)
+    }
+
     pub fn lecture_bookmarks(&self) -> Vec<crate::lecture::Bookmark> {
         crate::lecture::bookmarks()
     }

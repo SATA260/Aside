@@ -86,6 +86,8 @@ pub struct Settings {
     pub lecture_url: String,
     /// 视频暂停时，计时也暂停。默认关
     pub video_pause: bool,
+    /// 浮窗样式：gaga、capsule，或导入形象的文件夹名
+    pub character: String,
 }
 
 impl Default for Settings {
@@ -117,6 +119,7 @@ impl Default for Settings {
             week_prompted: String::new(),
             lecture_url: String::new(),
             video_pause: false,
+            character: "gaga".into(),
         }
     }
 }
@@ -131,6 +134,9 @@ impl Settings {
         let imported = crate::media::user_sound_id(&self.ambient).is_some();
         if !self.ambient.is_empty() && !builtin && !imported {
             self.ambient.clear();
+        }
+        if !crate::character::keep_character(&self.character) {
+            self.character = "gaga".into();
         }
         self
     }

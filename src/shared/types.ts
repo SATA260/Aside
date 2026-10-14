@@ -87,6 +87,15 @@ export interface Settings {
   lecture_url: string;
   /** 视频暂停时，计时也暂停 */
   video_pause: boolean;
+  /** 浮窗样式：gaga、capsule，或导入形象的 id */
+  character: string;
+}
+
+export interface CharacterInfo {
+  id: string;
+  name: string;
+  builtin: boolean;
+  dir: string;
 }
 
 export type ShortcutAction = "toggle" | "display";

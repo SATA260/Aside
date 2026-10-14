@@ -11,6 +11,7 @@ import type {
   WeekPrompt,
   WeekReport,
   Bookmark,
+  CharacterInfo,
   Session,
   SessionPatch,
   Settings,
@@ -77,6 +78,10 @@ export const api = {
     deleteSound: (id: number) => call<null>("media_delete_sound", { id }),
     renameImage: (id: number, name: string) => call<null>("media_rename_image", { id, name }),
     deleteImage: (id: number) => call<null>("media_delete_image", { id }),
+  },
+  character: {
+    list: () => call<CharacterInfo[]>("characters_list"),
+    import: (path: string) => call<CharacterInfo>("character_import", { url: path }),
   },
   lecture: {
     bookmarks: () => call<Bookmark[]>("lecture_bookmarks"),

@@ -1,10 +1,11 @@
 import { type CSSProperties, useEffect, useState } from "react";
+import { importCharacter } from "../../features/character/import";
 import { isMac } from "../../features/shortcuts/keys";
 import { ShortcutField } from "../../features/shortcuts/ShortcutField";
 import { api } from "../../shared/api";
 import { configureSfx, play } from "../../shared/sfx";
 import { useApp } from "../../shared/state";
-import type { Settings, ThemeName } from "../../shared/types";
+import type { CharacterInfo, Settings, ThemeName } from "../../shared/types";
 import { Segmented } from "../../shared/ui/controls";
 import { Slider, Switch } from "../../shared/ui/Switch";
 import { attempt } from "../../shared/ui/toast";
@@ -20,9 +21,14 @@ const THEMES: { value: ThemeName; label: string; swatch: string }[] = [
 export function SettingsPage() {
   const settings = useApp((s) => s.settings);
   const [autostart, setAutostart] = useState<boolean | null>(null);
+  const [characters, setCharacters] = useState<CharacterInfo[]>([]);
+  const dataVersion = useApp((s) => s.dataVersion);
   useEffect(() => {
     void attempt(api.autostart.get()).then((on) => on !== undefined && setAutostart(on));
   }, []);
+  useEffect(() => {
+    void api.character.list().then(setCharacters).catch(() => setCharacters([]));
+  }, [dataVersion]);
   if (!settings) return <div className="page" />;
   const update = (patch: Partial<Settings>) => attempt(api.settings.update(patch));
 
@@ -174,6 +180,38 @@ export function SettingsPage() {
           ) : (
             <p className="hint">开始专注时提示一次“可以按 Win+N 打开勿扰”，可以点“不再提示”。</p>
           )}
+        </section>
+
+        <section className="settings-group">
+          <h3>浮窗</h3>
+          <div className="settings-row">
+            <div>
+              <div>样式</div>
+              <div className="hint">胶囊不显示形象。空白处的点击会穿到下面的窗口</div>
+            </div>
+            <div className="atmo-picks">
+              {characters.map((item) => (
+                <button
+                  type="button"
+                  key={item.id}
+                  className={(settings.character || "gaga") === item.id ? "on" : ""}
+                  onClick={() => void update({ character: item.id })}
+                >
+                  {item.name}
+                </button>
+              ))}
+              <button
+                type="button"
+                className={settings.character === "capsule" ? "on" : ""}
+                onClick={() => void update({ character: "capsule" })}
+              >
+                胶囊
+              </button>
+              <button type="button" onClick={() => void attempt(importCharacter())}>
+                导入形象
+              </button>
+            </div>
+          </div>
         </section>
 
         <section className="settings-group">

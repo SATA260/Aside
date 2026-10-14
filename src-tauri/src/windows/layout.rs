@@ -35,6 +35,12 @@ pub const MINI_H: f64 = 88.0;
 const MINI_RIGHT: f64 = 24.0;
 const MINI_TOP: f64 = 56.0;
 
+/// 鼠标在窗口里时，只有落在胶囊或形象上才收下点击，旁边的空白穿透到下面的窗口。
+pub fn capture_click(cursor: (f64, f64), interactive: &[Rect]) -> bool {
+    let (x, y) = cursor;
+    interactive.iter().any(|r| x >= r.x && y >= r.y && x < r.x + r.w && y < r.y + r.h)
+}
+
 /// 浮窗放在哪：上次的位置还在某块屏幕上就用它，否则放在主屏右上角。
 /// `size` 和屏幕坐标用同样的单位。
 pub fn mini_spot(saved: Option<(f64, f64)>, size: (f64, f64), screens: &[Rect], primary: Option<Rect>) -> (f64, f64) {
@@ -72,6 +78,14 @@ mod tests {
     fn timer_goes_on_the_primary_screen_and_the_others_stay_blank() {
         let spots = overlay_spots(&[LEFT, RIGHT], Some(RIGHT));
         assert_eq!(summary(&spots), [("overlay-0", 1470.0, false), ("overlay-1", 0.0, true)]);
+    }
+
+    #[test]
+    fn clicks_outside_the_capsule_pass_through() {
+        let pill = Rect { x: 16.0, y: 16.0, w: 248.0, h: 56.0 };
+        assert!(capture_click((20.0, 20.0), &[pill]));
+        assert!(!capture_click((2.0, 2.0), &[pill]));
+        assert!(!capture_click((300.0, 40.0), &[pill]));
     }
 
     #[test]

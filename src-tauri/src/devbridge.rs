@@ -145,6 +145,26 @@ pub fn serve(app: Arc<Aside>, addr: &str, hub: Option<Arc<Hub>>, clock: Option<A
                 let _ = request.respond(json_response(response));
                 return;
             }
+            if request.method() == &Method::Get && let Some(rest) = path.strip_prefix("/characters/") {
+                let mut parts = rest.split('/');
+                let id = parts.next().unwrap_or("");
+                let file = parts.next().unwrap_or("");
+                let safe = parts.next().is_none()
+                    && crate::character::allowed_file(file)
+                    && !id.is_empty()
+                    && !id.starts_with('.')
+                    && !id.contains("..");
+                if safe {
+                    let path = app.data_dir.join("characters").join(id).join(file);
+                    if let Ok(bytes) = std::fs::read(&path) {
+                        let mime = Header::from_bytes("Content-Type", "image/png").unwrap();
+                        let _ = request.respond(Response::from_data(bytes).with_header(mime));
+                        return;
+                    }
+                }
+                let _ = request.respond(json_response(json!({ "ok": false, "error": "没有这张图" })));
+                return;
+            }
             if request.method() == &Method::Get && let Some(id) = path.strip_prefix("/media/image/") {
                 let response = match id.parse::<i64>().ok().and_then(|id| app.picture_file(id).ok()) {
                     Some(file) => {
@@ -228,7 +248,8 @@ fn import_upload(app: &Aside, kind: &str, name: &str, bytes: &[u8]) -> Value {
     let result = match kind {
         "sound" => app.import_sound(&path, None).and_then(|v| Ok(serde_json::to_value(v)?)),
         "image" => app.import_picture(&path, None).and_then(|v| Ok(serde_json::to_value(v)?)),
-        _ => Err(crate::error::AppError::Invalid("不知道要导入声音还是图片".into())),
+        "character" => app.import_character(&path).and_then(|v| Ok(serde_json::to_value(v)?)),
+        _ => Err(crate::error::AppError::Invalid("不知道要导入哪一种".into())),
     };
     let _ = std::fs::remove_file(&path);
     match result {

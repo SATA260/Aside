@@ -231,6 +231,8 @@ pub fn dispatch(app: &Aside, cmd: &str, input: Value, caller: &str) -> AppResult
         "stats_overview" => ok(app.stats_overview()?),
         "stats_week" => ok(app.stats_week(args::<DateArg>(input)?.date)?),
         "week_prompt" => ok(app.week_prompt()?),
+        "characters_list" => ok(app.characters()),
+        "character_import" => ok(app.import_character(Path::new(&args::<UrlArg>(input)?.url))?),
         "lecture_bookmarks" => ok(app.lecture_bookmarks()),
         "lecture_go" => ok(app.lecture_go(&args::<UrlArg>(input)?.url)?),
         "lecture_video" => {

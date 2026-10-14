@@ -1,5 +1,5 @@
 import { type CSSProperties, type ReactNode, useEffect, useState } from "react";
-import { Penguin, useReduceMotion } from "../../features/character/Penguin";
+import { Penguin, usePack, useReduceMotion } from "../../features/character/Penguin";
 import { pose } from "../../features/character/pose";
 import { SoundChoices } from "../../features/atmosphere/library";
 import { bigTime, horizon } from "../../features/timer/overlay";
@@ -19,6 +19,7 @@ export function MiniView() {
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [atmo, setAtmo] = useState(false);
   const reduce = useReduceMotion();
+  const pack = usePack();
   const paused = timer?.phase === "paused";
 
   useEffect(() => {
@@ -65,7 +66,7 @@ export function MiniView() {
         data-tauri-drag-region
       >
         <Dot color={timer.subject?.color} />
-        <Penguin pose={pose(timer.phase, timer.remaining_ms, reduce)} size={40} />
+        {pack.show && <Penguin pose={pose(timer.phase, timer.remaining_ms, reduce)} size={40} pack={pack.id} dir={pack.dir} />}
         <span className="name wk" data-tauri-drag-region>
           {name}
         </span>

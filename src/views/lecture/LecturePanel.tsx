@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { SoundChoices } from "../../features/atmosphere/library";
 import { bigTime, horizon } from "../../features/timer/overlay";
 import { api } from "../../shared/api";
+import { on } from "../../shared/ipc";
 import { clock, durationText } from "../../shared/format";
 import { play } from "../../shared/sfx";
 import { setTimer, useApp } from "../../shared/state";
@@ -17,8 +18,10 @@ export function LecturePanel() {
   const [draft, setDraft] = useState("");
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [atmo, setAtmo] = useState(false);
+  const [only, setOnly] = useState(false);
   const [confirmEnd, setConfirmEnd] = useState(false);
 
+  useEffect(() => on<{ on: boolean }>("lecture:video", (payload) => setOnly(payload.on)), []);
   useEffect(() => {
     void api.lecture.bookmarks().then(setBookmarks);
   }, []);
@@ -111,6 +114,17 @@ export function LecturePanel() {
               </button>
               <button type="button" onClick={() => setAtmo((v) => !v)}>
                 氛围
+              </button>
+              <button
+                type="button"
+                className={only ? "on" : ""}
+                onClick={() => {
+                  play("tap");
+                  const time = big ? clock(big.ms, big.round) : "";
+                  void attempt(api.lecture.video(!only, time));
+                }}
+              >
+                {only ? "退出只看视频" : "只看视频"}
               </button>
               <button type="button" className="end" onClick={end}>
                 {confirmEnd ? "再点一次结束" : "结束"}

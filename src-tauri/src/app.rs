@@ -33,6 +33,8 @@ pub struct Aside {
     /// 背景音在单独的线程里播，因为声卡对象不能跨线程。
     ambient_tx: Mutex<Option<Sender<AmbientCmd>>>,
     ambient_id: Mutex<String>,
+    /// 网课窗口正在“只看视频”
+    video_only: std::sync::atomic::AtomicBool,
 }
 
 enum AmbientCmd {
@@ -110,6 +112,7 @@ impl Aside {
             settings: RwLock::new(settings.clone()),
             ambient_tx: Mutex::new(None),
             ambient_id: Mutex::new(String::new()),
+            video_only: std::sync::atomic::AtomicBool::new(false),
         };
         app.sync_ambient(&settings);
         app.recover_timer()?;
@@ -281,6 +284,16 @@ impl Aside {
         self.edit_settings(|s| s.lecture_url = url.clone())?;
         self.shell.open_course(&url);
         Ok(url)
+    }
+
+    pub fn is_video_only(&self) -> bool {
+        self.video_only.load(std::sync::atomic::Ordering::Relaxed)
+    }
+
+    pub fn lecture_video(&self, on: bool, time: &str) {
+        self.video_only.store(on, std::sync::atomic::Ordering::Relaxed);
+        self.shell.eval_course(&crate::lecture::video_script(time, on));
+        self.events.emit("lecture:video", json!({ "on": on }));
     }
 
     /// 开始或结束专注时，按系统去开、关勿扰。名字没填就什么都不做。

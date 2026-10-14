@@ -109,6 +109,10 @@ impl Shell for DevShell {
     fn open_course(&self, url: &str) {
         self.hub.emit("dev:course", json!({ "url": url }));
     }
+
+    fn eval_course(&self, script: &str) {
+        self.hub.emit("dev:eval", json!({ "script": script }));
+    }
 }
 
 fn json_response(value: Value) -> Response<std::io::Cursor<Vec<u8>>> {

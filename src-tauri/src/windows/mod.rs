@@ -106,6 +106,15 @@ impl Shell for TauriShell {
             let _ = crate::windows::show_course(&window, url);
         }
     }
+
+    fn eval_course(&self, script: &str) {
+        if let Some(view) = self.app.get_webview("course") {
+            let _ = view.eval(script);
+        }
+        if let Some(window) = self.app.get_window("lecture") {
+            let _ = crate::windows::place_course(&window);
+        }
+    }
 }
 
 pub fn show_main(app: &AppHandle) -> tauri::Result<()> {
@@ -289,6 +298,15 @@ pub(crate) fn place_course(window: &tauri::Window) -> tauri::Result<()> {
     let scale = window.scale_factor()?;
     let width = size.width as f64 / scale;
     let height = size.height as f64 / scale;
+    let fill = window
+        .app_handle()
+        .try_state::<Arc<Aside>>()
+        .is_some_and(|aside| aside.is_video_only());
+    if fill {
+        view.set_position(tauri::LogicalPosition::new(0.0, 0.0))?;
+        view.set_size(tauri::LogicalSize::new(width.max(320.0), height.max(240.0)))?;
+        return Ok(());
+    }
     view.set_position(tauri::LogicalPosition::new(0.0, COURSE_BAR))?;
     view.set_size(tauri::LogicalSize::new((width - COURSE_SIDE).max(320.0), (height - COURSE_BAR).max(240.0)))?;
     Ok(())

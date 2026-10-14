@@ -37,6 +37,68 @@ pub fn course_url(raw: &str) -> Result<String, String> {
     }
 }
 
+/// 注入到课程网页里：铺满正在播放、面积最大的视频，右侧留一条时间。`on` 为假时撤掉。
+pub fn video_script(time: &str, on: bool) -> String {
+    let time = time.replace('\\', "").replace('\'', "");
+    if !on {
+        return "(() => { document.documentElement.classList.remove('aside-video'); document.getElementById('aside-style')?.remove(); document.getElementById('aside-bar')?.remove(); window.__asideOff?.(); })();".into();
+    }
+    format!(
+        r#"( () => {{
+  const clear = () => {{
+    document.documentElement.classList.remove("aside-video");
+    document.getElementById("aside-style")?.remove();
+    document.getElementById("aside-bar")?.remove();
+    window.__asideOff?.();
+  }};
+  const videos = Array.from(document.querySelectorAll("video"));
+  const playing = videos.filter((video) => !video.paused && !video.ended && video.readyState >= 2);
+  let best = null;
+  let area = 0;
+  for (const video of playing) {{
+    const box = video.getBoundingClientRect();
+    const size = Math.max(box.width * box.height, video.videoWidth * video.videoHeight);
+    if (size >= area) {{ area = size; best = video; }}
+  }}
+  clear();
+  if (!best) {{
+    const note = document.createElement("div");
+    note.id = "aside-bar";
+    note.textContent = "这个页面上没有找到正在播放的视频";
+    note.style.cssText = "position:fixed;right:16px;top:16px;z-index:2147483647;color:#fff;font:14px sans-serif;";
+    document.body.appendChild(note);
+    return;
+  }}
+  best.classList.add("aside-focus");
+  const style = document.createElement("style");
+  style.id = "aside-style";
+  style.textContent = "html.aside-video body{{visibility:hidden}} .aside-focus{{visibility:visible!important;position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;z-index:2147483646;object-fit:contain;background:#000}} #aside-bar{{position:fixed;top:0;right:0;bottom:0;width:72px;z-index:2147483647;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.35);color:#fff;font:20px sans-serif;opacity:1;transition:opacity .4s}} #aside-bar.idle{{opacity:0}}";
+  document.documentElement.classList.add("aside-video");
+  document.documentElement.appendChild(best);
+  document.documentElement.appendChild(style);
+  const bar = document.createElement("div");
+  bar.id = "aside-bar";
+  bar.textContent = "{time}";
+  document.documentElement.appendChild(bar);
+  let idle;
+  const wake = () => {{ bar.classList.remove("idle"); clearTimeout(idle); idle = setTimeout(() => bar.classList.add("idle"), 3000); }};
+  window.addEventListener("mousemove", wake);
+  const onKey = (event) => {{
+    if (event.key === "Escape") {{
+      clear();
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("mousemove", wake);
+      const invoke = window.__TAURI_INTERNALS__ && window.__TAURI_INTERNALS__.invoke;
+      if (invoke) invoke("call", {{ cmd: "lecture_video", args: {{ on: false, time: "" }} }});
+    }}
+  }};
+  window.addEventListener("keydown", onKey);
+  window.__asideOff = () => {{ window.removeEventListener("keydown", onKey); window.removeEventListener("mousemove", wake); }};
+  wake();
+}} )();"#
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -54,5 +116,17 @@ mod tests {
         assert!(course_url("javascript:alert(1)").unwrap_err().contains("http"));
         assert!(course_url("  ").is_err());
         assert!(course_url("not a url").is_err());
+    }
+
+    #[test]
+    fn video_only_keeps_the_largest_playing_video_and_escape_leaves_it() {
+        let on = video_script("32:48", true);
+        assert!(on.contains("32:48"));
+        assert!(on.contains("video"));
+        assert!(on.contains("Escape"));
+        assert!(on.contains("这个页面上没有找到正在播放的视频"));
+        let off = video_script("", false);
+        assert!(off.contains("aside-video"));
+        assert!(!off.contains("32:48"));
     }
 }

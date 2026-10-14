@@ -81,5 +81,6 @@ export const api = {
   lecture: {
     bookmarks: () => call<Bookmark[]>("lecture_bookmarks"),
     go: (url: string) => call<string>("lecture_go", { url }),
+    video: (on: boolean, time: string) => call<null>("lecture_video", { on, time }),
   },
 };

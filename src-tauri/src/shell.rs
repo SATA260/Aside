@@ -19,6 +19,8 @@ pub trait Shell: Send + Sync {
     fn focus_shortcut(&self, name: &str) -> Result<(), String>;
     /// 在网课窗口里打开课程网页。窗口还没出现时由 `open_view("lecture")` 负责。
     fn open_course(&self, url: &str);
+    /// 往课程网页里注入一段脚本。没有课程网页时什么都不做。
+    fn eval_course(&self, script: &str);
 }
 
 /// 只把调用记下来，测试用。
@@ -119,5 +121,9 @@ impl Shell for RecordingShell {
 
     fn open_course(&self, url: &str) {
         self.calls.lock().unwrap().push(format!("course:{url}"));
+    }
+
+    fn eval_course(&self, script: &str) {
+        self.calls.lock().unwrap().push(format!("eval:{script}"));
     }
 }

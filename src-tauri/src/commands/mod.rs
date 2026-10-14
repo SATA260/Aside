@@ -129,18 +129,29 @@ struct VideoOnly {
 }
 
 #[derive(Deserialize)]
+struct VideoPlaying {
+    #[serde(default)]
+    playing: Option<bool>,
+    #[serde(default)]
+    exit: bool,
+}
+
+#[derive(Deserialize)]
 struct RenameMedia {
     id: i64,
     name: String,
 }
 
 /// `caller` 是发起调用的窗口标签，比如 `main`、`overlay-0`、`mini`。
-pub fn dispatch(app: &Aside, cmd: &str, input: Value, _caller: &str) -> AppResult<Value> {
+pub fn dispatch(app: &Aside, cmd: &str, input: Value, caller: &str) -> AppResult<Value> {
     let input = if input.is_null() {
         Value::Object(Default::default())
     } else {
         input
     };
+    if caller == "course" && cmd != "video_playing" {
+        return Err(AppError::Invalid("这个页面只能告诉计时器视频是否在播放".into()));
+    }
     match cmd {
         "timer_view" => ok(app.timer_view()),
         "timer_start" => ok(app.timer_start(args::<StartArgs>(input)?)?),
@@ -227,6 +238,10 @@ pub fn dispatch(app: &Aside, cmd: &str, input: Value, _caller: &str) -> AppResul
             app.lecture_video(a.on, &a.time);
             ok(())
         }
+        "video_playing" => {
+            let a: VideoPlaying = args(input)?;
+            ok(app.video_playing(a.playing, a.exit)?)
+        }
         "stats_days" => {
             let a: Range = args(input)?;
             ok(app.stats_days(a.from, a.to)?)
@@ -239,12 +254,12 @@ pub fn dispatch(app: &Aside, cmd: &str, input: Value, _caller: &str) -> AppResul
 #[tauri::command]
 pub async fn call(
     state: tauri::State<'_, Arc<Aside>>,
-    window: tauri::Window,
+    webview: tauri::Webview,
     cmd: String,
     args: Option<Value>,
 ) -> Result<Value, String> {
     let app = state.inner().clone();
-    let caller = window.label().to_string();
+    let caller = webview.label().to_string();
     tauri::async_runtime::spawn_blocking(move || {
         dispatch(&app, &cmd, args.unwrap_or(Value::Null), &caller)
     })

@@ -85,6 +85,8 @@ export interface Settings {
   week_prompted: string;
   /** 网课窗口上次打开的地址。空着就显示书签 */
   lecture_url: string;
+  /** 视频暂停时，计时也暂停 */
+  video_pause: boolean;
 }
 
 export type ShortcutAction = "toggle" | "display";

@@ -84,6 +84,8 @@ pub struct Settings {
     pub week_prompted: String,
     /// 网课窗口上次打开的地址。空着就显示书签
     pub lecture_url: String,
+    /// 视频暂停时，计时也暂停。默认关
+    pub video_pause: bool,
 }
 
 impl Default for Settings {
@@ -114,6 +116,7 @@ impl Default for Settings {
             dnd_hint: true,
             week_prompted: String::new(),
             lecture_url: String::new(),
+            video_pause: false,
         }
     }
 }

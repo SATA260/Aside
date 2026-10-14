@@ -37,7 +37,17 @@ pub fn course_url(raw: &str) -> Result<String, String> {
     }
 }
 
-/// 注入到课程网页里：铺满正在播放、面积最大的视频，右侧留一条时间。`on` 为假时撤掉。
+/// 课程网页里只允许调用这一个命令：视频播放状态，或者退出只看视频。
+pub const PAUSE_SCRIPT: &str = r#"( () => {
+  if (window.__asidePause) return;
+  window.__asidePause = true;
+  const send = (playing) => {
+    const invoke = window.__TAURI_INTERNALS__ && window.__TAURI_INTERNALS__.invoke;
+    if (invoke) invoke("call", { cmd: "video_playing", args: { playing } });
+  };
+  document.addEventListener("play", (event) => { if (event.target && event.target.tagName === "VIDEO") send(true); }, true);
+  document.addEventListener("pause", (event) => { if (event.target && event.target.tagName === "VIDEO") send(false); }, true);
+} )();"#;
 pub fn video_script(time: &str, on: bool) -> String {
     let time = time.replace('\\', "").replace('\'', "");
     if !on {
@@ -89,7 +99,7 @@ pub fn video_script(time: &str, on: bool) -> String {
       window.removeEventListener("keydown", onKey);
       window.removeEventListener("mousemove", wake);
       const invoke = window.__TAURI_INTERNALS__ && window.__TAURI_INTERNALS__.invoke;
-      if (invoke) invoke("call", {{ cmd: "lecture_video", args: {{ on: false, time: "" }} }});
+      if (invoke) invoke("call", {{ cmd: "video_playing", args: {{ exit: true }} }});
     }}
   }};
   window.addEventListener("keydown", onKey);

@@ -177,6 +177,21 @@ export function SettingsPage() {
         </section>
 
         <section className="settings-group">
+          <h3>网课</h3>
+          <div className="settings-row">
+            <div>
+              <div>视频暂停时计时也暂停</div>
+              <div className="hint">默认关闭。课程页面只能把播放和暂停告诉计时器</div>
+            </div>
+            <Switch
+              label="视频暂停时计时也暂停"
+              on={!!settings.video_pause}
+              onChange={(video_pause) => void update({ video_pause })}
+            />
+          </div>
+        </section>
+
+        <section className="settings-group">
           <h3>启动</h3>
           <div className="settings-row">
             <div>

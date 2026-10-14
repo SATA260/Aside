@@ -1,9 +1,13 @@
 use std::sync::Arc;
 
-use aside_lib::app::Aside;
+use aside_lib::app::{Aside, StartArgs};
 use aside_lib::clock::ManualClock;
+use aside_lib::commands::dispatch;
 use aside_lib::events::RecordingSink;
 use aside_lib::shell::RecordingShell;
+use aside_lib::store::subjects;
+use aside_lib::timer::{Display, Mode, Phase};
+use serde_json::json;
 
 fn rig() -> (tempfile::TempDir, Arc<Aside>, Arc<RecordingShell>) {
     let dir = tempfile::tempdir().unwrap();
@@ -40,4 +44,28 @@ fn video_only_injects_a_script_that_can_be_cleared() {
     app.lecture_video(false, "");
     assert!(!app.is_video_only());
     assert!(shell.calls().last().unwrap().contains("aside-video"));
+}
+
+#[test]
+fn a_paused_video_pauses_the_timer_only_when_asked() {
+    let (_dir, app, _shell) = rig();
+    let id = app.store.read(|c| subjects::list(c, false)).unwrap().into_iter().find(|s| s.is_fallback).unwrap().id;
+    app.timer_start(StartArgs {
+        subject_id: id,
+        mode: Mode::Countdown,
+        planned_ms: Some(45 * 60_000),
+        task: String::new(),
+        display: Display::Fullscreen,
+    })
+    .unwrap();
+    app.video_playing(Some(false), false).unwrap();
+    assert_eq!(app.timer_view().snapshot.phase, Phase::Running);
+    app.settings_update(json!({ "video_pause": true })).unwrap();
+    app.video_playing(Some(false), false).unwrap();
+    assert_eq!(app.timer_view().snapshot.phase, Phase::Paused);
+    app.video_playing(Some(true), false).unwrap();
+    assert_eq!(app.timer_view().snapshot.phase, Phase::Running);
+    assert!(dispatch(&app, "timer_finish", serde_json::Value::Null, "course").is_err());
+    assert!(dispatch(&app, "video_playing", json!({ "exit": true }), "course").is_ok());
+    assert!(!app.is_video_only());
 }

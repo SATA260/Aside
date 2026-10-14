@@ -157,10 +157,14 @@ impl Aside {
     }
 
     fn save_settings(&self, next: Settings) -> AppResult<Settings> {
+        let was_linked = self.settings().video_pause;
         self.store.write(|c| store::settings::put(c, SETTINGS_KEY, &next))?;
         *self.settings.write().unwrap_or_else(|e| e.into_inner()) = next.clone();
         self.events.emit(SETTINGS_CHANGED, serde_json::to_value(&next)?);
         self.sync_ambient(&next);
+        if next.video_pause && !was_linked {
+            self.shell.eval_course(crate::lecture::PAUSE_SCRIPT);
+        }
         Ok(next)
     }
 
@@ -294,6 +298,26 @@ impl Aside {
         self.video_only.store(on, std::sync::atomic::Ordering::Relaxed);
         self.shell.eval_course(&crate::lecture::video_script(time, on));
         self.events.emit("lecture:video", json!({ "on": on }));
+    }
+
+    /// 课程网页告诉计时器视频在不在播。设置没开时不动计时。`exit` 退出只看视频。
+    pub fn video_playing(&self, playing: Option<bool>, exit: bool) -> AppResult<()> {
+        if exit {
+            self.lecture_video(false, "");
+        }
+        if !self.settings().video_pause {
+            return Ok(());
+        }
+        match playing {
+            Some(true) => {
+                let _ = self.timer_resume();
+            }
+            Some(false) => {
+                let _ = self.timer_pause();
+            }
+            None => {}
+        }
+        Ok(())
     }
 
     /// 开始或结束专注时，按系统去开、关勿扰。名字没填就什么都不做。

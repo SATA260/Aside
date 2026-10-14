@@ -282,7 +282,17 @@ pub(crate) fn show_course(window: &tauri::Window, raw: &str) -> tauri::Result<()
         view.navigate(parsed)?;
     } else {
         window.add_child(
-            tauri::webview::WebviewBuilder::new("course", WebviewUrl::External(parsed)),
+            tauri::webview::WebviewBuilder::new("course", WebviewUrl::External(parsed)).on_page_load(|webview, payload| {
+                if payload.event() != tauri::webview::PageLoadEvent::Finished {
+                    return;
+                }
+                let Some(aside) = webview.app_handle().try_state::<Arc<Aside>>() else {
+                    return;
+                };
+                if aside.settings().video_pause {
+                    let _ = webview.eval(crate::lecture::PAUSE_SCRIPT);
+                }
+            }),
             tauri::LogicalPosition::new(0.0, COURSE_BAR),
             tauri::LogicalSize::new(800.0, 600.0),
         )?;

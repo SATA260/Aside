@@ -156,7 +156,13 @@ function DayPanel({ date, today, onDate }: { date: DateStr; today: DateStr; onDa
               type="button"
               key={i}
               aria-label="这一段"
-              style={{ left: `${b.left}%`, width: `${b.width}%`, background: b.color } as CSSProperties}
+              style={
+                {
+                  left: `${b.left}%`,
+                  width: `max(1px, ${b.width * 0.35}%)`,
+                  background: b.color,
+                } as CSSProperties
+              }
               onClick={() => setEditing(b.id)}
             />
           ))}

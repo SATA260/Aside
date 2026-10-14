@@ -1,5 +1,6 @@
 //! 本地 SQLite：科目、专注记录、模考分数、导入的声音和图片、设置，以及数据库版本迁移。
 
+pub mod media;
 pub mod sessions;
 pub mod settings;
 pub mod subjects;

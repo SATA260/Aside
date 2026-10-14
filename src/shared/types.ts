@@ -72,9 +72,27 @@ export interface Settings {
   exam_on: boolean;
   /** 考试日期，形如 2026-12-21。空着表示还没填 */
   exam_date: string;
+  /** 用导入的图片当背景。有值时盖过 scene */
+  scene_image: number | null;
+  /** 导入声音时自动对齐响度 */
+  loudness_match: boolean;
 }
 
 export type ShortcutAction = "toggle" | "display";
+
+export interface ImportedSound {
+  id: number;
+  name: string;
+  path: string;
+  gain_db: number;
+  duration_ms: number;
+}
+
+export interface ImportedImage {
+  id: number;
+  name: string;
+  path: string;
+}
 
 /** 本地日期，形如 2026-10-14 */
 export type DateStr = string;

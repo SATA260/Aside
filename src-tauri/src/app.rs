@@ -14,6 +14,7 @@ use crate::audio::{self, Player};
 use crate::clock::Clock;
 use crate::error::AppResult;
 use crate::events::{DATA_CHANGED, EventSink, SETTINGS_CHANGED};
+use crate::media::{self, LoopMode};
 use crate::settings::{Point, Settings};
 use crate::shell::Shell;
 use crate::store::{self, Store, subjects};
@@ -35,6 +36,7 @@ pub struct Aside {
 
 enum AmbientCmd {
     Play { samples: Vec<f32>, volume: f32 },
+    PlayFile { path: PathBuf, gain_db: f32, volume: f32 },
     Once(Vec<f32>),
     Volume(f32),
     Stop,
@@ -48,6 +50,11 @@ fn ambient_thread(rx: mpsc::Receiver<AmbientCmd>) {
                 let player = player.get_or_insert_with(Player::open);
                 player.set_volume(volume);
                 player.switch_to(samples);
+            }
+            AmbientCmd::PlayFile { path, gain_db, volume } => {
+                let player = player.get_or_insert_with(Player::open);
+                player.set_volume(volume);
+                player.switch_live(path, gain_db);
             }
             AmbientCmd::Once(samples) => {
                 let player = player.get_or_insert_with(Player::open);
@@ -173,6 +180,8 @@ impl Aside {
                     samples: audio::builtin::samples(sound),
                     volume: settings.ambient_volume as f32,
                 });
+            } else if let Some(id) = media::user_sound_id(&settings.ambient) {
+                self.play_imported(id, settings.ambient_volume as f32);
             }
         } else {
             self.send_ambient(AmbientCmd::Volume(settings.ambient_volume as f32));
@@ -185,6 +194,81 @@ impl Aside {
 
     pub fn silence_alarm(&self) {
         self.send_ambient(AmbientCmd::Stop);
+    }
+
+    fn play_imported(&self, id: i64, volume: f32) {
+        let Ok(row) = self.store.read(|c| store::media::sound(c, id)) else {
+            return;
+        };
+        let path = self.data_dir.join(&row.file);
+        if media::loop_mode(row.duration_ms) == LoopMode::Seamless {
+            if let Ok(samples) = media::decode_loop(&path, row.gain_db as f32) {
+                self.send_ambient(AmbientCmd::Play { samples, volume });
+            }
+        } else {
+            self.send_ambient(AmbientCmd::PlayFile { path, gain_db: row.gain_db as f32, volume });
+        }
+    }
+
+    pub fn sounds(&self) -> AppResult<Vec<store::media::Sound>> {
+        self.store.read(|c| store::media::list_sounds(c, &self.data_dir))
+    }
+
+    pub fn pictures(&self) -> AppResult<Vec<store::media::Picture>> {
+        self.store.read(|c| store::media::list_pictures(c, &self.data_dir))
+    }
+
+    pub fn import_sound(&self, path: &std::path::Path, name: Option<&str>) -> AppResult<store::media::Sound> {
+        let sound = media::import_sound(&self.store, &self.data_dir, path, name, self.settings().loudness_match)?;
+        self.edit_settings(|s| s.ambient = format!("s:{}", sound.id))?;
+        self.data_changed();
+        Ok(sound)
+    }
+
+    pub fn import_picture(&self, path: &std::path::Path, name: Option<&str>) -> AppResult<store::media::Picture> {
+        let picture = media::import_picture(&self.store, &self.data_dir, path, name)?;
+        self.edit_settings(|s| s.scene_image = Some(picture.id))?;
+        self.data_changed();
+        Ok(picture)
+    }
+
+    pub fn rename_sound(&self, id: i64, name: &str) -> AppResult<()> {
+        let name = media::clean_name(name)?;
+        self.store.write(|c| store::media::rename_sound(c, id, &name))?;
+        self.data_changed();
+        Ok(())
+    }
+
+    pub fn delete_sound(&self, id: i64) -> AppResult<()> {
+        let rel = self.store.write(|c| store::media::delete_sound(c, id))?;
+        media::remove_stored_file(&self.data_dir, &rel);
+        if self.settings().ambient == format!("s:{id}") {
+            self.edit_settings(|s| s.ambient.clear())?;
+        }
+        self.data_changed();
+        Ok(())
+    }
+
+    pub fn rename_picture(&self, id: i64, name: &str) -> AppResult<()> {
+        let name = media::clean_name(name)?;
+        self.store.write(|c| store::media::rename_picture(c, id, &name))?;
+        self.data_changed();
+        Ok(())
+    }
+
+    pub fn delete_picture(&self, id: i64) -> AppResult<()> {
+        let rel = self.store.write(|c| store::media::delete_picture(c, id))?;
+        media::remove_stored_file(&self.data_dir, &rel);
+        if self.settings().scene_image == Some(id) {
+            self.edit_settings(|s| s.scene_image = None)?;
+        }
+        self.data_changed();
+        Ok(())
+    }
+
+    pub fn picture_file(&self, id: i64) -> AppResult<PathBuf> {
+        let row = self.store.read(|c| store::media::picture_file(c, id))?;
+        Ok(self.data_dir.join(row.file))
     }
 
     fn send_ambient(&self, cmd: AmbientCmd) {

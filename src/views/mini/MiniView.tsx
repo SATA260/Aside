@@ -1,5 +1,5 @@
 import { type CSSProperties, type ReactNode, useEffect, useState } from "react";
-import { SOUNDS } from "../../features/atmosphere/catalog";
+import { SoundChoices } from "../../features/atmosphere/library";
 import { bigTime, horizon } from "../../features/timer/overlay";
 import { api } from "../../shared/api";
 import { clock } from "../../shared/format";
@@ -92,16 +92,10 @@ export function MiniView() {
       </div>
       {atmo && (
         <div className="mini-atmo wk">
-          {SOUNDS.map((s) => (
-            <button
-              type="button"
-              key={s.id || "off"}
-              className={settings.ambient === s.id ? "on" : ""}
-              onClick={() => void attempt(api.settings.update({ ambient: s.id }))}
-            >
-              {s.name}
-            </button>
-          ))}
+          <SoundChoices
+            ambient={settings.ambient}
+            onPick={(ambient) => void attempt(api.settings.update({ ambient }))}
+          />
           {(["night", "bamboo", "mist", "dusk", "sky"] as ThemeName[]).map((theme) => (
             <button
               type="button"

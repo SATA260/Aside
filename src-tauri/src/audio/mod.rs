@@ -3,6 +3,7 @@
 //! 没有声卡时安静地什么都不播。
 
 pub mod builtin;
+pub mod fileloop;
 
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -16,10 +17,18 @@ struct Voice {
     samples: Vec<f32>,
     pos: usize,
     once: bool,
+    live: Option<fileloop::LiveFeed>,
 }
 
 impl Voice {
+    fn clip(samples: Vec<f32>, once: bool) -> Self {
+        Self { samples, pos: 0, once, live: None }
+    }
+
     fn next_sample(&mut self) -> f32 {
+        if let Some(live) = self.live.as_mut() {
+            return live.next_sample();
+        }
         if self.samples.is_empty() || (self.once && self.pos >= self.samples.len()) {
             return 0.0;
         }
@@ -44,17 +53,27 @@ impl Engine {
 
     /// 直接换成一段声音，没有渐变。
     pub fn set_clip(&mut self, samples: Vec<f32>) {
-        self.current = Some(Voice { samples, pos: 0, once: false });
+        self.current = Some(Voice::clip(samples, false));
         self.incoming = None;
     }
 
     /// 用两秒交叉渐变换成一段新的声音。
     pub fn switch_to(&mut self, samples: Vec<f32>) {
+        self.switch_voice(Voice::clip(samples, false));
+    }
+
+    /// 换成一个边播边读的长文件，同样用两秒交叉渐变。
+    pub fn switch_live(&mut self, live: fileloop::LiveFeed) {
+        self.switch_voice(Voice { samples: Vec::new(), pos: 0, once: false, live: Some(live) });
+    }
+
+    fn switch_voice(&mut self, voice: Voice) {
         if self.current.is_none() {
-            self.set_clip(samples);
+            self.current = Some(voice);
+            self.incoming = None;
             return;
         }
-        self.incoming = Some(Voice { samples, pos: 0, once: false });
+        self.incoming = Some(voice);
         self.fade_done = 0;
         self.fade_len = (SAMPLE_RATE as f32 * CROSSFADE_SECS) as usize;
     }
@@ -166,8 +185,13 @@ impl Player {
     pub fn play_once(&self, samples: Vec<f32>) {
         let mut engine = self.engine.lock().unwrap_or_else(|e| e.into_inner());
         engine.set_volume(1.0);
-        engine.current = Some(Voice { samples, pos: 0, once: true });
+        engine.current = Some(Voice::clip(samples, true));
         engine.incoming = None;
+    }
+
+    pub fn switch_live(&self, path: std::path::PathBuf, gain_db: f32) {
+        let live = fileloop::LiveFeed::open(path, gain_db);
+        self.engine.lock().unwrap_or_else(|e| e.into_inner()).switch_live(live);
     }
 
     pub fn stop(&self) {

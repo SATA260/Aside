@@ -70,6 +70,10 @@ pub struct Settings {
     pub exam_on: bool,
     /// 考试日期，形如 2026-12-21。空着表示还没填
     pub exam_date: String,
+    /// 导入声音时自动对齐响度
+    pub loudness_match: bool,
+    /// 用导入的图片当背景。有值时盖过 `scene`
+    pub scene_image: Option<i64>,
 }
 
 impl Default for Settings {
@@ -93,6 +97,8 @@ impl Default for Settings {
             ambient_volume: 0.6,
             exam_on: false,
             exam_date: String::new(),
+            loudness_match: true,
+            scene_image: None,
         }
     }
 }
@@ -103,7 +109,9 @@ impl Settings {
         self.sfx_volume = self.sfx_volume.clamp(0.0, 1.0);
         self.daily_goal_ms = self.daily_goal_ms.clamp(0, DAY_MS);
         self.ambient_volume = self.ambient_volume.clamp(0.0, 1.0);
-        if !self.ambient.is_empty() && crate::audio::builtin::get(&self.ambient).is_none() {
+        let builtin = crate::audio::builtin::get(&self.ambient).is_some();
+        let imported = crate::media::user_sound_id(&self.ambient).is_some();
+        if !self.ambient.is_empty() && !builtin && !imported {
             self.ambient.clear();
         }
         self
@@ -139,5 +147,13 @@ mod tests {
         let quiet = Settings { ambient: "rain".into(), ambient_volume: -1.0, ..Settings::default() }.normalized();
         assert_eq!(quiet.ambient, "rain");
         assert_eq!(quiet.ambient_volume, 0.0);
+    }
+
+    #[test]
+    fn an_imported_sound_id_is_kept() {
+        let settings = Settings { ambient: "s:12".into(), ..Settings::default() }.normalized();
+        assert_eq!(settings.ambient, "s:12");
+        let broken = Settings { ambient: "s:nope".into(), ..Settings::default() }.normalized();
+        assert_eq!(broken.ambient, "");
     }
 }

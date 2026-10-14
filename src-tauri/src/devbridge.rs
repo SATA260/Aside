@@ -122,9 +122,32 @@ pub fn serve(app: Arc<Aside>, addr: &str, hub: Option<Arc<Hub>>, clock: Option<A
         let clock = clock.clone();
         std::thread::spawn(move || {
             let url = request.url().to_string();
+            let path = url.split('?').next().unwrap_or("");
+            if request.method() == &Method::Post && path == "/import" {
+                let kind = header(&request, "x-kind");
+                let name = header(&request, "x-name").unwrap_or_else(|| "upload.bin".into());
+                let mut bytes = Vec::new();
+                let _ = request.as_reader().read_to_end(&mut bytes);
+                let response = import_upload(&app, &kind.unwrap_or_default(), &name, &bytes);
+                let _ = request.respond(json_response(response));
+                return;
+            }
+            if request.method() == &Method::Get && let Some(id) = path.strip_prefix("/media/image/") {
+                let response = match id.parse::<i64>().ok().and_then(|id| app.picture_file(id).ok()) {
+                    Some(file) => {
+                        let mime = Header::from_bytes("Content-Type", "image/png").unwrap();
+                        let bytes = std::fs::read(&file).unwrap_or_default();
+                        let _ = request.respond(Response::from_data(bytes).with_header(mime));
+                        return;
+                    }
+                    None => json!({ "ok": false, "error": "没有这张图片" }),
+                };
+                let _ = request.respond(json_response(response));
+                return;
+            }
             let mut body = String::new();
             let _ = request.as_reader().read_to_string(&mut body);
-            let response = match (request.method(), url.split('?').next().unwrap_or("")) {
+            let response = match (request.method(), path) {
                 (Method::Post, "/call") => {
                     let input: Value = serde_json::from_str(&body).unwrap_or(Value::Null);
                     let cmd = input["cmd"].as_str().unwrap_or_default();
@@ -151,5 +174,52 @@ pub fn serve(app: Arc<Aside>, addr: &str, hub: Option<Arc<Hub>>, clock: Option<A
             };
             let _ = request.respond(json_response(response));
         });
+    }
+}
+
+fn header(request: &tiny_http::Request, name: &'static str) -> Option<String> {
+    request
+        .headers()
+        .iter()
+        .find(|h| h.field.equiv(name))
+        .map(|h| h.value.as_str().to_string())
+}
+
+fn percent_decode(raw: &str) -> String {
+    let bytes = raw.as_bytes();
+    let mut out = Vec::with_capacity(bytes.len());
+    let mut i = 0;
+    while i < bytes.len() {
+        if bytes[i] == b'%' && i + 2 < bytes.len() && let Ok(v) = u8::from_str_radix(&raw[i + 1..i + 3], 16) {
+            out.push(v);
+            i += 3;
+            continue;
+        }
+        out.push(if bytes[i] == b'+' { b' ' } else { bytes[i] });
+        i += 1;
+    }
+    String::from_utf8_lossy(&out).into_owned()
+}
+
+fn import_upload(app: &Aside, kind: &str, name: &str, bytes: &[u8]) -> Value {
+    let name = percent_decode(name);
+    let safe = std::path::Path::new(&name).file_name().and_then(|s| s.to_str()).unwrap_or("upload.bin");
+    let dir = app.data_dir.join("inbox");
+    if std::fs::create_dir_all(&dir).is_err() {
+        return json!({ "ok": false, "error": "存不下这份文件" });
+    }
+    let path = dir.join(safe);
+    if std::fs::write(&path, bytes).is_err() {
+        return json!({ "ok": false, "error": "存不下这份文件" });
+    }
+    let result = match kind {
+        "sound" => app.import_sound(&path, None).and_then(|v| Ok(serde_json::to_value(v)?)),
+        "image" => app.import_picture(&path, None).and_then(|v| Ok(serde_json::to_value(v)?)),
+        _ => Err(crate::error::AppError::Invalid("不知道要导入声音还是图片".into())),
+    };
+    let _ = std::fs::remove_file(&path);
+    match result {
+        Ok(value) => json!({ "ok": true, "value": value }),
+        Err(err) => json!({ "ok": false, "error": err.to_string() }),
     }
 }

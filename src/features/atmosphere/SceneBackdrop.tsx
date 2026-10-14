@@ -2,8 +2,8 @@ import { useEffect, useRef } from "react";
 import type { SceneId } from "./catalog";
 import "./scene.css";
 
-/** 全屏背景和氛围面板里的预览用同一张画面。 */
-export function SceneBackdrop({ scene }: { scene: SceneId }) {
+/** 全屏背景和氛围面板里的预览用同一张画面。导入的照片已经压暗、模糊过。 */
+export function SceneBackdrop({ scene, photo }: { scene: SceneId; photo?: string | null }) {
   const ref = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -57,6 +57,14 @@ export function SceneBackdrop({ scene }: { scene: SceneId }) {
       alive = false;
     };
   }, [scene]);
+
+  if (photo) {
+    return (
+      <div className="scene-bg scene-photo">
+        <img src={photo} alt="" />
+      </div>
+    );
+  }
 
   return (
     <div className={`scene-bg scene-${scene}`}>

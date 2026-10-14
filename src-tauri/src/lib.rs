@@ -8,7 +8,7 @@ pub mod devbridge;
 pub mod error;
 pub mod events;
 mod lecture;
-mod media;
+pub mod media;
 pub mod records;
 pub mod settings;
 pub mod shell;
@@ -54,6 +54,7 @@ pub fn run() {
             let _ = show_main(app);
         }))
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_autostart::Builder::new().app_name("Aside").args([autostart::ARG]).build())
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()

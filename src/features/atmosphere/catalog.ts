@@ -23,3 +23,21 @@ export function nextOf<T extends { id: string }>(list: readonly T[], id: string)
   if (index < 0) return list[0];
   return list[(index + 1) % list.length];
 }
+
+export interface ImportedRef {
+  id: number;
+  name: string;
+}
+
+/** 内置画面后面接上导入的图片，键盘换画面时按这个顺序走。 */
+export function backdrops(images: readonly ImportedRef[]) {
+  return [
+    ...SCENES.map((scene) => ({ id: scene.id, name: scene.name, image: null as number | null })),
+    ...images.map((image) => ({ id: `img:${image.id}`, name: image.name, image: image.id })),
+  ];
+}
+
+/** 内置声音后面接上导入的声音。 */
+export function soundOptions(sounds: readonly ImportedRef[]) {
+  return [...SOUNDS.map((sound) => ({ id: sound.id, name: sound.name })), ...sounds.map((sound) => ({ id: `s:${sound.id}`, name: sound.name }))];
+}

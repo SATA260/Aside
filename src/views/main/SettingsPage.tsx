@@ -91,6 +91,17 @@ export function SettingsPage() {
               }}
             />
           </div>
+          <div className="settings-row">
+            <div>
+              <div>导入时对齐响度</div>
+              <div className="hint">新导入的声音会调到和内置环境音差不多</div>
+            </div>
+            <Switch
+              label="导入时对齐响度"
+              on={settings.loudness_match !== false}
+              onChange={(loudness_match) => void update({ loudness_match })}
+            />
+          </div>
         </section>
 
         <section className="settings-group">

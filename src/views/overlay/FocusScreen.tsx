@@ -1,5 +1,6 @@
 import { type CSSProperties, Fragment, useEffect, useState } from "react";
-import { SCENES, SOUNDS, nextOf } from "../../features/atmosphere/catalog";
+import { backdrops, nextOf, soundOptions } from "../../features/atmosphere/catalog";
+import { SceneChoices, SoundChoices, useLibrary } from "../../features/atmosphere/library";
 import { useAtmoPreview } from "../../features/atmosphere/preview";
 import { bigTime, horizon } from "../../features/timer/overlay";
 import { quoteFor } from "../../features/atmosphere/quotes";
@@ -29,6 +30,7 @@ export function FocusScreen({ timer, settings }: { timer: TimerView; settings: S
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [atmo, setAtmo] = useState(false);
   const [notice, setNotice] = useState("");
+  const { sounds, images } = useLibrary();
 
   useEffect(() => {
     if (!notice) return;
@@ -51,10 +53,13 @@ export function FocusScreen({ timer, settings }: { timer: TimerView; settings: S
     const onKey = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.code === "KeyB") {
-        const next = nextOf(SCENES, settings.scene ?? "sky");
-        choose({ scene: next.id }, next.name);
+        const list = backdrops(images);
+        const current = settings.scene_image != null ? `img:${settings.scene_image}` : (settings.scene ?? "sky");
+        const next = nextOf(list, current);
+        if (next.image != null) choose({ scene_image: next.image }, next.name);
+        else choose({ scene: next.id as Settings["scene"], scene_image: null }, next.name);
       } else if (e.code === "KeyN") {
-        const next = nextOf(SOUNDS, settings.ambient ?? "");
+        const next = nextOf(soundOptions(sounds), settings.ambient ?? "");
         choose({ ambient: next.id }, next.name);
       } else if (e.code === "KeyT") {
         const next = nextOf(THEMES, settings.theme);
@@ -160,31 +165,19 @@ export function FocusScreen({ timer, settings }: { timer: TimerView; settings: S
         <div className="atmo-live wk">
           <div>
             <span>画面</span>
-            {SCENES.map((s) => (
-              <button
-                type="button"
-                key={s.id}
-                className={settings.scene === s.id ? "on" : ""}
-                onMouseEnter={() => useAtmoPreview.setState({ scene: s.id })}
-                onMouseLeave={() => useAtmoPreview.setState({ scene: null })}
-                onClick={() => choose({ scene: s.id }, s.name)}
-              >
-                {s.name}
-              </button>
-            ))}
+            <SceneChoices
+              scene={settings.scene}
+              imageId={settings.scene_image}
+              onScene={(id, name) => choose({ scene: id, scene_image: null }, name)}
+              onImage={(id, name) => choose({ scene_image: id }, name)}
+              onEnterScene={(id) => useAtmoPreview.setState({ scene: id, picture: null })}
+              onEnterImage={(src) => useAtmoPreview.setState({ scene: null, picture: src })}
+              onLeave={() => useAtmoPreview.setState({ scene: null, picture: null })}
+            />
           </div>
           <div>
             <span>声音</span>
-            {SOUNDS.map((s) => (
-              <button
-                type="button"
-                key={s.id || "off"}
-                className={settings.ambient === s.id ? "on" : ""}
-                onClick={() => choose({ ambient: s.id }, s.name)}
-              >
-                {s.name}
-              </button>
-            ))}
+            <SoundChoices ambient={settings.ambient} onPick={(id, name) => choose({ ambient: id }, name)} />
           </div>
           <div>
             <span>风格</span>

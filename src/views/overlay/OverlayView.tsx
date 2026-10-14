@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { SCENES, type SceneId } from "../../features/atmosphere/catalog";
 import { SceneBackdrop } from "../../features/atmosphere/SceneBackdrop";
+import { imageSrc, useLibrary } from "../../features/atmosphere/library";
 import { useAtmoPreview } from "../../features/atmosphere/preview";
 import { api } from "../../shared/api";
 import { on } from "../../shared/ipc";
@@ -30,11 +31,16 @@ export function OverlayView() {
   }, []);
 
   const ended = timer?.phase === "finished" && timer.last;
-  const preview = useAtmoPreview((s) => s.scene);
-  const scene = preview ?? ((SCENES.find((s) => s.id === settings?.scene)?.id ?? "sky") as SceneId);
+  const previewScene = useAtmoPreview((s) => s.scene);
+  const previewPicture = useAtmoPreview((s) => s.picture);
+  const { images } = useLibrary();
+  const scene = (previewScene ?? SCENES.find((s) => s.id === settings?.scene)?.id ?? "sky") as SceneId;
+  const hovering = previewScene !== null || previewPicture !== null;
+  const saved = images.find((picture) => picture.id === settings?.scene_image);
+  const photo = previewPicture ?? (hovering || !saved ? null : imageSrc(saved));
   return (
     <div className={ended ? `overlay ended ${timer.last?.reason}` : "overlay"}>
-      <SceneBackdrop scene={scene} />
+      <SceneBackdrop scene={scene} photo={photo} />
       <div className="sky" />
       {!blank && timer && settings && (timer.phase === "running" || timer.phase === "paused") && (
         <FocusScreen timer={timer} settings={settings} />

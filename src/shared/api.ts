@@ -4,6 +4,8 @@ import type {
   DayTotal,
   DayView,
   DisplayMode,
+  ImportedImage,
+  ImportedSound,
   Outcome,
   Overview,
   Session,
@@ -60,5 +62,15 @@ export const api = {
   },
   alarm: {
     stop: () => call<null>("alarm_stop"),
+  },
+  media: {
+    sounds: () => call<ImportedSound[]>("media_sounds"),
+    images: () => call<ImportedImage[]>("media_images"),
+    importSound: (path: string, name?: string) => call<ImportedSound>("media_import_sound", { path, name }),
+    importImage: (path: string, name?: string) => call<ImportedImage>("media_import_image", { path, name }),
+    renameSound: (id: number, name: string) => call<null>("media_rename_sound", { id, name }),
+    deleteSound: (id: number) => call<null>("media_delete_sound", { id }),
+    renameImage: (id: number, name: string) => call<null>("media_rename_image", { id, name }),
+    deleteImage: (id: number) => call<null>("media_delete_image", { id }),
   },
 };

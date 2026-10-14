@@ -30,6 +30,7 @@ impl Shell for TauriShell {
             "main" => show_main(&self.app),
             "overlay" => open_overlay(&self.app),
             "mini" => open_mini(&self.app),
+            "lecture" => open_lecture(&self.app),
             _ => Ok(()),
         };
         if let Err(e) = result {
@@ -54,6 +55,11 @@ impl Shell for TauriShell {
             "mini" => {
                 if let Some(w) = self.app.get_webview_window("mini") {
                     remember_position(&self.app, &w);
+                    let _ = w.destroy();
+                }
+            }
+            "lecture" => {
+                if let Some(w) = self.app.get_window("lecture") {
                     let _ = w.destroy();
                 }
             }
@@ -92,6 +98,12 @@ impl Shell for TauriShell {
             Ok(())
         } else {
             Err(crate::system::dnd::missing_shortcut(name))
+        }
+    }
+
+    fn open_course(&self, url: &str) {
+        if let Some(window) = self.app.get_window("lecture") {
+            let _ = crate::windows::show_course(&window, url);
         }
     }
 }
@@ -224,6 +236,62 @@ fn open_mini(app: &AppHandle) -> tauri::Result<()> {
     #[cfg(target_os = "macos")]
     float_over_fullscreen_apps(&w)?;
     w.show()
+}
+
+const COURSE_BAR: f64 = 52.0;
+const COURSE_SIDE: f64 = 280.0;
+
+/// 网课窗口：右边是侧栏网页，左边嵌课程网页。登录状态跟着系统网页视图一起留下。
+fn open_lecture(app: &AppHandle) -> tauri::Result<()> {
+    if let Some(w) = app.get_window("lecture") {
+        w.show()?;
+        return w.set_focus();
+    }
+    let window = tauri::window::WindowBuilder::new(app, "lecture")
+        .title("网课")
+        .inner_size(1180.0, 760.0)
+        .min_inner_size(880.0, 600.0)
+        .build()?;
+    window.add_child(
+        tauri::webview::WebviewBuilder::new("lecture-ui", WebviewUrl::App("index.html?view=lecture".into())).auto_resize(),
+        tauri::LogicalPosition::new(0.0, 0.0),
+        tauri::LogicalSize::new(1180.0, 760.0),
+    )?;
+    let saved = app.try_state::<Arc<Aside>>().map(|a| a.settings().lecture_url.clone()).unwrap_or_default();
+    if !saved.is_empty() {
+        show_course(&window, &saved)?;
+    }
+    window.show()?;
+    window.set_focus()
+}
+
+pub(crate) fn show_course(window: &tauri::Window, raw: &str) -> tauri::Result<()> {
+    let Ok(parsed) = url::Url::parse(raw) else {
+        return Ok(());
+    };
+    if let Some(view) = window.app_handle().get_webview("course") {
+        view.navigate(parsed)?;
+    } else {
+        window.add_child(
+            tauri::webview::WebviewBuilder::new("course", WebviewUrl::External(parsed)),
+            tauri::LogicalPosition::new(0.0, COURSE_BAR),
+            tauri::LogicalSize::new(800.0, 600.0),
+        )?;
+    }
+    place_course(window)
+}
+
+pub(crate) fn place_course(window: &tauri::Window) -> tauri::Result<()> {
+    let Some(view) = window.app_handle().get_webview("course") else {
+        return Ok(());
+    };
+    let size = window.inner_size()?;
+    let scale = window.scale_factor()?;
+    let width = size.width as f64 / scale;
+    let height = size.height as f64 / scale;
+    view.set_position(tauri::LogicalPosition::new(0.0, COURSE_BAR))?;
+    view.set_size(tauri::LogicalSize::new((width - COURSE_SIDE).max(320.0), (height - COURSE_BAR).max(240.0)))?;
+    Ok(())
 }
 
 /// 用户在全屏的网课或文档里时，浮窗也要浮在上面，而不是留在桌面那个空间里。

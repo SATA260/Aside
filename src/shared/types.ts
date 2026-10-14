@@ -83,6 +83,8 @@ export interface Settings {
   dnd_hint: boolean;
   /** 已经提示过周报的那个周一 */
   week_prompted: string;
+  /** 网课窗口上次打开的地址。空着就显示书签 */
+  lecture_url: string;
 }
 
 export type ShortcutAction = "toggle" | "display";
@@ -171,6 +173,11 @@ export interface Period {
   total_ms: number;
   days_studied: number;
   subjects: SubjectMs[];
+}
+
+export interface Bookmark {
+  name: string;
+  url: string;
 }
 
 export interface WeekPrompt {

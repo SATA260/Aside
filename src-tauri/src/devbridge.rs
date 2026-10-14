@@ -105,6 +105,10 @@ impl Shell for DevShell {
         self.hub.emit("dev:focus", json!({ "name": name }));
         Ok(())
     }
+
+    fn open_course(&self, url: &str) {
+        self.hub.emit("dev:course", json!({ "url": url }));
+    }
 }
 
 fn json_response(value: Value) -> Response<std::io::Cursor<Vec<u8>>> {

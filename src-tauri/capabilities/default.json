@@ -2,7 +2,7 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Aside's own windows: main, fullscreen overlays, floating window and lecture side panel",
-  "windows": ["main", "overlay-*", "mini", "lecture"],
+    "windows": ["main", "overlay-*", "mini", "lecture", "course"],
   "permissions": [
     "core:default",
     "core:window:allow-start-dragging",

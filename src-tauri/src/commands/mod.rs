@@ -117,6 +117,11 @@ struct ImportPath {
 }
 
 #[derive(Deserialize)]
+struct UrlArg {
+    url: String,
+}
+
+#[derive(Deserialize)]
 struct RenameMedia {
     id: i64,
     name: String,
@@ -208,6 +213,8 @@ pub fn dispatch(app: &Aside, cmd: &str, input: Value, _caller: &str) -> AppResul
         "stats_overview" => ok(app.stats_overview()?),
         "stats_week" => ok(app.stats_week(args::<DateArg>(input)?.date)?),
         "week_prompt" => ok(app.week_prompt()?),
+        "lecture_bookmarks" => ok(app.lecture_bookmarks()),
+        "lecture_go" => ok(app.lecture_go(&args::<UrlArg>(input)?.url)?),
         "stats_days" => {
             let a: Range = args(input)?;
             ok(app.stats_days(a.from, a.to)?)

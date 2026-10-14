@@ -272,6 +272,17 @@ impl Aside {
         Ok(self.data_dir.join(row.file))
     }
 
+    pub fn lecture_bookmarks(&self) -> Vec<crate::lecture::Bookmark> {
+        crate::lecture::bookmarks()
+    }
+
+    pub fn lecture_go(&self, raw: &str) -> AppResult<String> {
+        let url = crate::lecture::course_url(raw).map_err(|msg| crate::error::AppError::Invalid(msg))?;
+        self.edit_settings(|s| s.lecture_url = url.clone())?;
+        self.shell.open_course(&url);
+        Ok(url)
+    }
+
     /// 开始或结束专注时，按系统去开、关勿扰。名字没填就什么都不做。
     pub(crate) fn apply_focus(&self, starting: bool) {
         let settings = self.settings();

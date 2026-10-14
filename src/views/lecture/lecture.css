@@ -1,0 +1,126 @@
+html[data-view="lecture"],
+html[data-view="lecture"] body {
+  background: var(--bg);
+}
+
+.lecture {
+  height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  grid-template-rows: 52px minmax(0, 1fr);
+}
+
+.lecture-bar {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg);
+}
+
+.lecture-bar form {
+  display: flex;
+  flex: 1;
+  gap: 6px;
+  min-width: 0;
+}
+
+.lecture-bar input {
+  flex: 1;
+  min-width: 0;
+}
+
+.lecture-bar button,
+.lecture-marks button,
+.lecture-home button,
+.lecture-actions button,
+.lecture-atmo button {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.lecture-marks {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.lecture-stage {
+  grid-column: 1;
+  grid-row: 2;
+  min-height: 0;
+}
+
+.lecture-home {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 10px;
+  padding: 32px;
+}
+
+.lecture-home button {
+  font-size: 18px;
+  color: var(--text);
+}
+
+.lecture-side {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  border-left: 1px solid var(--line);
+  padding: 20px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: var(--bg);
+}
+
+.lecture-side .who {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lecture-time {
+  font-size: 42px;
+  font-weight: 200;
+  letter-spacing: -0.03em;
+}
+
+.lecture-side .horizon {
+  height: 2px;
+  background: var(--line);
+  position: relative;
+}
+
+.lecture-side .horizon i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: var(--text);
+}
+
+.lecture-side .today,
+.lecture-side .task,
+.lecture-side .hint {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.lecture-actions,
+.lecture-atmo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.lecture-actions .end {
+  color: var(--text);
+}

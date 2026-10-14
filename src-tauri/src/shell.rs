@@ -17,6 +17,8 @@ pub trait Shell: Send + Sync {
     fn set_autostart(&self, on: bool) -> Result<(), String>;
     /// 运行用户在“快捷指令”里建好的专注模式指令。找不到时返回能给用户看的原因。
     fn focus_shortcut(&self, name: &str) -> Result<(), String>;
+    /// 在网课窗口里打开课程网页。窗口还没出现时由 `open_view("lecture")` 负责。
+    fn open_course(&self, url: &str);
 }
 
 /// 只把调用记下来，测试用。
@@ -113,5 +115,9 @@ impl Shell for RecordingShell {
         } else {
             Ok(())
         }
+    }
+
+    fn open_course(&self, url: &str) {
+        self.calls.lock().unwrap().push(format!("course:{url}"));
     }
 }

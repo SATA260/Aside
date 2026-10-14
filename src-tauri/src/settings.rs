@@ -82,6 +82,8 @@ pub struct Settings {
     pub dnd_hint: bool,
     /// 已经提示过周报的那个周一，形如 2026-10-12
     pub week_prompted: String,
+    /// 网课窗口上次打开的地址。空着就显示书签
+    pub lecture_url: String,
 }
 
 impl Default for Settings {
@@ -111,6 +113,7 @@ impl Default for Settings {
             dnd_off: String::new(),
             dnd_hint: true,
             week_prompted: String::new(),
+            lecture_url: String::new(),
         }
     }
 }

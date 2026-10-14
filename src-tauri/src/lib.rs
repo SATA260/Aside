@@ -7,7 +7,7 @@ pub mod commands;
 pub mod devbridge;
 pub mod error;
 pub mod events;
-mod lecture;
+pub mod lecture;
 pub mod media;
 pub mod records;
 pub mod settings;
@@ -98,6 +98,12 @@ pub fn run() {
             Ok(())
         })
         .on_window_event(|window, event| {
+            if let WindowEvent::Resized(_) = event
+                && window.label() == "lecture"
+                && let Some(lecture) = window.app_handle().get_window("lecture")
+            {
+                let _ = windows::place_course(&lecture);
+            }
             // 关掉主窗口只是藏起来，Aside 留在托盘或菜单栏里
             if window.label() == "main"
                 && let WindowEvent::CloseRequested { api, .. } = event

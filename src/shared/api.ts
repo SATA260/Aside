@@ -10,6 +10,7 @@ import type {
   Overview,
   WeekPrompt,
   WeekReport,
+  Bookmark,
   Session,
   SessionPatch,
   Settings,
@@ -76,5 +77,9 @@ export const api = {
     deleteSound: (id: number) => call<null>("media_delete_sound", { id }),
     renameImage: (id: number, name: string) => call<null>("media_rename_image", { id, name }),
     deleteImage: (id: number) => call<null>("media_delete_image", { id }),
+  },
+  lecture: {
+    bookmarks: () => call<Bookmark[]>("lecture_bookmarks"),
+    go: (url: string) => call<string>("lecture_go", { url }),
   },
 };

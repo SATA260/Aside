@@ -66,6 +66,10 @@ pub struct Settings {
     /// 背景音，空字符串表示关掉
     pub ambient: String,
     pub ambient_volume: f64,
+    /// 考研倒计时，默认关掉。只在开始页显示
+    pub exam_on: bool,
+    /// 考试日期，形如 2026-12-21。空着表示还没填
+    pub exam_date: String,
 }
 
 impl Default for Settings {
@@ -87,6 +91,8 @@ impl Default for Settings {
             scene: Scene::Sky,
             ambient: String::new(),
             ambient_volume: 0.6,
+            exam_on: false,
+            exam_date: String::new(),
         }
     }
 }

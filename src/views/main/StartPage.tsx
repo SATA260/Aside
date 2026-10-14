@@ -14,6 +14,8 @@ import {
   TASK_MAX,
   toStartArgs,
 } from "../../features/timer/startForm";
+import { daysUntilExam } from "../../features/atmosphere/quotes";
+import { toDateStr } from "../../features/records/dates";
 import { api } from "../../shared/api";
 import { clock, durationParts, durationText, hm, MINUTE } from "../../shared/format";
 import { play } from "../../shared/sfx";
@@ -75,6 +77,7 @@ function StartFormView({ init, timer, settings }: { init: StartForm; timer: Time
     <div className="page start-page">
       <div className="start-layout">
         <div className="start-form">
+        <ExamLine now={timer.now} settings={settings} />
         <Greeting todayMs={timer.today_ms} />
         {timer.recovered && <RecoveredNotice outcome={timer.recovered} />}
         {active && <ActiveNotice timer={timer} />}
@@ -148,6 +151,13 @@ function StartFormView({ init, timer, settings }: { init: StartForm; timer: Time
       </div>
     </div>
   );
+}
+
+function ExamLine({ now, settings }: { now: number; settings: Settings }) {
+  if (!settings.exam_on || !settings.exam_date) return null;
+  const days = daysUntilExam(toDateStr(new Date(now)), settings.exam_date);
+  if (days == null) return null;
+  return <p className="exam-line">{days === 0 ? "考试就是今天" : `距考试 ${days} 天`}</p>;
 }
 
 function Greeting({ todayMs }: { todayMs: number }) {

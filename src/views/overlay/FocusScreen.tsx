@@ -2,6 +2,8 @@ import { type CSSProperties, Fragment, useEffect, useState } from "react";
 import { SCENES, SOUNDS, nextOf } from "../../features/atmosphere/catalog";
 import { useAtmoPreview } from "../../features/atmosphere/preview";
 import { bigTime, horizon } from "../../features/timer/overlay";
+import { quoteFor } from "../../features/atmosphere/quotes";
+import { toDateStr } from "../../features/records/dates";
 import { api } from "../../shared/api";
 import { clock, durationText, hm, MINUTE } from "../../shared/format";
 import { useDrift, useIdle } from "../../shared/hooks";
@@ -216,7 +218,7 @@ export function FocusScreen({ timer, settings }: { timer: TimerView; settings: S
           <span>{hm(line.from)}</span>
           <span>{hm(line.to)}</span>
         </div>
-        <p className="quote wk">慢慢来，比较快。</p>
+        <p className="quote wk">{quoteFor(toDateStr(new Date(timer.now)))}</p>
       </footer>
       {!idle && <p className="keys-hint">B 画面 · N 声音 · T 风格 · ↑↓ 音量</p>}
     </div>

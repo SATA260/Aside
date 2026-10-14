@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { fullScore, scoreError } from "../../features/timer/mock";
+import { quoteFor } from "../../features/atmosphere/quotes";
+import { toDateStr } from "../../features/records/dates";
 import { api } from "../../shared/api";
 import { durationParts } from "../../shared/format";
 import { setTimer } from "../../shared/state";
@@ -82,7 +84,7 @@ export function EndScreen({ outcome, subject }: { outcome: Outcome; subject: Sub
         </div>
       )}
 
-      <p className="quote wk">今天也坐下来了，这就很好。</p>
+      <p className="quote wk">{quoteFor(toDateStr(new Date(outcome.ended_at || Date.now())))}</p>
     </div>
   );
 }

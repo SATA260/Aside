@@ -112,6 +112,27 @@ export function SettingsPage() {
         </section>
 
         <section className="settings-group">
+          <h3>考试</h3>
+          <div className="settings-row">
+            <div>
+              <div>考研倒计时</div>
+              <div className="hint">只出现在开始页顶部，全屏页里看不到</div>
+            </div>
+            <Switch label="考研倒计时" on={!!settings.exam_on} onChange={(exam_on) => void update({ exam_on })} />
+          </div>
+          <div className="settings-row">
+            <div>考试日期</div>
+            <input
+              className="input small"
+              type="date"
+              aria-label="考试日期"
+              value={settings.exam_date ?? ""}
+              onChange={(e) => void update({ exam_date: e.target.value })}
+            />
+          </div>
+        </section>
+
+        <section className="settings-group">
           <h3>启动</h3>
           <div className="settings-row">
             <div>

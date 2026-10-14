@@ -69,6 +69,9 @@ export interface Settings {
   /** 背景音 id，空字符串表示关掉 */
   ambient: string;
   ambient_volume: number;
+  exam_on: boolean;
+  /** 考试日期，形如 2026-12-21。空着表示还没填 */
+  exam_date: string;
 }
 
 export type ShortcutAction = "toggle" | "display";

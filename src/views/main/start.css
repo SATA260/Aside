@@ -6,8 +6,11 @@
   padding-bottom: clamp(32px, 6vh, 80px);
 }
 
-.start-form {
-  min-width: 0;
+.exam-line {
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: var(--muted);
+  letter-spacing: 0.04em;
 }
 
 .start-layout {

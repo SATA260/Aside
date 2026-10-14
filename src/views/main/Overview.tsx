@@ -7,6 +7,7 @@ import { play } from "../../shared/sfx";
 import { useApp } from "../../shared/state";
 import type { DateStr, Overview as OverviewData, Subject } from "../../shared/types";
 import { Dot } from "../../shared/ui/controls";
+import { WeekCard } from "./WeekCard";
 import { attempt } from "../../shared/ui/toast";
 
 const GOAL_HOURS = [0, 1, 2, 3, 4, 5, 6, 8, 10, 12];
@@ -17,6 +18,7 @@ export function Overview({ today, onOpen }: { today: DateStr; onOpen: (date: Dat
   const [data, setData] = useState<OverviewData | null>(null);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [span, setSpan] = useState<"week" | "month">("week");
+  const [card, setCard] = useState(false);
 
   useEffect(() => {
     let live = true;
@@ -67,7 +69,12 @@ export function Overview({ today, onOpen }: { today: DateStr; onOpen: (date: Dat
       </section>
 
       <section className="card">
-        <h3>这一周</h3>
+        <h3>
+          这一周
+          <button type="button" className="link" onClick={() => setCard(true)}>
+            查看周报
+          </button>
+        </h3>
         <Big ms={data.week.total_ms} />
         <p className="balance">
           {data.week.days_studied > 0 && `学了 ${data.week.days_studied} 天。`}
@@ -134,6 +141,7 @@ export function Overview({ today, onOpen }: { today: DateStr; onOpen: (date: Dat
         </div>
         <p className="balance">这个月学了 {data.month.days_studied} 天</p>
       </section>
+      {card && <WeekCard data={data} subjects={subjects} onClose={() => setCard(false)} />}
     </div>
   );
 }

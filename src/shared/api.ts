@@ -47,6 +47,8 @@ export const api = {
   sessions: {
     setNote: (id: number, note: string) => call<null>("session_set_note", { id, note }),
     day: (date: DateStr) => call<DayView>("day_view", { date }),
+    add: (entry: { subject_id: number; started_at: number; ended_at: number; task?: string; note?: string }) =>
+      call<Session>("session_add", entry),
     update: (id: number, patch: SessionPatch) => call<Session>("session_update", { id, ...patch }),
     remove: (id: number) => call<null>("session_delete", { id }),
   },

@@ -10,6 +10,7 @@ import { Dot } from "../../shared/ui/controls";
 import { attempt } from "../../shared/ui/toast";
 import { Calendar } from "./Calendar";
 import { EntryEditor } from "./EntryEditor";
+import { ManualForm } from "./ManualForm";
 import "./records.css";
 
 const TICKS = [0, 6, 12, 18, 24];
@@ -34,6 +35,7 @@ function DayPanel({ date, today, onDate }: { date: DateStr; today: DateStr; onDa
   const [day, setDay] = useState<DayView | null>(null);
   const [editing, setEditing] = useState<number | null>(null);
   const [picking, setPicking] = useState(false);
+  const [adding, setAdding] = useState(false);
 
   useEffect(() => {
     let live = true;
@@ -43,7 +45,10 @@ function DayPanel({ date, today, onDate }: { date: DateStr; today: DateStr; onDa
     };
   }, [date, dataVersion]);
 
-  useEffect(() => setEditing(null), [date]);
+  useEffect(() => {
+    setEditing(null);
+    setAdding(false);
+  }, [date]);
 
   const go = (d: DateStr) => {
     if (d > today) return;
@@ -86,19 +91,33 @@ function DayPanel({ date, today, onDate }: { date: DateStr; today: DateStr; onDa
             />
           )}
         </div>
-        {day && day.entries.length > 0 && (
-          <div className="sum">
-            学了
-            {durationParts(day.total_ms).map((p) => (
-              <span key={p.unit}>
-                {" "}
-                <b>{p.n}</b> {p.unit}
-              </span>
-            ))}{" "}
-            · {day.entries.length} 段
-          </div>
-        )}
+        <div className="sum">
+          {day && day.entries.length > 0 && (
+            <span>
+              学了
+              {durationParts(day.total_ms).map((p) => (
+                <span key={p.unit}>
+                  {" "}
+                  <b>{p.n}</b> {p.unit}
+                </span>
+              ))}{" "}
+              · {day.entries.length} 段
+            </span>
+          )}
+          <button
+            type="button"
+            className="link"
+            onClick={() => {
+              play("tap");
+              setAdding((v) => !v);
+            }}
+          >
+            ＋ 补记一段
+          </button>
+        </div>
       </div>
+
+      {adding && <ManualForm date={date} onDone={() => setAdding(false)} />}
 
       <div className="timeline">
         {day &&

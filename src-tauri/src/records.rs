@@ -50,6 +50,18 @@ pub struct DayView {
     pub entries: Vec<DayEntry>,
 }
 
+/// 补上一段已经发生的专注。
+#[derive(Debug, Clone, Deserialize)]
+pub struct ManualEntry {
+    pub subject_id: i64,
+    pub started_at: i64,
+    pub ended_at: i64,
+    #[serde(default)]
+    pub task: String,
+    #[serde(default)]
+    pub note: String,
+}
+
 /// 只改给出的字段。改了起止时间的记录按连续学习重算时长。
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct SessionPatch {
@@ -115,15 +127,7 @@ impl Aside {
             let ended = patch.ended_at.unwrap_or(s.ended_at);
             let moving = started != s.started_at || ended != s.ended_at;
             if moving {
-                check_span(started, ended, now)?;
-                if let Some((a, b)) = active {
-                    if overlaps(started, ended, a, b) {
-                        return invalid("和正在进行的专注重叠了");
-                    }
-                }
-                if let Some(other) = sessions::first_overlap(c, started, ended, id)? {
-                    return invalid(conflict_text(c, &other)?);
-                }
+                ensure_free(c, started, ended, id, now, active)?;
             }
             sessions::update_fields(c, &s)?;
             if moving {
@@ -144,6 +148,30 @@ impl Aside {
         view.snapshot.started_at.map(|start| (start, now))
     }
 
+    pub fn session_add(&self, entry: ManualEntry) -> AppResult<Session> {
+        let now = self.clock.now_ms();
+        let active = self.active_wall(now);
+        let session = self.store.write(|c| {
+            if subjects::get(c, entry.subject_id)?.archived {
+                return invalid("这个科目已经归档了");
+            }
+            ensure_free(c, entry.started_at, entry.ended_at, 0, now, active)?;
+            let task = sessions::clean_task(&entry.task)?;
+            let note = sessions::clean_note(&entry.note)?;
+            let id = sessions::insert_manual(
+                c,
+                entry.subject_id,
+                entry.started_at,
+                entry.ended_at,
+                &task,
+                &note,
+            )?;
+            sessions::get(c, id)
+        })?;
+        self.data_changed();
+        Ok(session)
+    }
+
     pub fn session_set_note(&self, id: i64, note: &str) -> AppResult<()> {
         self.store.write(|c| sessions::set_note(c, id, note))?;
         self.data_changed();
@@ -155,6 +183,26 @@ impl Aside {
         self.data_changed();
         Ok(())
     }
+}
+
+fn ensure_free(
+    c: &rusqlite::Connection,
+    started: i64,
+    ended: i64,
+    except: i64,
+    now: i64,
+    active: Option<(i64, i64)>,
+) -> AppResult<()> {
+    check_span(started, ended, now)?;
+    if let Some((a, b)) = active {
+        if overlaps(started, ended, a, b) {
+            return invalid("和正在进行的专注重叠了");
+        }
+    }
+    if let Some(other) = sessions::first_overlap(c, started, ended, except)? {
+        return invalid(conflict_text(c, &other)?);
+    }
+    Ok(())
 }
 
 fn conflict_text(c: &rusqlite::Connection, other: &Session) -> AppResult<String> {

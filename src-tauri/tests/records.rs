@@ -3,7 +3,7 @@ use std::sync::Arc;
 use aside_lib::app::{Aside, StartArgs};
 use aside_lib::clock::ManualClock;
 use aside_lib::events::RecordingSink;
-use aside_lib::records::SessionPatch;
+use aside_lib::records::{ManualEntry, SessionPatch};
 use aside_lib::shell::RecordingShell;
 use aside_lib::timer::{Display, Mode};
 use chrono::{Local, NaiveDate, TimeZone};
@@ -412,6 +412,148 @@ fn an_entry_cannot_move_onto_the_session_in_progress() {
             .started_at,
         at(13, 9, 0)
     );
+}
+
+fn manual(subject_id: i64, start: i64, minutes: i64, note: &str) -> ManualEntry {
+    ManualEntry {
+        subject_id,
+        started_at: start,
+        ended_at: start + minutes * MIN,
+        task: String::new(),
+        note: note.into(),
+    }
+}
+
+#[test]
+fn a_manual_entry_shows_up_on_that_day_as_one_continuous_span() {
+    let e = setup(at(13, 22, 0));
+    let politics = subject(&e.app, "政治");
+    let s = e
+        .app
+        .session_add(manual(politics, at(13, 19, 30), 90, "纸质书"))
+        .unwrap();
+    assert_eq!(s.source, "manual");
+    assert_eq!(s.note, "纸质书");
+    assert_eq!(s.focused_ms, 90 * MIN);
+    assert_eq!(
+        s.segments,
+        vec![aside_lib::timer::Segment {
+            start: at(13, 19, 30),
+            end: at(13, 21, 0)
+        }]
+    );
+    let day = e.app.day_view(date(13)).unwrap();
+    assert_eq!(day.entries.len(), 1);
+    assert_eq!(day.total_ms, 90 * MIN);
+    assert_eq!(
+        e.events.names().last().map(String::as_str),
+        Some("data:changed")
+    );
+}
+
+#[test]
+fn a_manual_entry_may_touch_another_but_not_overlap_it() {
+    let e = setup(at(13, 22, 0));
+    let math = subject(&e.app, "数学");
+    let politics = subject(&e.app, "政治");
+    e.record(math, "", at(13, 19, 0), 30);
+    e.clock.set(at(13, 22, 0));
+
+    let err = e
+        .app
+        .session_add(manual(politics, at(13, 19, 20), 20, ""))
+        .unwrap_err();
+    assert!(err.to_string().contains("数学"), "{}", err);
+    assert!(err.to_string().contains("19:00"), "{}", err);
+    assert_eq!(e.app.day_view(date(13)).unwrap().entries.len(), 1);
+
+    let s = e
+        .app
+        .session_add(manual(politics, at(13, 19, 30), 30, ""))
+        .unwrap();
+    assert_eq!(s.started_at, at(13, 19, 30));
+    assert_eq!(e.app.day_view(date(13)).unwrap().entries.len(), 2);
+}
+
+#[test]
+fn a_manual_entry_cannot_run_past_now_or_outside_one_minute_to_a_day() {
+    let e = setup(at(13, 20, 0));
+    let politics = subject(&e.app, "政治");
+    assert!(
+        e.app
+            .session_add(manual(politics, at(13, 19, 30), 60, ""))
+            .unwrap_err()
+            .to_string()
+            .contains("不能晚于")
+    );
+    assert!(
+        e.app
+            .session_add(manual(politics, at(13, 19, 0), 0, ""))
+            .is_err()
+    );
+    let too_long = ManualEntry {
+        subject_id: politics,
+        started_at: at(12, 18, 0),
+        ended_at: at(12, 18, 0) + 24 * 60 * MIN + MIN,
+        task: String::new(),
+        note: String::new(),
+    };
+    assert!(
+        e.app
+            .session_add(too_long)
+            .unwrap_err()
+            .to_string()
+            .contains("最长 24 小时")
+    );
+    let exact = e
+        .app
+        .session_add(manual(politics, at(13, 19, 0), 60, ""))
+        .unwrap();
+    assert_eq!(exact.focused_ms, 60 * MIN);
+}
+
+#[test]
+fn a_manual_entry_refuses_an_archived_or_unknown_subject_and_a_long_note() {
+    let e = setup(at(13, 22, 0));
+    let politics = subject(&e.app, "政治");
+    e.app.subject_archive(politics).unwrap();
+    assert!(
+        e.app
+            .session_add(manual(politics, at(13, 19, 0), 30, ""))
+            .unwrap_err()
+            .to_string()
+            .contains("归档")
+    );
+    assert!(
+        e.app
+            .session_add(manual(999, at(13, 19, 0), 30, ""))
+            .is_err()
+    );
+    assert!(
+        e.app
+            .session_add(manual(
+                subject(&e.app, "数学"),
+                at(13, 19, 0),
+                30,
+                &"字".repeat(201)
+            ))
+            .is_err()
+    );
+    assert_eq!(e.app.day_view(date(13)).unwrap().entries.len(), 0);
+}
+
+#[test]
+fn a_manual_entry_cannot_overlap_the_session_in_progress() {
+    let e = setup(at(13, 19, 0));
+    let math = subject(&e.app, "数学");
+    e.start(math, "");
+    e.clock.set(at(13, 19, 40));
+    let err = e
+        .app
+        .session_add(manual(subject(&e.app, "政治"), at(13, 19, 10), 20, ""))
+        .unwrap_err();
+    assert!(err.to_string().contains("正在进行"), "{}", err);
+    assert!(e.app.day_view(date(13)).unwrap().entries.is_empty());
 }
 
 #[test]

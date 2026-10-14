@@ -50,6 +50,9 @@
 }
 
 .dayhead .sum {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
   font-size: 13px;
   color: var(--muted);
 }

@@ -11,7 +11,7 @@ use serde_json::Value;
 
 use crate::app::{Aside, StartArgs};
 use crate::error::{AppError, AppResult};
-use crate::records::SessionPatch;
+use crate::records::{ManualEntry, SessionPatch};
 use crate::timer::Display;
 
 fn args<T: DeserializeOwned>(value: Value) -> AppResult<T> {
@@ -104,7 +104,11 @@ struct Range {
 
 /// `caller` 是发起调用的窗口标签，比如 `main`、`overlay-0`、`mini`。
 pub fn dispatch(app: &Aside, cmd: &str, input: Value, _caller: &str) -> AppResult<Value> {
-    let input = if input.is_null() { Value::Object(Default::default()) } else { input };
+    let input = if input.is_null() {
+        Value::Object(Default::default())
+    } else {
+        input
+    };
     match cmd {
         "timer_view" => ok(app.timer_view()),
         "timer_start" => ok(app.timer_start(args::<StartArgs>(input)?)?),
@@ -144,6 +148,7 @@ pub fn dispatch(app: &Aside, cmd: &str, input: Value, _caller: &str) -> AppResul
             ok(app.session_set_note(a.id, &a.note)?)
         }
 
+        "session_add" => ok(app.session_add(args::<ManualEntry>(input)?)?),
         "session_update" => {
             let a: Patch = args(input)?;
             ok(app.session_update(a.id, a.patch)?)

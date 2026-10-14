@@ -156,6 +156,32 @@ pub fn ids_between(c: &Connection, from: i64, to: i64) -> AppResult<Vec<i64>> {
     Ok(rows)
 }
 
+/// 补记一段：从开始到结束连续计算，没有暂停。
+pub fn insert_manual(
+    c: &Connection,
+    subject_id: i64,
+    started: i64,
+    ended: i64,
+    task: &str,
+    note: &str,
+) -> AppResult<i64> {
+    c.execute(
+        "INSERT INTO sessions (subject_id, mode, planned_ms, started_at, ended_at, focused_ms, task, note, source)
+         VALUES (?1, 'countup', NULL, ?2, ?3, ?4, ?5, ?6, 'manual')",
+        params![subject_id, started, ended, ended - started, task, note],
+    )?;
+    let id = c.last_insert_rowid();
+    insert_segments(
+        c,
+        id,
+        &[Segment {
+            start: started,
+            end: ended,
+        }],
+    )?;
+    Ok(id)
+}
+
 /// 和 [start, end) 重叠的第一条记录，`except` 那条除外。首尾相接不算重叠。
 pub fn first_overlap(
     c: &Connection,

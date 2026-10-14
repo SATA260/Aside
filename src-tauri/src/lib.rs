@@ -1,6 +1,7 @@
 pub mod app;
 pub mod audio;
 pub mod autostart;
+pub mod character;
 pub mod clock;
 pub mod commands;
 #[cfg(feature = "devserver")]

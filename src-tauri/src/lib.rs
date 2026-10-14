@@ -1,4 +1,5 @@
 pub mod app;
+pub mod audio;
 pub mod autostart;
 pub mod clock;
 pub mod commands;

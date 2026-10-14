@@ -167,6 +167,10 @@ pub fn dispatch(app: &Aside, cmd: &str, input: Value, _caller: &str) -> AppResul
         "session_delete" => ok(app.session_delete(args::<Id>(input)?.id)?),
         "day_view" => ok(app.day_view(args::<DateArg>(input)?.date)?),
 
+        "alarm_stop" => {
+            app.silence_alarm();
+            ok(())
+        }
         "stats_overview" => ok(app.stats_overview()?),
         "stats_days" => {
             let a: Range = args(input)?;

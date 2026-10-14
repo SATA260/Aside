@@ -234,6 +234,7 @@ impl Aside {
             self.view_of(&st, now)
         };
         self.broadcast(&view);
+        self.silence_alarm();
         self.shell.open_view("main");
         self.shell.close_view("overlay");
         Ok(view)
@@ -351,6 +352,9 @@ impl Aside {
         }
         if outcome.recorded {
             self.data_changed();
+        }
+        if outcome.reason == crate::timer::EndReason::Completed {
+            self.ring();
         }
         if outcome.plan.display != Display::Fullscreen {
             self.shell.open_view("overlay");

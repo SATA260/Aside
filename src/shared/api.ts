@@ -58,4 +58,7 @@ export const api = {
     overview: () => call<Overview>("stats_overview"),
     days: (from: DateStr, to: DateStr) => call<DayTotal[]>("stats_days", { from, to }),
   },
+  alarm: {
+    stop: () => call<null>("alarm_stop"),
+  },
 };

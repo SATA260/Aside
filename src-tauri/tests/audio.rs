@@ -98,6 +98,16 @@ fn every_builtin_sound_decodes_to_audible_audio() {
 }
 
 #[test]
+fn the_chime_grows_louder_and_the_alarm_rings_three_times() {
+    let tone = aside_lib::audio::chime();
+    let rms = |slice: &[f32]| (slice.iter().map(|s| s * s).sum::<f32>() / slice.len() as f32).sqrt();
+    let early = rms(&tone[..SAMPLE_RATE as usize]);
+    let late = rms(&tone[SAMPLE_RATE as usize * 6..SAMPLE_RATE as usize * 7]);
+    assert!(late > early * 2.0, "{late} should be much louder than {early}");
+    assert_eq!(aside_lib::audio::alarm().len(), tone.len() * 3);
+}
+
+#[test]
 fn opening_the_player_works_even_without_a_sound_device() {
     let player = aside_lib::audio::Player::open();
     player.set_volume(0.4);

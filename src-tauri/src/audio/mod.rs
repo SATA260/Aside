@@ -15,11 +15,12 @@ pub const CROSSFADE_SECS: f32 = 2.0;
 struct Voice {
     samples: Vec<f32>,
     pos: usize,
+    once: bool,
 }
 
 impl Voice {
     fn next_sample(&mut self) -> f32 {
-        if self.samples.is_empty() {
+        if self.samples.is_empty() || (self.once && self.pos >= self.samples.len()) {
             return 0.0;
         }
         let sample = self.samples[self.pos % self.samples.len()];
@@ -43,7 +44,7 @@ impl Engine {
 
     /// 直接换成一段声音，没有渐变。
     pub fn set_clip(&mut self, samples: Vec<f32>) {
-        self.current = Some(Voice { samples, pos: 0 });
+        self.current = Some(Voice { samples, pos: 0, once: false });
         self.incoming = None;
     }
 
@@ -53,7 +54,7 @@ impl Engine {
             self.set_clip(samples);
             return;
         }
-        self.incoming = Some(Voice { samples, pos: 0 });
+        self.incoming = Some(Voice { samples, pos: 0, once: false });
         self.fade_done = 0;
         self.fade_len = (SAMPLE_RATE as f32 * CROSSFADE_SECS) as usize;
     }
@@ -115,7 +116,29 @@ impl Source for EngineSource {
     }
 }
 
-/// 背景音播放器。没有声卡时照样能用，只是没有声音。
+/// 到点时的一声：八秒里慢慢响起来。
+pub fn chime() -> Vec<f32> {
+    let total = SAMPLE_RATE as usize * 8;
+    let step = 523.25 / SAMPLE_RATE as f32 * std::f32::consts::TAU;
+    let mut phase = 0.0f32;
+    (0..total)
+        .map(|i| {
+            let env = (i as f32 / total as f32).clamp(0.0, 1.0);
+            let sample = phase.sin() * env * 0.12;
+            phase = (phase + step) % std::f32::consts::TAU;
+            sample
+        })
+        .collect()
+}
+
+/// 同一声连响三次，一次比一次响。
+pub fn alarm() -> Vec<f32> {
+    let tone = chime();
+    [0.4, 0.7, 1.0]
+        .into_iter()
+        .flat_map(|gain| tone.iter().map(move |s| s * gain))
+        .collect()
+}
 pub struct Player {
     engine: Arc<Mutex<Engine>>,
     _output: Option<(rodio::OutputStream, rodio::Sink)>,
@@ -138,6 +161,13 @@ impl Player {
 
     pub fn switch_to(&self, samples: Vec<f32>) {
         self.engine.lock().unwrap_or_else(|e| e.into_inner()).switch_to(samples);
+    }
+
+    pub fn play_once(&self, samples: Vec<f32>) {
+        let mut engine = self.engine.lock().unwrap_or_else(|e| e.into_inner());
+        engine.set_volume(1.0);
+        engine.current = Some(Voice { samples, pos: 0, once: true });
+        engine.incoming = None;
     }
 
     pub fn stop(&self) {

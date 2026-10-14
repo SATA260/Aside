@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { SCENES, type SceneId } from "../../features/atmosphere/catalog";
 import { SceneBackdrop } from "../../features/atmosphere/SceneBackdrop";
 import { useAtmoPreview } from "../../features/atmosphere/preview";
+import { api } from "../../shared/api";
 import { on } from "../../shared/ipc";
 import { play } from "../../shared/sfx";
 import { useApp } from "../../shared/state";
@@ -17,6 +18,16 @@ export function OverlayView() {
   const settings = useApp((s) => s.settings);
 
   useEffect(() => (blank ? undefined : on("timer:finished", () => play("end"))), []);
+
+  useEffect(() => {
+    const stop = () => void api.alarm.stop();
+    window.addEventListener("pointerdown", stop);
+    window.addEventListener("keydown", stop);
+    return () => {
+      window.removeEventListener("pointerdown", stop);
+      window.removeEventListener("keydown", stop);
+    };
+  }, []);
 
   const ended = timer?.phase === "finished" && timer.last;
   const preview = useAtmoPreview((s) => s.scene);

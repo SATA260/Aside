@@ -35,6 +35,7 @@ pub struct Aside {
 
 enum AmbientCmd {
     Play { samples: Vec<f32>, volume: f32 },
+    Once(Vec<f32>),
     Volume(f32),
     Stop,
 }
@@ -47,6 +48,10 @@ fn ambient_thread(rx: mpsc::Receiver<AmbientCmd>) {
                 let player = player.get_or_insert_with(Player::open);
                 player.set_volume(volume);
                 player.switch_to(samples);
+            }
+            AmbientCmd::Once(samples) => {
+                let player = player.get_or_insert_with(Player::open);
+                player.play_once(samples);
             }
             AmbientCmd::Volume(volume) => {
                 if let Some(player) = player.as_ref() {
@@ -172,6 +177,14 @@ impl Aside {
         } else {
             self.send_ambient(AmbientCmd::Volume(settings.ambient_volume as f32));
         }
+    }
+
+    pub fn ring(&self) {
+        self.send_ambient(AmbientCmd::Once(audio::alarm()));
+    }
+
+    pub fn silence_alarm(&self) {
+        self.send_ambient(AmbientCmd::Stop);
     }
 
     fn send_ambient(&self, cmd: AmbientCmd) {

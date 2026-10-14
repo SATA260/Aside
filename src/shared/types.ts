@@ -81,6 +81,8 @@ export interface Settings {
   dnd_off: string;
   /** Windows 开始专注时还要不要提示 Win+N */
   dnd_hint: boolean;
+  /** 已经提示过周报的那个周一 */
+  week_prompted: string;
 }
 
 export type ShortcutAction = "toggle" | "display";
@@ -169,6 +171,16 @@ export interface Period {
   total_ms: number;
   days_studied: number;
   subjects: SubjectMs[];
+}
+
+export interface WeekPrompt {
+  from: DateStr;
+  to: DateStr;
+}
+
+export interface WeekReport {
+  week: Period;
+  days: DayTotal[];
 }
 
 export interface Overview {

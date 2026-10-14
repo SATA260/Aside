@@ -141,7 +141,7 @@ export function Overview({ today, onOpen }: { today: DateStr; onOpen: (date: Dat
         </div>
         <p className="balance">这个月学了 {data.month.days_studied} 天</p>
       </section>
-      {card && <WeekCard data={data} subjects={subjects} onClose={() => setCard(false)} />}
+      {card && <WeekCard from={data.week.from} onClose={() => setCard(false)} />}
     </div>
   );
 }

@@ -25,6 +25,7 @@ import type { Mode, Outcome, Settings, TimerView } from "../../shared/types";
 import { Button, Chip, Dot, Segmented, TextButton } from "../../shared/ui/controls";
 import { attempt } from "../../shared/ui/toast";
 import { AtmospherePanel } from "./AtmospherePanel";
+import { WeekCard } from "./WeekCard";
 import "./start.css";
 
 const MODES: { value: Mode; label: string }[] = [
@@ -79,6 +80,7 @@ function StartFormView({ init, timer, settings }: { init: StartForm; timer: Time
       <div className="start-layout">
         <div className="start-form">
         <ExamLine now={timer.now} settings={settings} />
+        <WeekPrompt />
         <FocusNotice />
         <Greeting todayMs={timer.today_ms} />
         {timer.recovered && <RecoveredNotice outcome={timer.recovered} />}
@@ -181,6 +183,23 @@ function Greeting({ todayMs }: { todayMs: number }) {
           </span>
         ))}
       </h1>
+    </div>
+  );
+}
+
+function WeekPrompt() {
+  const [prompt, setPrompt] = useState<{ from: string; to: string } | null>(null);
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    void api.stats.prompt().then((row) => row && setPrompt(row));
+  }, []);
+  if (open && prompt) return <WeekCard from={prompt.from} onClose={() => setOpen(false)} />;
+  if (!prompt || open) return null;
+  return (
+    <div className="notice">
+      <span>上周的周报好了</span>
+      <TextButton onClick={() => setOpen(true)}>查看</TextButton>
+      <TextButton onClick={() => setPrompt(null)}>关闭</TextButton>
     </div>
   );
 }

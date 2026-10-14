@@ -1,11 +1,11 @@
 //! 记录页的统计：从数据库取出运行段，交给 `stats` 里的纯函数汇总。
 
-use chrono::NaiveDate;
+use chrono::{Days, NaiveDate};
 use serde::Serialize;
 
 use super::{
-    DayTotal, SubjectMs, balance, daily, day_start_of, days_studied, heatmap_from, local_date, month_of, sum_subjects,
-    week_of,
+    DayTotal, SubjectMs, balance, daily, day_start_of, days_studied, due_week_prompt, heatmap_from, local_date, month_of,
+    sum_subjects, week_of,
 };
 use crate::app::Aside;
 use crate::error::{AppResult, invalid};
@@ -18,6 +18,18 @@ pub struct Period {
     pub total_ms: i64,
     pub days_studied: usize,
     pub subjects: Vec<SubjectMs>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct WeekReport {
+    pub week: Period,
+    pub days: Vec<DayTotal>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct WeekPrompt {
+    pub from: NaiveDate,
+    pub to: NaiveDate,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -56,6 +68,28 @@ impl Aside {
             return invalid("日期范围不对");
         }
         self.daily(from, to)
+    }
+
+    /// 某一周的周报。传入这一周里的任意一天，都会归到周一。
+    pub fn stats_week(&self, date: NaiveDate) -> AppResult<WeekReport> {
+        let range = week_of(date);
+        let days = self.daily(range.0, range.1)?;
+        Ok(WeekReport { week: period(&days, range), days })
+    }
+
+    /// 周一、上周有记录、这周还没提示过，就返回上周的范围，并记下来这周已经提示过。
+    pub fn week_prompt(&self) -> AppResult<Option<WeekPrompt>> {
+        let today = local_date(self.clock.now_ms());
+        let monday = week_of(today).0;
+        let last_monday = monday - Days::new(7);
+        let last = (last_monday, last_monday + Days::new(6));
+        let days = self.daily(last.0, last.1)?;
+        let ms = days.iter().map(|d| d.total_ms).sum();
+        if !due_week_prompt(today, &self.settings().week_prompted, ms) {
+            return Ok(None);
+        }
+        self.edit_settings(|s| s.week_prompted = monday.to_string())?;
+        Ok(Some(WeekPrompt { from: last.0, to: last.1 }))
     }
 
     fn daily(&self, from: NaiveDate, to: NaiveDate) -> AppResult<Vec<DayTotal>> {

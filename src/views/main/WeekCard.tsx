@@ -1,28 +1,38 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toPng } from "html-to-image";
 import { QUOTES } from "../../features/atmosphere/quotes";
-import { addDays } from "../../features/records/dates";
+import { addDays, toDateStr } from "../../features/records/dates";
+import { api } from "../../shared/api";
 import { durationParts, durationShort } from "../../shared/format";
-import type { Overview, Subject } from "../../shared/types";
+import type { DateStr, Subject, WeekReport } from "../../shared/types";
 import { Button } from "../../shared/ui/controls";
+import { attempt } from "../../shared/ui/toast";
 
-/** 一张可以保存的周报。不含任务和备注。 */
-export function WeekCard({
-  data,
-  subjects,
-  onClose,
-}: {
-  data: Overview;
-  subjects: Subject[];
-  onClose: () => void;
-}) {
+/** 一张可以保存的周报。不含任务和备注。`from` 是这一周里的任意一天。 */
+export function WeekCard({ from, onClose }: { from: DateStr; onClose: () => void }) {
   const card = useRef<HTMLDivElement>(null);
+  const [anchor, setAnchor] = useState(from);
+  const [data, setData] = useState<WeekReport | null>(null);
+  const [subjects, setSubjects] = useState<Subject[]>([]);
   const [line, setLine] = useState(0);
+
+  useEffect(() => {
+    let live = true;
+    void attempt(api.stats.week(anchor)).then((report) => live && report && setData(report));
+    void attempt(api.subjects.list(true)).then((rows) => live && rows && setSubjects(rows));
+    return () => {
+      live = false;
+    };
+  }, [anchor]);
+
+  if (!data) return null;
   const days = Array.from({ length: 7 }, (_, i) => addDays(data.week.from, i));
   const msOf = (date: string) => data.days.find((d) => d.date === date)?.total_ms ?? 0;
   const peak = Math.max(...data.week.subjects.map((s) => s.ms), 1);
   const name = (id: number) => subjects.find((s) => s.id === id)?.name ?? "";
   const color = (id: number) => subjects.find((s) => s.id === id)?.color ?? "#A3A9B4";
+  const today = toDateStr(new Date());
+  const next = addDays(data.week.from, 7);
 
   const save = async () => {
     if (!card.current) return;
@@ -70,11 +80,13 @@ export function WeekCard({
         <p className="q">{QUOTES[line % QUOTES.length]}</p>
       </div>
       <div className="week-actions">
-        <Button
-          onClick={() => setLine((n) => n + 1)}
-        >
-          换一句话
+        <Button cue={null} onClick={() => setAnchor(addDays(data.week.from, -7))}>
+          上一周
         </Button>
+        <Button cue={null} disabled={next > today} onClick={() => setAnchor(next)}>
+          下一周
+        </Button>
+        <Button onClick={() => setLine((n) => n + 1)}>换一句话</Button>
         <Button variant="primary" onClick={() => void save()}>
           保存为图片
         </Button>

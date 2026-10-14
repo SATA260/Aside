@@ -206,6 +206,8 @@ pub fn dispatch(app: &Aside, cmd: &str, input: Value, _caller: &str) -> AppResul
         "media_delete_image" => ok(app.delete_picture(args::<Id>(input)?.id)?),
 
         "stats_overview" => ok(app.stats_overview()?),
+        "stats_week" => ok(app.stats_week(args::<DateArg>(input)?.date)?),
+        "week_prompt" => ok(app.week_prompt()?),
         "stats_days" => {
             let a: Range = args(input)?;
             ok(app.stats_days(a.from, a.to)?)

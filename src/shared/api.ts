@@ -8,6 +8,8 @@ import type {
   ImportedSound,
   Outcome,
   Overview,
+  WeekPrompt,
+  WeekReport,
   Session,
   SessionPatch,
   Settings,
@@ -59,6 +61,8 @@ export const api = {
   stats: {
     overview: () => call<Overview>("stats_overview"),
     days: (from: DateStr, to: DateStr) => call<DayTotal[]>("stats_days", { from, to }),
+    week: (date: DateStr) => call<WeekReport>("stats_week", { date }),
+    prompt: () => call<WeekPrompt | null>("week_prompt"),
   },
   alarm: {
     stop: () => call<null>("alarm_stop"),

@@ -120,6 +120,14 @@ pub fn balance(week: &[(&str, i64)]) -> String {
     }
 }
 
+/// 周一第一次打开、并且上周有记录时，提示一次。`prompted` 是已经提示过的那个周一。
+pub fn due_week_prompt(today: NaiveDate, prompted: &str, last_week_ms: i64) -> bool {
+    if today.weekday() != Weekday::Mon || last_week_ms <= 0 {
+        return false;
+    }
+    prompted != week_of(today).0.to_string()
+}
+
 /// 本地日期 `date` 的 0 点（Unix 毫秒）。
 pub fn day_start_of(date: NaiveDate) -> i64 {
     let midnight = date.and_hms_opt(0, 0, 0).expect("0 点总是合法的");

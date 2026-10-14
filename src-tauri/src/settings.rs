@@ -80,6 +80,8 @@ pub struct Settings {
     pub dnd_off: String,
     /// Windows 开始专注时还要不要提示 Win+N
     pub dnd_hint: bool,
+    /// 已经提示过周报的那个周一，形如 2026-10-12
+    pub week_prompted: String,
 }
 
 impl Default for Settings {
@@ -108,6 +110,7 @@ impl Default for Settings {
             dnd_on: String::new(),
             dnd_off: String::new(),
             dnd_hint: true,
+            week_prompted: String::new(),
         }
     }
 }

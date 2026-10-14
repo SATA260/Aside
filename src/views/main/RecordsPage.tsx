@@ -48,6 +48,7 @@ function DayPanel({ date, today, onDate }: { date: DateStr; today: DateStr; onDa
   const go = (d: DateStr) => {
     if (d > today) return;
     play("tap");
+    setPicking(false);
     onDate(d);
   };
 

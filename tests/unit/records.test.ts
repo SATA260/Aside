@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { addDays, dayLabel, dayTitle, monthGrid, toDateStr } from "../../src/features/records/dates";
+import { atLocal, rangeFrom, wallMinutes } from "../../src/features/records/span";
 import { blocks, crossesMidnight } from "../../src/features/records/timeline";
 
 const at = (d: number, h: number, m = 0) => new Date(2026, 9, d, h, m).getTime();
@@ -32,6 +33,28 @@ describe("dates", () => {
     expect(grid).toHaveLength(35);
     expect(grid.filter(Boolean)).toHaveLength(31);
     expect(grid.slice(-2)).toEqual(["2026-10-31", null]);
+  });
+});
+
+describe("span", () => {
+  it("builds a range from a local date, a clock time and whole minutes", () => {
+    const started = new Date(2026, 9, 13, 19, 30).getTime();
+    expect(atLocal("2026-10-13", "19:30")).toBe(started);
+    expect(atLocal("2026-10-13", "19:30:00")).toBe(started);
+    expect(rangeFrom("2026-10-13", "19:30", 90)).toEqual({ started_at: started, ended_at: started + 90 * MIN });
+    expect(wallMinutes(started, started + 90 * MIN)).toBe(90);
+  });
+
+  it("rejects a bad clock time or a length outside 1 minute to 24 hours", () => {
+    expect(atLocal("2026-10-13", "24:00")).toBeNull();
+    expect(atLocal("2026-10-13", "7")).toBeNull();
+    expect(rangeFrom("2026-10-13", "19:30", 0)).toBeNull();
+    expect(rangeFrom("2026-10-13", "19:30", 24 * 60)).toEqual({
+      started_at: new Date(2026, 9, 13, 19, 30).getTime(),
+      ended_at: new Date(2026, 9, 14, 19, 30).getTime(),
+    });
+    expect(rangeFrom("2026-10-13", "19:30", 24 * 60 + 1)).toBeNull();
+    expect(rangeFrom("2026-10-13", "19:30", 1.5)).toBeNull();
   });
 });
 

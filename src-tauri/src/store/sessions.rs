@@ -36,9 +36,15 @@ pub fn count(c: &Connection) -> AppResult<i64> {
 }
 
 pub fn segments_of(c: &Connection, id: i64) -> AppResult<Vec<Segment>> {
-    let mut stmt = c.prepare("SELECT start_at, end_at FROM segments WHERE session_id = ?1 ORDER BY start_at")?;
+    let mut stmt =
+        c.prepare("SELECT start_at, end_at FROM segments WHERE session_id = ?1 ORDER BY start_at")?;
     let rows = stmt
-        .query_map([id], |r| Ok(Segment { start: r.get(0)?, end: r.get(1)? }))?
+        .query_map([id], |r| {
+            Ok(Segment {
+                start: r.get(0)?,
+                end: r.get(1)?,
+            })
+        })?
         .collect::<Result<Vec<_>, _>>()?;
     Ok(rows)
 }
@@ -79,7 +85,8 @@ pub fn get(c: &Connection, id: i64) -> AppResult<Session> {
 }
 
 pub fn insert_segments(c: &Connection, id: i64, segments: &[Segment]) -> AppResult<()> {
-    let mut stmt = c.prepare("INSERT INTO segments (session_id, start_at, end_at) VALUES (?1, ?2, ?3)")?;
+    let mut stmt =
+        c.prepare("INSERT INTO segments (session_id, start_at, end_at) VALUES (?1, ?2, ?3)")?;
     for s in segments.iter().filter(|s| s.len() > 0) {
         stmt.execute(params![id, s.start, s.end])?;
     }
@@ -115,7 +122,13 @@ pub fn pieces_between(c: &Connection, from: i64, to: i64) -> AppResult<Vec<Piece
          ORDER BY g.start_at",
     )?;
     let rows = stmt
-        .query_map(params![from, to], |r| Ok(Piece { subject_id: r.get(0)?, start: r.get(1)?, end: r.get(2)? }))?
+        .query_map(params![from, to], |r| {
+            Ok(Piece {
+                subject_id: r.get(0)?,
+                start: r.get(1)?,
+                end: r.get(2)?,
+            })
+        })?
         .collect::<Result<Vec<_>, _>>()?;
     Ok(rows)
 }
@@ -137,8 +150,50 @@ pub fn ids_between(c: &Connection, from: i64, to: i64) -> AppResult<Vec<i64>> {
          WHERE EXISTS (SELECT 1 FROM segments g WHERE g.session_id = s.id AND g.end_at > ?1 AND g.start_at < ?2)
          ORDER BY s.started_at, s.id",
     )?;
-    let rows = stmt.query_map(params![from, to], |r| r.get(0))?.collect::<Result<Vec<_>, _>>()?;
+    let rows = stmt
+        .query_map(params![from, to], |r| r.get(0))?
+        .collect::<Result<Vec<_>, _>>()?;
     Ok(rows)
+}
+
+/// 和 [start, end) 重叠的第一条记录，`except` 那条除外。首尾相接不算重叠。
+pub fn first_overlap(
+    c: &Connection,
+    start: i64,
+    end: i64,
+    except: i64,
+) -> AppResult<Option<Session>> {
+    let id: Option<i64> = c
+        .query_row(
+            "SELECT id FROM sessions
+             WHERE started_at < ?2 AND ended_at > ?1 AND id != ?3
+             ORDER BY started_at, id LIMIT 1",
+            params![start, end, except],
+            |r| r.get(0),
+        )
+        .optional()?;
+    match id {
+        Some(id) => Ok(Some(get(c, id)?)),
+        None => Ok(None),
+    }
+}
+
+/// 改起止时间，并收成一段连续的学习。
+pub fn reschedule(c: &Connection, id: i64, started: i64, ended: i64) -> AppResult<()> {
+    c.execute(
+        "UPDATE sessions SET started_at = ?1, ended_at = ?2, focused_ms = ?3 WHERE id = ?4",
+        params![started, ended, ended - started, id],
+    )?;
+    c.execute("DELETE FROM segments WHERE session_id = ?1", [id])?;
+    insert_segments(
+        c,
+        id,
+        &[Segment {
+            start: started,
+            end: ended,
+        }],
+    )?;
+    Ok(())
 }
 
 /// 写回科目、任务和备注。
@@ -176,7 +231,11 @@ pub fn clean_note(note: &str) -> AppResult<String> {
 
 pub fn set_note(c: &Connection, id: i64, note: &str) -> AppResult<()> {
     let note = clean_note(note)?;
-    if c.execute("UPDATE sessions SET note = ?1 WHERE id = ?2", params![note, id])? != 1 {
+    if c.execute(
+        "UPDATE sessions SET note = ?1 WHERE id = ?2",
+        params![note, id],
+    )? != 1
+    {
         return invalid("找不到这条记录");
     }
     Ok(())
@@ -193,9 +252,11 @@ pub fn save_active(c: &Connection, timer: &Timer, heartbeat_at: i64) -> AppResul
 
 pub fn load_active(c: &Connection) -> AppResult<Option<(Timer, i64)>> {
     let row: Option<(String, i64)> = c
-        .query_row("SELECT state, heartbeat_at FROM active_timer WHERE id = 1", [], |r| {
-            Ok((r.get(0)?, r.get(1)?))
-        })
+        .query_row(
+            "SELECT state, heartbeat_at FROM active_timer WHERE id = 1",
+            [],
+            |r| Ok((r.get(0)?, r.get(1)?)),
+        )
         .optional()?;
     Ok(match row {
         Some((state, heartbeat)) => Some((serde_json::from_str(&state)?, heartbeat)),

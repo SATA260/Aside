@@ -113,6 +113,8 @@ export interface SessionPatch {
   subject_id?: number;
   task?: string;
   note?: string;
+  started_at?: number;
+  ended_at?: number;
 }
 
 export interface SubjectMs {

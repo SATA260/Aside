@@ -1,25 +1,72 @@
 import { type CSSProperties, Fragment, useEffect, useState } from "react";
+import { SCENES, SOUNDS, nextOf } from "../../features/atmosphere/catalog";
+import { useAtmoPreview } from "../../features/atmosphere/preview";
 import { bigTime, horizon } from "../../features/timer/overlay";
 import { api } from "../../shared/api";
 import { clock, durationText, hm, MINUTE } from "../../shared/format";
 import { useDrift, useIdle } from "../../shared/hooks";
 import { play } from "../../shared/sfx";
 import { setTimer } from "../../shared/state";
-import type { Settings, TimerView } from "../../shared/types";
+import { resolveTheme } from "../../shared/theme/resolve";
+import type { Settings, ThemeName, TimerView } from "../../shared/types";
 import { Dot } from "../../shared/ui/controls";
 import { attempt } from "../../shared/ui/toast";
+
+const THEMES: { id: ThemeName; name: string }[] = [
+  { id: "night", name: "夜读" },
+  { id: "bamboo", name: "竹影" },
+  { id: "mist", name: "晨雾" },
+  { id: "dusk", name: "暮色" },
+  { id: "sky", name: "跟随天色" },
+];
 
 export function FocusScreen({ timer, settings }: { timer: TimerView; settings: Settings }) {
   const idle = useIdle(3000);
   const drift = useDrift();
   const paused = timer.phase === "paused";
   const [confirmEnd, setConfirmEnd] = useState(false);
+  const [atmo, setAtmo] = useState(false);
+  const [notice, setNotice] = useState("");
+
+  useEffect(() => {
+    if (!notice) return;
+    const id = setTimeout(() => setNotice(""), 2000);
+    return () => clearTimeout(id);
+  }, [notice]);
 
   useEffect(() => {
     if (!confirmEnd) return;
     const id = setTimeout(() => setConfirmEnd(false), 3000);
     return () => clearTimeout(id);
   }, [confirmEnd]);
+
+  const choose = (patch: Partial<Settings>, label: string) => {
+    setNotice(`换成了 ${label}`);
+    void attempt(api.settings.update(patch));
+  };
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.code === "KeyB") {
+        const next = nextOf(SCENES, settings.scene ?? "sky");
+        choose({ scene: next.id }, next.name);
+      } else if (e.code === "KeyN") {
+        const next = nextOf(SOUNDS, settings.ambient ?? "");
+        choose({ ambient: next.id }, next.name);
+      } else if (e.code === "KeyT") {
+        const next = nextOf(THEMES, settings.theme);
+        choose({ theme: next.id }, next.name);
+      } else if (e.code === "ArrowUp" || e.code === "ArrowDown") {
+        e.preventDefault();
+        const step = e.code === "ArrowUp" ? 0.05 : -0.05;
+        const ambient_volume = Math.min(1, Math.max(0, (settings.ambient_volume ?? 0.6) + step));
+        void attempt(api.settings.update({ ambient_volume }));
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
 
   const togglePause = async () => {
     play(paused ? "resume" : "pause");
@@ -55,7 +102,7 @@ export function FocusScreen({ timer, settings }: { timer: TimerView; settings: S
 
   return (
     <div
-      className={idle ? "focus idle" : "focus"}
+      className={idle ? "focus idle" : atmo ? "focus atmo-open" : "focus"}
       style={{ transform: `translate(${drift.x}px, ${drift.y}px)` }}
     >
       <header className="ov-top">
@@ -65,6 +112,7 @@ export function FocusScreen({ timer, settings }: { timer: TimerView; settings: S
           {timer.plan?.task && <span className="task">{timer.plan.task}</span>}
         </div>
         <div className="ov-clock num">{hm(timer.now)}</div>
+        {notice && <p className="ov-notice wk">{notice}</p>}
       </header>
 
       <main className="ov-center">
@@ -98,10 +146,65 @@ export function FocusScreen({ timer, settings }: { timer: TimerView; settings: S
         >
           缩成浮窗
         </button>
+        <button type="button" className={atmo ? "on" : ""} onClick={() => setAtmo((v) => !v)}>
+          氛围
+        </button>
         <button type="button" className="end" onClick={end}>
           {confirmEnd ? "再点一次结束" : "结束"}
         </button>
       </nav>
+
+      {atmo && (
+        <div className="atmo-live wk">
+          <div>
+            <span>画面</span>
+            {SCENES.map((s) => (
+              <button
+                type="button"
+                key={s.id}
+                className={settings.scene === s.id ? "on" : ""}
+                onMouseEnter={() => useAtmoPreview.setState({ scene: s.id })}
+                onMouseLeave={() => useAtmoPreview.setState({ scene: null })}
+                onClick={() => choose({ scene: s.id }, s.name)}
+              >
+                {s.name}
+              </button>
+            ))}
+          </div>
+          <div>
+            <span>声音</span>
+            {SOUNDS.map((s) => (
+              <button
+                type="button"
+                key={s.id || "off"}
+                className={settings.ambient === s.id ? "on" : ""}
+                onClick={() => choose({ ambient: s.id }, s.name)}
+              >
+                {s.name}
+              </button>
+            ))}
+          </div>
+          <div>
+            <span>风格</span>
+            {THEMES.map((t) => (
+              <button
+                type="button"
+                key={t.id}
+                className={settings.theme === t.id ? "on" : ""}
+                onMouseEnter={() => {
+                  document.documentElement.dataset.theme = resolveTheme(t.id, new Date().getHours());
+                }}
+                onMouseLeave={() => {
+                  document.documentElement.dataset.theme = resolveTheme(settings.theme, new Date().getHours());
+                }}
+                onClick={() => choose({ theme: t.id }, t.name)}
+              >
+                {t.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <footer className="ov-bottom">
         <div className="horizon" style={{ "--p": line.p } as CSSProperties}>
@@ -115,6 +218,7 @@ export function FocusScreen({ timer, settings }: { timer: TimerView; settings: S
         </div>
         <p className="quote wk">慢慢来，比较快。</p>
       </footer>
+      {!idle && <p className="keys-hint">B 画面 · N 声音 · T 风格 · ↑↓ 音量</p>}
     </div>
   );
 }

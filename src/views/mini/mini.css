@@ -107,6 +107,32 @@ html[data-view="mini"] body {
   background: color-mix(in srgb, var(--text) 12%, transparent);
 }
 
+.pill .ico button.on {
+  color: var(--text);
+}
+
+.mini-atmo {
+  position: absolute;
+  top: calc(50% + 36px);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 8px;
+  width: 220px;
+}
+
+.mini-atmo button {
+  background: none;
+  border: 0;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.mini-atmo button.on {
+  color: var(--text);
+}
+
 .pill .ico button.end.on {
   color: var(--text);
   background: color-mix(in srgb, var(--subject-politics) 35%, transparent);

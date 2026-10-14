@@ -1,9 +1,11 @@
 import { type CSSProperties, type ReactNode, useEffect, useState } from "react";
+import { SOUNDS } from "../../features/atmosphere/catalog";
 import { bigTime, horizon } from "../../features/timer/overlay";
 import { api } from "../../shared/api";
 import { clock } from "../../shared/format";
 import { play } from "../../shared/sfx";
 import { setTimer, useApp } from "../../shared/state";
+import type { ThemeName } from "../../shared/types";
 import { Dot } from "../../shared/ui/controls";
 import { attempt } from "../../shared/ui/toast";
 import "./mini.css";
@@ -13,6 +15,7 @@ export function MiniView() {
   const timer = useApp((s) => s.timer);
   const settings = useApp((s) => s.settings);
   const [confirmEnd, setConfirmEnd] = useState(false);
+  const [atmo, setAtmo] = useState(false);
   const paused = timer?.phase === "paused";
 
   useEffect(() => {
@@ -78,12 +81,39 @@ export function MiniView() {
           >
             <path d="M3 7V3h4M13 9v4H9M3 3l4 4M13 13 9 9" fill="none" stroke="currentColor" strokeWidth="1.4" />
           </IconButton>
+          <IconButton title="氛围" className={atmo ? "on" : ""} onClick={() => setAtmo((v) => !v)}>
+            <circle cx="8" cy="8" r="3.2" fill="none" stroke="currentColor" strokeWidth="1.4" />
+          </IconButton>
           <IconButton title="结束" className={confirmEnd ? "end on" : "end"} onClick={end}>
             <rect x="4" y="4" width="8" height="8" rx="1.5" />
           </IconButton>
         </span>
         <i className="p" data-tauri-drag-region />
       </div>
+      {atmo && (
+        <div className="mini-atmo wk">
+          {SOUNDS.map((s) => (
+            <button
+              type="button"
+              key={s.id || "off"}
+              className={settings.ambient === s.id ? "on" : ""}
+              onClick={() => void attempt(api.settings.update({ ambient: s.id }))}
+            >
+              {s.name}
+            </button>
+          ))}
+          {(["night", "bamboo", "mist", "dusk", "sky"] as ThemeName[]).map((theme) => (
+            <button
+              type="button"
+              key={theme}
+              className={settings.theme === theme ? "on" : ""}
+              onClick={() => void attempt(api.settings.update({ theme }))}
+            >
+              {theme === "night" ? "夜读" : theme === "bamboo" ? "竹影" : theme === "mist" ? "晨雾" : theme === "dusk" ? "暮色" : "天色"}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

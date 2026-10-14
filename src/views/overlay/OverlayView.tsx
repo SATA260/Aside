@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { SCENES, type SceneId } from "../../features/atmosphere/catalog";
 import { SceneBackdrop } from "../../features/atmosphere/SceneBackdrop";
+import { useAtmoPreview } from "../../features/atmosphere/preview";
 import { on } from "../../shared/ipc";
 import { play } from "../../shared/sfx";
 import { useApp } from "../../shared/state";
@@ -18,7 +19,8 @@ export function OverlayView() {
   useEffect(() => (blank ? undefined : on("timer:finished", () => play("end"))), []);
 
   const ended = timer?.phase === "finished" && timer.last;
-  const scene = (SCENES.find((s) => s.id === settings?.scene)?.id ?? "sky") as SceneId;
+  const preview = useAtmoPreview((s) => s.scene);
+  const scene = preview ?? ((SCENES.find((s) => s.id === settings?.scene)?.id ?? "sky") as SceneId);
   return (
     <div className={ended ? `overlay ended ${timer.last?.reason}` : "overlay"}>
       <SceneBackdrop scene={scene} />

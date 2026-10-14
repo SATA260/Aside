@@ -218,9 +218,71 @@ html[data-view="overlay"] body {
   transition: opacity 0.6s var(--ease);
 }
 
-.focus.idle .textctl {
+.focus.idle .textctl,
+.focus.idle .atmo-live,
+.focus.idle .keys-hint {
   opacity: 0;
   pointer-events: none;
+}
+
+.focus.atmo-open .ov-time {
+  font-size: min(calc(168 * var(--u)), 18vw);
+}
+
+.atmo-live {
+  display: flex;
+  justify-content: space-between;
+  gap: calc(18 * var(--u));
+  margin-bottom: calc(16 * var(--u));
+  transition: opacity 0.6s var(--ease);
+}
+
+.atmo-live > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: baseline;
+  gap: calc(6 * var(--u)) calc(12 * var(--u));
+  max-width: 34%;
+}
+
+.atmo-live span,
+.atmo-live button {
+  background: none;
+  border: 0;
+  color: var(--muted);
+  font-family: var(--font-wk);
+  font-size: calc(15 * var(--u));
+  cursor: pointer;
+}
+
+.atmo-live span {
+  cursor: default;
+}
+
+.atmo-live button.on {
+  color: var(--text);
+}
+
+.ov-notice {
+  position: absolute;
+  top: calc(16 * var(--u));
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: calc(14 * var(--u));
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.keys-hint {
+  position: absolute;
+  right: calc(28 * var(--u));
+  bottom: calc(16 * var(--u));
+  font-size: calc(11 * var(--u));
+  color: var(--muted);
+  opacity: 0.65;
+  transition: opacity 0.6s var(--ease);
 }
 
 .textctl button {

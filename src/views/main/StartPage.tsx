@@ -21,6 +21,7 @@ import { setTimer, useApp } from "../../shared/state";
 import type { Mode, Outcome, Settings, TimerView } from "../../shared/types";
 import { Button, Chip, Dot, Segmented, TextButton } from "../../shared/ui/controls";
 import { attempt } from "../../shared/ui/toast";
+import { AtmospherePanel } from "./AtmospherePanel";
 import "./start.css";
 
 const MODES: { value: Mode; label: string }[] = [
@@ -72,7 +73,8 @@ function StartFormView({ init, timer, settings }: { init: StartForm; timer: Time
 
   return (
     <div className="page start-page">
-      <div className="start-form">
+      <div className="start-layout">
+        <div className="start-form">
         <Greeting todayMs={timer.today_ms} />
         {timer.recovered && <RecoveredNotice outcome={timer.recovered} />}
         {active && <ActiveNotice timer={timer} />}
@@ -141,6 +143,8 @@ function StartFormView({ init, timer, settings }: { init: StartForm; timer: Time
           </Button>
           <span className="hint">{formatAccel(settings.shortcut_toggle)} 也可以随时开始</span>
         </div>
+        </div>
+        <AtmospherePanel />
       </div>
     </div>
   );

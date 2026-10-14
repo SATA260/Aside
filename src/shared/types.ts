@@ -64,6 +64,11 @@ export interface Settings {
   shortcut_display: string;
   /** 0 表示不设每日目标 */
   daily_goal_ms: number;
+  /** 全屏背景：天色、雨窗、台灯、星夜、晨雾 */
+  scene: "sky" | "rain" | "lamp" | "stars" | "fog";
+  /** 背景音 id，空字符串表示关掉 */
+  ambient: string;
+  ambient_volume: number;
 }
 
 export type ShortcutAction = "toggle" | "display";

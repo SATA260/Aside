@@ -7,7 +7,82 @@
 }
 
 .start-form {
+  min-width: 0;
+}
+
+.start-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
   margin-block: auto;
+}
+
+@media (min-width: 1180px) {
+  .start-page {
+    --page-w: 1040px;
+  }
+
+  .start-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: 40px;
+    align-items: start;
+  }
+}
+
+.atmo {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.atmo-preview {
+  position: relative;
+  height: 148px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+}
+
+.atmo-preview .num {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 36px;
+  font-weight: 200;
+  color: var(--text);
+}
+
+.atmo-preview:has(.scene-fog) .num {
+  color: #1c2430;
+}
+
+.atmo-picks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.atmo-picks button {
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.atmo-picks button.on {
+  color: var(--text);
+  background: var(--line);
+}
+
+.atmo .slider {
+  width: 100%;
+  margin: 4px 0 8px;
 }
 
 /* 每一组选项铺满表单宽度，组内按钮等宽 */

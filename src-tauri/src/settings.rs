@@ -7,6 +7,16 @@ use crate::timer::{DAY_MS, Display, MINUTE_MS, Mode};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
+pub enum Scene {
+    Sky,
+    Rain,
+    Lamp,
+    Stars,
+    Fog,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
 pub enum Theme {
     Night,
     Bamboo,
@@ -52,6 +62,10 @@ pub struct Settings {
     pub shortcut_display: String,
     /// 每日目标。0 表示不设，柱状图上也就没有参考线
     pub daily_goal_ms: i64,
+    pub scene: Scene,
+    /// 背景音，空字符串表示关掉
+    pub ambient: String,
+    pub ambient_volume: f64,
 }
 
 impl Default for Settings {
@@ -70,6 +84,9 @@ impl Default for Settings {
             shortcut_toggle: "CommandOrControl+Alt+S".into(),
             shortcut_display: "CommandOrControl+Alt+M".into(),
             daily_goal_ms: 0,
+            scene: Scene::Sky,
+            ambient: String::new(),
+            ambient_volume: 0.6,
         }
     }
 }
@@ -79,6 +96,10 @@ impl Settings {
     pub fn normalized(mut self) -> Self {
         self.sfx_volume = self.sfx_volume.clamp(0.0, 1.0);
         self.daily_goal_ms = self.daily_goal_ms.clamp(0, DAY_MS);
+        self.ambient_volume = self.ambient_volume.clamp(0.0, 1.0);
+        if !self.ambient.is_empty() && crate::audio::builtin::get(&self.ambient).is_none() {
+            self.ambient.clear();
+        }
         self
     }
 }
@@ -102,5 +123,15 @@ mod tests {
         assert_eq!(low.daily_goal_ms, 0);
         assert_eq!(high.daily_goal_ms, DAY_MS);
         assert_eq!(Settings::default().normalized().daily_goal_ms, 0);
+    }
+
+    #[test]
+    fn an_unknown_sound_turns_off_and_the_volume_stays_in_range() {
+        let loud = Settings { ambient: "nope".into(), ambient_volume: 4.0, ..Settings::default() }.normalized();
+        assert_eq!(loud.ambient, "");
+        assert_eq!(loud.ambient_volume, 1.0);
+        let quiet = Settings { ambient: "rain".into(), ambient_volume: -1.0, ..Settings::default() }.normalized();
+        assert_eq!(quiet.ambient, "rain");
+        assert_eq!(quiet.ambient_volume, 0.0);
     }
 }

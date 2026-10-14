@@ -1,0 +1,21 @@
+import { describe, expect, it } from "vitest";
+import { SCENES, SOUNDS, nextOf } from "../../src/features/atmosphere/catalog";
+
+describe("atmosphere catalog", () => {
+  it("starts from the sky scene and an off sound", () => {
+    expect(SCENES[0]).toEqual({ id: "sky", name: "天色" });
+    expect(SOUNDS[0]).toEqual({ id: "", name: "关" });
+    expect(SCENES.map((s) => s.name)).toEqual(["天色", "雨窗", "台灯", "星夜", "晨雾"]);
+  });
+
+  it("cycles to the next item and wraps around", () => {
+    expect(nextOf(SCENES, "sky").id).toBe("rain");
+    expect(nextOf(SCENES, "fog").id).toBe("sky");
+    expect(nextOf(SOUNDS, "").id).toBe("rain");
+    expect(nextOf(SOUNDS, "noise").id).toBe("");
+  });
+
+  it("stays on the first item when the current id is unknown", () => {
+    expect(nextOf(SCENES, "missing").id).toBe("sky");
+  });
+});

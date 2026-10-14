@@ -4,11 +4,13 @@
 //! 记录页的在 `records` 和 `stats::service`。
 
 use std::path::PathBuf;
+use std::sync::mpsc::{self, Sender};
 use std::sync::{Arc, Mutex, MutexGuard, RwLock};
 
 use serde::Deserialize;
 use serde_json::{Value, json};
 
+use crate::audio::{self, Player};
 use crate::clock::Clock;
 use crate::error::AppResult;
 use crate::events::{DATA_CHANGED, EventSink, SETTINGS_CHANGED};
@@ -26,6 +28,38 @@ pub struct Aside {
     pub store: Store,
     pub(crate) timer: Mutex<TimerState>,
     settings: RwLock<Settings>,
+    /// 背景音在单独的线程里播，因为声卡对象不能跨线程。
+    ambient_tx: Mutex<Option<Sender<AmbientCmd>>>,
+    ambient_id: Mutex<String>,
+}
+
+enum AmbientCmd {
+    Play { samples: Vec<f32>, volume: f32 },
+    Volume(f32),
+    Stop,
+}
+
+fn ambient_thread(rx: mpsc::Receiver<AmbientCmd>) {
+    let mut player: Option<Player> = None;
+    while let Ok(cmd) = rx.recv() {
+        match cmd {
+            AmbientCmd::Play { samples, volume } => {
+                let player = player.get_or_insert_with(Player::open);
+                player.set_volume(volume);
+                player.switch_to(samples);
+            }
+            AmbientCmd::Volume(volume) => {
+                if let Some(player) = player.as_ref() {
+                    player.set_volume(volume);
+                }
+            }
+            AmbientCmd::Stop => {
+                if let Some(player) = player.as_ref() {
+                    player.stop();
+                }
+            }
+        }
+    }
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -60,8 +94,11 @@ impl Aside {
             shell,
             store,
             timer: Mutex::new(TimerState::default()),
-            settings: RwLock::new(settings),
+            settings: RwLock::new(settings.clone()),
+            ambient_tx: Mutex::new(None),
+            ambient_id: Mutex::new(String::new()),
         };
+        app.sync_ambient(&settings);
         app.recover_timer()?;
         Ok(Arc::new(app))
     }
@@ -107,7 +144,49 @@ impl Aside {
         self.store.write(|c| store::settings::put(c, SETTINGS_KEY, &next))?;
         *self.settings.write().unwrap_or_else(|e| e.into_inner()) = next.clone();
         self.events.emit(SETTINGS_CHANGED, serde_json::to_value(&next)?);
+        self.sync_ambient(&next);
         Ok(next)
+    }
+
+    /// 背景音跟着设置走。换一首才重新加载，调音量不会把正在播的声音打断。
+    fn sync_ambient(&self, settings: &Settings) {
+        let mut id = self.ambient_id.lock().unwrap_or_else(|e| e.into_inner());
+        let changed = settings.ambient != *id;
+        if changed {
+            *id = settings.ambient.clone();
+        }
+        drop(id);
+        if settings.ambient.is_empty() {
+            if changed {
+                self.send_ambient(AmbientCmd::Stop);
+            }
+            return;
+        }
+        if changed {
+            if let Some(sound) = audio::builtin::get(&settings.ambient) {
+                self.send_ambient(AmbientCmd::Play {
+                    samples: audio::builtin::samples(sound),
+                    volume: settings.ambient_volume as f32,
+                });
+            }
+        } else {
+            self.send_ambient(AmbientCmd::Volume(settings.ambient_volume as f32));
+        }
+    }
+
+    fn send_ambient(&self, cmd: AmbientCmd) {
+        let mut slot = self.ambient_tx.lock().unwrap_or_else(|e| e.into_inner());
+        if slot.is_none() {
+            if matches!(cmd, AmbientCmd::Stop | AmbientCmd::Volume(_)) {
+                return;
+            }
+            let (tx, rx) = mpsc::channel();
+            std::thread::spawn(move || ambient_thread(rx));
+            *slot = Some(tx);
+        }
+        if let Some(tx) = slot.as_ref() {
+            let _ = tx.send(cmd);
+        }
     }
 
     // ---------- 科目 ----------

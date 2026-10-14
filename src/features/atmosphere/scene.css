@@ -1,0 +1,35 @@
+.scene-bg {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.scene-bg canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.scene-sky {
+  background: linear-gradient(180deg, var(--bg) 0%, var(--bg) 40%, var(--bg2) 100%);
+}
+
+.scene-rain {
+  background: linear-gradient(180deg, #141c2b 0%, #1c2838 55%, #243044 100%);
+}
+
+.scene-lamp {
+  background:
+    radial-gradient(40% 45% at 70% 18%, rgba(232, 196, 140, 0.55), transparent 70%),
+    linear-gradient(180deg, #1a1612 0%, #241c16 100%);
+}
+
+.scene-stars {
+  background: radial-gradient(80% 60% at 50% 100%, #1b2740 0%, #0c1018 70%);
+}
+
+.scene-fog {
+  background: linear-gradient(180deg, #d5dde6 0%, #c5cfd8 50%, #b7c3cf 100%);
+}

@@ -5,7 +5,7 @@ use serde::Serialize;
 
 use crate::error::{AppResult, invalid};
 use crate::stats::Piece;
-use crate::timer::{Finished, Segment, Timer};
+use crate::timer::{Finished, MAX_TASK_CHARS, Segment, Timer};
 
 pub const MAX_NOTE_CHARS: usize = 200;
 
@@ -128,6 +128,42 @@ pub fn focused_between(c: &Connection, from: i64, to: i64) -> AppResult<i64> {
         params![from, to],
         |r| r.get(0),
     )?)
+}
+
+/// 有运行段落在 [from, to) 里的记录，按开始时刻排列。
+pub fn ids_between(c: &Connection, from: i64, to: i64) -> AppResult<Vec<i64>> {
+    let mut stmt = c.prepare(
+        "SELECT s.id FROM sessions s
+         WHERE EXISTS (SELECT 1 FROM segments g WHERE g.session_id = s.id AND g.end_at > ?1 AND g.start_at < ?2)
+         ORDER BY s.started_at, s.id",
+    )?;
+    let rows = stmt.query_map(params![from, to], |r| r.get(0))?.collect::<Result<Vec<_>, _>>()?;
+    Ok(rows)
+}
+
+/// 写回科目、任务和备注。
+pub fn update_fields(c: &Connection, s: &Session) -> AppResult<()> {
+    c.execute(
+        "UPDATE sessions SET subject_id = ?1, task = ?2, note = ?3 WHERE id = ?4",
+        params![s.subject_id, s.task, s.note, s.id],
+    )?;
+    Ok(())
+}
+
+/// 删掉一条记录，运行段和模考分数跟着删。
+pub fn delete(c: &Connection, id: i64) -> AppResult<()> {
+    if c.execute("DELETE FROM sessions WHERE id = ?1", [id])? != 1 {
+        return invalid("找不到这条记录");
+    }
+    Ok(())
+}
+
+pub fn clean_task(task: &str) -> AppResult<String> {
+    let task = task.trim();
+    if task.chars().count() > MAX_TASK_CHARS {
+        return invalid(format!("任务最多 {MAX_TASK_CHARS} 个字"));
+    }
+    Ok(task.to_string())
 }
 
 pub fn clean_note(note: &str) -> AppResult<String> {

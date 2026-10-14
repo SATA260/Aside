@@ -11,6 +11,7 @@ use serde_json::Value;
 
 use crate::app::{Aside, StartArgs};
 use crate::error::{AppError, AppResult};
+use crate::records::SessionPatch;
 use crate::timer::Display;
 
 fn args<T: DeserializeOwned>(value: Value) -> AppResult<T> {
@@ -84,6 +85,18 @@ struct Note {
 }
 
 #[derive(Deserialize)]
+struct Patch {
+    id: i64,
+    #[serde(flatten)]
+    patch: SessionPatch,
+}
+
+#[derive(Deserialize)]
+struct DateArg {
+    date: NaiveDate,
+}
+
+#[derive(Deserialize)]
 struct Range {
     from: NaiveDate,
     to: NaiveDate,
@@ -130,6 +143,13 @@ pub fn dispatch(app: &Aside, cmd: &str, input: Value, _caller: &str) -> AppResul
             let a: Note = args(input)?;
             ok(app.session_set_note(a.id, &a.note)?)
         }
+
+        "session_update" => {
+            let a: Patch = args(input)?;
+            ok(app.session_update(a.id, a.patch)?)
+        }
+        "session_delete" => ok(app.session_delete(args::<Id>(input)?.id)?),
+        "day_view" => ok(app.day_view(args::<DateArg>(input)?.date)?),
 
         "stats_overview" => ok(app.stats_overview()?),
         "stats_days" => {

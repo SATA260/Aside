@@ -8,6 +8,7 @@ pub mod error;
 pub mod events;
 mod lecture;
 mod media;
+pub mod records;
 pub mod settings;
 pub mod shell;
 pub mod shortcuts;

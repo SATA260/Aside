@@ -1,6 +1,7 @@
 //! Aside 的业务核心：持有数据库、计时器和设置，所有命令最终都调用这里的方法。
 //! 它不直接依赖 Tauri，窗口和系统操作通过 `Shell`，事件通过 `EventSink`，
-//! 所以测试和开发桥都能直接用它。计时相关的方法在 `timer::service`。
+//! 所以测试和开发桥都能直接用它。计时相关的方法在 `timer::service`，
+//! 记录页的在 `records` 和 `stats::service`。
 
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex, MutexGuard, RwLock};
@@ -13,7 +14,7 @@ use crate::error::AppResult;
 use crate::events::{DATA_CHANGED, EventSink, SETTINGS_CHANGED};
 use crate::settings::{Point, Settings};
 use crate::shell::Shell;
-use crate::store::{self, Store, sessions, subjects};
+use crate::store::{self, Store, subjects};
 use crate::timer::service::TimerState;
 use crate::timer::{Display, Mode};
 
@@ -141,14 +142,6 @@ impl Aside {
 
     pub fn subjects_reorder(&self, ids: &[i64]) -> AppResult<()> {
         self.store.write(|c| subjects::reorder(c, ids))?;
-        self.data_changed();
-        Ok(())
-    }
-
-    // ---------- 记录 ----------
-
-    pub fn session_set_note(&self, id: i64, note: &str) -> AppResult<()> {
-        self.store.write(|c| sessions::set_note(c, id, note))?;
         self.data_changed();
         Ok(())
     }

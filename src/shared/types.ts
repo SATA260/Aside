@@ -69,6 +69,52 @@ export type ShortcutAction = "toggle" | "display";
 /** 本地日期，形如 2026-10-14 */
 export type DateStr = string;
 
+export interface Segment {
+  start: number;
+  end: number;
+}
+
+export interface MockScore {
+  score: number;
+  full_score: number;
+}
+
+export interface Session {
+  id: number;
+  subject_id: number;
+  mode: Mode;
+  planned_ms: number | null;
+  started_at: number;
+  ended_at: number;
+  focused_ms: number;
+  task: string;
+  note: string;
+  source: "timer" | "manual";
+  segments: Segment[];
+  mock: MockScore | null;
+}
+
+export interface DayEntry extends Session {
+  subject_name: string;
+  subject_color: string;
+  /** 落在这一天里的部分 */
+  day_ms: number;
+}
+
+export interface DayView {
+  date: DateStr;
+  start: number;
+  end: number;
+  total_ms: number;
+  entries: DayEntry[];
+}
+
+export interface SessionPatch {
+  subject_id?: number;
+  task?: string;
+  note?: string;
+}
+
 export interface SubjectMs {
   subject_id: number;
   ms: number;

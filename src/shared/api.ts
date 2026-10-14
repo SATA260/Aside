@@ -2,9 +2,12 @@ import { call } from "./ipc";
 import type {
   DateStr,
   DayTotal,
+  DayView,
   DisplayMode,
   Outcome,
   Overview,
+  Session,
+  SessionPatch,
   Settings,
   ShortcutAction,
   StartArgs,
@@ -43,6 +46,9 @@ export const api = {
   },
   sessions: {
     setNote: (id: number, note: string) => call<null>("session_set_note", { id, note }),
+    day: (date: DateStr) => call<DayView>("day_view", { date }),
+    update: (id: number, patch: SessionPatch) => call<Session>("session_update", { id, ...patch }),
+    remove: (id: number) => call<null>("session_delete", { id }),
   },
   stats: {
     overview: () => call<Overview>("stats_overview"),

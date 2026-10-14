@@ -11,7 +11,7 @@ use crate::error::AppError;
 
 pub const MINUTE_MS: i64 = 60_000;
 pub const DAY_MS: i64 = 24 * 60 * MINUTE_MS;
-const MAX_TASK_CHARS: usize = 50;
+pub const MAX_TASK_CHARS: usize = 50;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]

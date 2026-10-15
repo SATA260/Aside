@@ -8,6 +8,12 @@ html[data-view="mini"] body {
   inset: 0;
   display: grid;
   place-items: center;
+  cursor: grab;
+}
+
+.mini button,
+.mini input {
+  cursor: pointer;
 }
 
 .pill {
@@ -117,23 +123,74 @@ html[data-view="mini"] body {
 }
 
 .pet-stack {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
 }
 
-.pet-controls {
-  display: none;
+.pet-bubble {
+  position: relative;
+  display: flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 8px;
+  max-width: 210px;
+  min-height: 36px;
+  padding: 4px 10px;
   border-radius: 12px;
   background: color-mix(in srgb, var(--bg) 88%, transparent);
   color: var(--text);
+  overflow: hidden;
 }
 
-.pet-controls button {
+.pet-bubble .t {
+  font-family: var(--font-num);
+  font-weight: 300;
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.pet-bubble .t .wk {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.pet-bubble.paused .t {
+  opacity: 0.5;
+}
+
+.pet-bubble .ico {
+  display: none;
+  gap: 2px;
+}
+
+.pet-stack:hover .pet-bubble .ico,
+.pet-stack:focus-within .pet-bubble .ico,
+.pet-bubble.confirming .ico {
+  display: flex;
+}
+
+.pet-stack:hover .pet-bubble .t,
+.pet-bubble.confirming .t {
+  font-size: 15px;
+}
+
+.pet-bubble .p {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: calc(var(--p) * 100%);
+  background: linear-gradient(90deg, transparent, var(--accent));
+}
+
+.pet-bubble.paused .p {
+  opacity: 0.4;
+}
+
+.pet-bubble button {
   width: 28px;
   height: 28px;
   border: 0;
@@ -143,9 +200,18 @@ html[data-view="mini"] body {
   cursor: pointer;
 }
 
-.pet-stack:hover .pet-controls,
-.pet-stack:focus-within .pet-controls {
-  display: flex;
+.pet-bubble button.end.on {
+  background: color-mix(in srgb, var(--subject-politics) 35%, transparent);
+}
+
+.mini.pet .mini-atmo {
+  top: auto;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  width: 210px;
+  max-height: 140px;
+  overflow: auto;
+  transform: translateX(-50%);
 }
 
 .mini-atmo {

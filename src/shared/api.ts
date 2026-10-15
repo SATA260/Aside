@@ -10,7 +10,6 @@ import type {
   Overview,
   WeekPrompt,
   WeekReport,
-  Bookmark,
   CharacterInfo,
   Session,
   SessionPatch,
@@ -85,10 +84,5 @@ export const api = {
   },
   mini: {
     hits: (rects: { x: number; y: number; w: number; h: number }[]) => call<null>("mini_hits", { rects }),
-  },
-  lecture: {
-    bookmarks: () => call<Bookmark[]>("lecture_bookmarks"),
-    go: (url: string) => call<string>("lecture_go", { url }),
-    video: (on: boolean, time: string) => call<null>("lecture_video", { on, time }),
   },
 };

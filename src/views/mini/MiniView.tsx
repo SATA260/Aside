@@ -1,18 +1,19 @@
-import { type CSSProperties, type ReactNode, useEffect, useState } from "react";
+import { getCurrentWindow } from "@tauri-apps/api/window";
+import { type CSSProperties, type PointerEvent, type ReactNode, useEffect, useRef, useState } from "react";
 import { Penguin, usePack, useReduceMotion } from "../../features/character/Penguin";
 import { pose } from "../../features/character/pose";
 import { SoundChoices } from "../../features/atmosphere/library";
 import { bigTime, horizon } from "../../features/timer/overlay";
 import { api } from "../../shared/api";
 import { clock } from "../../shared/format";
+import { inTauri } from "../../shared/ipc";
 import { play } from "../../shared/sfx";
 import { setTimer, useApp } from "../../shared/state";
-import type { ThemeName } from "../../shared/types";
 import { Dot } from "../../shared/ui/controls";
 import { attempt } from "../../shared/ui/toast";
 import "./mini.css";
 
-/** 浮窗：置顶的小胶囊，拖动胶囊本身可以挪位置，悬停时出现按钮。 */
+/** 浮窗：置顶的小窗。按住形象、气泡或空白处都能拖，松手后记住位置。 */
 export function MiniView() {
   const timer = useApp((s) => s.timer);
   const settings = useApp((s) => s.settings);
@@ -20,6 +21,7 @@ export function MiniView() {
   const [atmo, setAtmo] = useState(false);
   const reduce = useReduceMotion();
   const pack = usePack();
+  const stackRef = useRef<HTMLDivElement>(null);
   const paused = timer?.phase === "paused";
 
   useEffect(() => {
@@ -53,8 +55,15 @@ export function MiniView() {
       void api.mini.hits(rects);
     };
     send();
+    // 悬停后气泡变宽，马上把新的可点范围告诉窗口，不然第一下会穿透过去
+    const kick = () => requestAnimationFrame(send);
+    const stack = stackRef.current;
+    stack?.addEventListener("pointerenter", kick);
     const id = window.setInterval(send, 400);
-    return () => window.clearInterval(id);
+    return () => {
+      window.clearInterval(id);
+      stack?.removeEventListener("pointerenter", kick);
+    };
   }, [pack.show, atmo, confirmEnd]);
 
   if (!timer || !settings || (timer.phase !== "running" && timer.phase !== "paused")) return null;
@@ -75,22 +84,41 @@ export function MiniView() {
 
   if (pack.show) {
     return (
-      <div className="mini pet">
-        <div className="pet-stack">
-          <div data-hit>
+      <div className="mini pet" onPointerDown={dragMini}>
+        <div className="pet-stack" ref={stackRef}>
+          <div data-hit data-tauri-drag-region>
             <Penguin pose={look} size={180} pack={pack.id} dir={pack.dir} clip={clip} />
           </div>
-          <div className="pet-controls" data-hit>
-            <span className="t num">{confirmEnd ? "再点一次结束" : clock(big.ms, big.round)}</span>
-            <IconButton title={paused ? "继续" : "暂停"} onClick={() => void togglePause()}>
-              {paused ? <path d="M5 3.5v9l7.5-4.5z" /> : <path d="M5 3.5h2v9H5zM9 3.5h2v9H9z" />}
-            </IconButton>
-            <IconButton title="氛围" className={atmo ? "on" : ""} onClick={() => setAtmo((v) => !v)}>
-              <circle cx="8" cy="8" r="3.2" fill="none" stroke="currentColor" strokeWidth="1.4" />
-            </IconButton>
-            <IconButton title="结束" className={confirmEnd ? "end on" : "end"} onClick={end}>
-              <rect x="4" y="4" width="8" height="8" rx="1.5" />
-            </IconButton>
+          <div
+            className={`pet-bubble${paused ? " paused" : ""}${confirmEnd ? " confirming" : ""}`}
+            style={{ "--p": horizon(timer).p } as CSSProperties}
+            data-hit
+            data-tauri-drag-region
+          >
+            <span className="t num" data-tauri-drag-region>
+              {confirmEnd ? <span className="wk">再点一次结束</span> : clock(big.ms, big.round)}
+            </span>
+            <span className="ico">
+              <IconButton title={paused ? "继续" : "暂停"} onClick={() => void togglePause()}>
+                {paused ? <path d="M5 3.5v9l7.5-4.5z" /> : <path d="M5 3.5h2v9H5zM9 3.5h2v9H9z" />}
+              </IconButton>
+              <IconButton title="氛围" className={atmo ? "on" : ""} onClick={() => setAtmo((v) => !v)}>
+                <circle cx="8" cy="8" r="3.2" fill="none" stroke="currentColor" strokeWidth="1.4" />
+              </IconButton>
+              <IconButton
+                title="展开到全屏"
+                onClick={() => {
+                  play("tap");
+                  void attempt(api.timer.switchDisplay("fullscreen"));
+                }}
+              >
+                <path d="M3 7V3h4M13 9v4H9M3 3l4 4M13 13 9 9" fill="none" stroke="currentColor" strokeWidth="1.4" />
+              </IconButton>
+              <IconButton title="结束" className={confirmEnd ? "end on" : "end"} onClick={end}>
+                <rect x="4" y="4" width="8" height="8" rx="1.5" />
+              </IconButton>
+            </span>
+            <i className="p" data-tauri-drag-region />
           </div>
           {atmo && (
             <div className="mini-atmo wk" data-hit>
@@ -108,16 +136,6 @@ export function MiniView() {
               <button type="button" className={pack.id === "capsule" ? "on" : ""} onClick={() => void attempt(api.settings.update({ character: "capsule" }))}>
                 胶囊
               </button>
-              {(["night", "bamboo", "mist", "dusk", "sky"] as ThemeName[]).map((theme) => (
-                <button
-                  type="button"
-                  key={theme}
-                  className={settings.theme === theme ? "on" : ""}
-                  onClick={() => void attempt(api.settings.update({ theme }))}
-                >
-                  {theme === "night" ? "夜读" : theme === "bamboo" ? "竹影" : theme === "mist" ? "晨雾" : theme === "dusk" ? "暮色" : "天色"}
-                </button>
-              ))}
             </div>
           )}
         </div>
@@ -126,7 +144,7 @@ export function MiniView() {
   }
 
   return (
-    <div className="mini">
+    <div className="mini" onPointerDown={dragMini}>
       <div
         className={`pill${paused ? " paused" : ""}${confirmEnd ? " confirming" : ""}`}
         style={{ "--p": horizon(timer).p } as CSSProperties}
@@ -186,20 +204,18 @@ export function MiniView() {
           >
             胶囊
           </button>
-          {(["night", "bamboo", "mist", "dusk", "sky"] as ThemeName[]).map((theme) => (
-            <button
-              type="button"
-              key={theme}
-              className={settings.theme === theme ? "on" : ""}
-              onClick={() => void attempt(api.settings.update({ theme }))}
-            >
-              {theme === "night" ? "夜读" : theme === "bamboo" ? "竹影" : theme === "mist" ? "晨雾" : theme === "dusk" ? "暮色" : "天色"}
-            </button>
-          ))}
         </div>
       )}
     </div>
   );
+}
+
+function dragMini(event: PointerEvent) {
+  if (event.button !== 0) return;
+  const target = event.target;
+  if (target instanceof Element && target.closest("button, input, a, textarea")) return;
+  if (!inTauri) return;
+  void getCurrentWindow().startDragging();
 }
 
 function IconButton({

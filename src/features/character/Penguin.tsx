@@ -37,6 +37,9 @@ export function Penguin({
   const frames = clip?.frames || (pose === "blink" ? 2 : 4);
   const ms = clip?.ms || (pose === "done" || pose === "blink" ? 160 : 180);
   const frameW = Math.round((size * 180) / 220);
+  const reduce = useReduceMotion();
+  // 减少动态时只留眨眼；其它动作停在第一帧。行内样式会盖过样式表，所以在这里关掉。
+  const moving = !reduce || pose === "blink";
   return (
     <i
       className="penguin"
@@ -46,7 +49,7 @@ export function Penguin({
         height: size,
         backgroundImage: `url(${sheetUrl(pack, dir, pose)})`,
         backgroundSize: `${frameW * frames}px ${size}px`,
-        animation: `penguin-shift ${frames * ms}ms steps(${frames}) infinite`,
+        animation: moving ? `penguin-shift ${frames * ms}ms steps(${frames}) infinite` : "none",
         ["--shift" as string]: `-${frameW * frames}px`,
       }}
     />

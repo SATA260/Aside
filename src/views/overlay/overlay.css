@@ -41,10 +41,6 @@ html[data-view="overlay"] body {
   );
 }
 
-.overlay:has(.scene-fog) {
-  color: #1c2430;
-}
-
 .overlay .dot {
   width: calc(8 * var(--u));
   height: calc(8 * var(--u));
@@ -243,7 +239,7 @@ html[data-view="overlay"] body {
   justify-content: center;
   align-items: baseline;
   gap: calc(6 * var(--u)) calc(12 * var(--u));
-  max-width: 34%;
+  max-width: 48%;
 }
 
 .atmo-live span {

@@ -82,10 +82,6 @@ pub struct Settings {
     pub dnd_hint: bool,
     /// 已经提示过周报的那个周一，形如 2026-10-12
     pub week_prompted: String,
-    /// 网课窗口上次打开的地址。空着就显示书签
-    pub lecture_url: String,
-    /// 视频暂停时，计时也暂停。默认关
-    pub video_pause: bool,
     /// 浮窗样式：gaga、capsule，或导入形象的文件夹名
     pub character: String,
     /// 时间到时形象叫一声。默认关闭
@@ -119,8 +115,6 @@ impl Default for Settings {
             dnd_off: String::new(),
             dnd_hint: true,
             week_prompted: String::new(),
-            lecture_url: String::new(),
-            video_pause: false,
             character: "gaga".into(),
             quack: false,
         }
@@ -140,6 +134,10 @@ impl Settings {
         }
         if !crate::character::keep_character(&self.character) {
             self.character = "gaga".into();
+        }
+        self.theme = Theme::Night;
+        if self.last_display == Display::Lecture {
+            self.last_display = Display::Fullscreen;
         }
         self
     }
@@ -170,6 +168,12 @@ mod tests {
     fn an_unknown_sound_turns_off_and_the_volume_stays_in_range() {
         let loud = Settings { ambient: "nope".into(), ambient_volume: 4.0, ..Settings::default() }.normalized();
         assert_eq!(loud.ambient, "");
+        let removed = Settings { ambient: "library".into(), ..Settings::default() }.normalized();
+        assert_eq!(removed.ambient, "");
+        let styled = Settings { theme: Theme::Mist, ..Settings::default() }.normalized();
+        assert_eq!(styled.theme, Theme::Night);
+        let lecture = Settings { last_display: Display::Lecture, ..Settings::default() }.normalized();
+        assert_eq!(lecture.last_display, Display::Fullscreen);
         assert_eq!(loud.ambient_volume, 1.0);
         let quiet = Settings { ambient: "rain".into(), ambient_volume: -1.0, ..Settings::default() }.normalized();
         assert_eq!(quiet.ambient, "rain");

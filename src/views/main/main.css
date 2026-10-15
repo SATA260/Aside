@@ -146,42 +146,6 @@
   color: var(--muted);
 }
 
-.themes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 14px 18px;
-  justify-content: flex-end;
-}
-
-.theme-pick {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  white-space: nowrap;
-  color: var(--muted);
-  background: none;
-  border: 0;
-  cursor: pointer;
-}
-
-.theme-pick i {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  border: 1px solid var(--line);
-}
-
-.theme-pick.on {
-  color: var(--text);
-}
-
-.theme-pick.on i {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
 .slider {
   -webkit-appearance: none;
   appearance: none;

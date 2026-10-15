@@ -19,7 +19,7 @@ export function initialForm(
   settings: Settings,
   subjects: Subject[],
   timer: TimerView,
-  displays: DisplayMode[] = ["fullscreen", "mini", "lecture"],
+  displays: DisplayMode[] = ["fullscreen", "mini"],
 ): StartForm {
   const fallback = subjects.find((s) => s.is_fallback) ?? subjects[0];
   // 再来一段沿用刚结束这一段的科目、方式、时长、显示和任务；回到电脑则回到平时的开始页

@@ -1,4 +1,4 @@
-//! 占位企鹅：青蓝连体服、米白肚皮、浅橙嘴和脚。正式画可以整包替换。
+//! 尺寸用的占位画家。浮窗里的嘎嘎用 src/assets/characters/gaga 里的画，测试不会覆盖那些文件。
 
 use image::{Rgba, RgbaImage};
 

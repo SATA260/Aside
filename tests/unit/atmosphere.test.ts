@@ -5,6 +5,7 @@ describe("atmosphere catalog", () => {
   it("starts from the sky scene and an off sound", () => {
     expect(SCENES[0]).toEqual({ id: "sky", name: "天色" });
     expect(SOUNDS[0]).toEqual({ id: "", name: "关" });
+    expect(SOUNDS.map((s) => s.name)).toEqual(["关", "雨声", "咖啡馆", "篝火", "白噪音"]);
     expect(SCENES.map((s) => s.name)).toEqual(["天色", "雨窗", "台灯", "星夜", "晨雾"]);
   });
 

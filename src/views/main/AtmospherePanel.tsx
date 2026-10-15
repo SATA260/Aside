@@ -3,19 +3,11 @@ import { SceneBackdrop } from "../../features/atmosphere/SceneBackdrop";
 import { SceneChoices, SoundChoices, imageSrc, useLibrary } from "../../features/atmosphere/library";
 import { api } from "../../shared/api";
 import { useApp } from "../../shared/state";
-import type { Settings, ThemeName } from "../../shared/types";
+import type { Settings } from "../../shared/types";
 import { Slider } from "../../shared/ui/Switch";
 import { attempt } from "../../shared/ui/toast";
 
-const THEMES: { value: ThemeName; label: string }[] = [
-  { value: "night", label: "夜读" },
-  { value: "bamboo", label: "竹影" },
-  { value: "mist", label: "晨雾" },
-  { value: "dusk", label: "暮色" },
-  { value: "sky", label: "跟随天色" },
-];
-
-/** 开始页右侧：画面、声音、风格，点一下就换。 */
+/** 开始页右侧：画面和声音，点一下就换。 */
 export function AtmospherePanel() {
   const settings = useApp((s) => s.settings);
   const { images } = useLibrary();
@@ -51,20 +43,6 @@ export function AtmospherePanel() {
         value={settings.ambient_volume}
         onCommit={(ambient_volume) => update({ ambient_volume })}
       />
-
-      <div className="label">风格</div>
-      <div className="atmo-picks">
-        {THEMES.map((t) => (
-          <button
-            type="button"
-            key={t.value}
-            className={settings.theme === t.value ? "on" : ""}
-            onClick={() => update({ theme: t.value })}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
     </aside>
   );
 }

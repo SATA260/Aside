@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Penguin, usePack } from "../../features/character/Penguin";
+import { Penguin, usePack, useReduceMotion } from "../../features/character/Penguin";
+import { pose } from "../../features/character/pose";
 import { fullScore, scoreError } from "../../features/timer/mock";
 import { quoteFor } from "../../features/atmosphere/quotes";
 import { toDateStr } from "../../features/records/dates";
@@ -14,6 +15,8 @@ const NOTE_MAX = 200;
 
 export function EndScreen({ outcome, subject }: { outcome: Outcome; subject: Subject | null }) {
   const pack = usePack();
+  const reduce = useReduceMotion();
+  const look = pose("finished", null, reduce);
   const [note, setNote] = useState("");
   const [saved, setSaved] = useState("");
   const [busy, setBusy] = useState(false);
@@ -63,7 +66,7 @@ export function EndScreen({ outcome, subject }: { outcome: Outcome; subject: Sub
       {pack.show && outcome.reason === "completed" && (
         <div className="end-pet">
           <span className="bubble">嘎嘎！</span>
-          <Penguin pose="done" size={160} pack={pack.id} dir={pack.dir} clip={pack.clips?.done} />
+          <Penguin pose={look} size={160} pack={pack.id} dir={pack.dir} clip={pack.clips?.[look]} />
         </div>
       )}
 

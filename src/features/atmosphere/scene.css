@@ -34,6 +34,16 @@
   background: linear-gradient(180deg, #d5dde6 0%, #c5cfd8 50%, #b7c3cf 100%);
 }
 
+/* 晨雾是浅底，字改成深色。变量写在包住文字的那一层，画面本身不包含文字。 */
+.overlay:has(.scene-fog),
+.atmo-preview:has(.scene-fog) {
+  --text: #1c2430;
+  --muted: #3e4a5c;
+  --accent: #3e4a63;
+  --line: rgba(28, 36, 48, 0.16);
+  color: #1c2430;
+}
+
 .scene-photo img {
   width: 100%;
   height: 100%;

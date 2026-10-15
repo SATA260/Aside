@@ -56,9 +56,8 @@ pub struct TimerState {
 
 pub fn view_name(display: Display) -> &'static str {
     match display {
-        Display::Fullscreen => "overlay",
+        Display::Fullscreen | Display::Lecture => "overlay",
         Display::Mini => "mini",
-        Display::Lecture => "lecture",
     }
 }
 
@@ -270,9 +269,8 @@ impl Aside {
             st.timer.plan().filter(|_| st.timer.is_active()).map(|p| p.display)
         };
         match current {
-            Some(Display::Fullscreen) => self.timer_switch_display(Display::Mini),
+            Some(Display::Fullscreen | Display::Lecture) => self.timer_switch_display(Display::Mini),
             Some(Display::Mini) => self.timer_switch_display(Display::Fullscreen),
-            Some(Display::Lecture) => Ok(self.timer_view()),
             None => Err(TimerError::NotActive.into()),
         }
     }

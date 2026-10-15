@@ -3,7 +3,6 @@ import { configureSfx } from "../shared/sfx";
 import { startSync, useApp } from "../shared/state";
 import { useTheme } from "../shared/theme/useTheme";
 import { Toaster } from "../shared/ui/toast";
-import { LecturePanel } from "../views/lecture/LecturePanel";
 import { MainView } from "../views/main/MainView";
 import { MiniView } from "../views/mini/MiniView";
 import { OverlayView } from "../views/overlay/OverlayView";
@@ -12,7 +11,6 @@ const VIEWS = {
   main: MainView,
   overlay: OverlayView,
   mini: MiniView,
-  lecture: LecturePanel,
 } as const;
 
 type ViewName = keyof typeof VIEWS;
@@ -26,7 +24,7 @@ export function currentView(): ViewName {
 export function App() {
   const settings = useApp((s) => s.settings);
   useEffect(() => startSync(), []);
-  useTheme(settings?.theme);
+  useTheme();
   useEffect(() => {
     if (settings) configureSfx({ enabled: settings.sfx_enabled, volume: settings.sfx_volume });
   }, [settings]);

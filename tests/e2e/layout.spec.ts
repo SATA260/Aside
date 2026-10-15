@@ -81,11 +81,9 @@ test.describe("主窗口", () => {
     [1440, 900],
     [1920, 1050],
   ]) {
-    test(`${w}×${h} 下风格名都在一行、页面不横向滚动`, async ({ page }) => {
+    test(`${w}×${h} 下页面不横向滚动`, async ({ page }) => {
       await page.setViewportSize({ width: w, height: h });
       await openMain(page, "设置");
-      const heights = await page.locator(".theme-pick").evaluateAll((els) => els.map((e) => e.clientHeight));
-      expect(new Set(heights).size).toBe(1);
       for (const name of ["开始", "科目", "设置"]) {
         await page.getByRole("button", { name, exact: true }).click();
         const overflow = await page.locator(".page").evaluate((e) => e.scrollWidth - e.clientWidth);

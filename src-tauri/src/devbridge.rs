@@ -106,14 +106,6 @@ impl Shell for DevShell {
         Ok(())
     }
 
-    fn open_course(&self, url: &str) {
-        self.hub.emit("dev:course", json!({ "url": url }));
-    }
-
-    fn eval_course(&self, script: &str) {
-        self.hub.emit("dev:eval", json!({ "script": script }));
-    }
-
     fn resize_mini(&self, width: f64, height: f64) {
         self.hub.emit("dev:mini-size", json!({ "width": width, "height": height }));
     }

@@ -1,22 +1,14 @@
-import { type CSSProperties, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { importCharacter } from "../../features/character/import";
 import { isMac } from "../../features/shortcuts/keys";
 import { ShortcutField } from "../../features/shortcuts/ShortcutField";
 import { api } from "../../shared/api";
 import { configureSfx, play } from "../../shared/sfx";
 import { useApp } from "../../shared/state";
-import type { CharacterInfo, Settings, ThemeName } from "../../shared/types";
+import type { CharacterInfo, Settings } from "../../shared/types";
 import { Segmented } from "../../shared/ui/controls";
 import { Slider, Switch } from "../../shared/ui/Switch";
 import { attempt } from "../../shared/ui/toast";
-
-const THEMES: { value: ThemeName; label: string; swatch: string }[] = [
-  { value: "night", label: "夜读", swatch: "#10151f" },
-  { value: "bamboo", label: "竹影", swatch: "#121b17" },
-  { value: "mist", label: "晨雾", swatch: "#e4e9ef" },
-  { value: "dusk", label: "暮色", swatch: "#e9e4ec" },
-  { value: "sky", label: "跟随天色", swatch: "linear-gradient(135deg, #e4e9ef 0 50%, #10151f 50%)" },
-];
 
 export function SettingsPage() {
   const settings = useApp((s) => s.settings);
@@ -38,28 +30,6 @@ export function SettingsPage() {
       <div className="settings-cols">
         <section className="settings-group">
           <h3>外观</h3>
-          <div className="settings-row">
-            <div>
-              <div>风格</div>
-              <div className="hint">跟随天色：清晨晨雾，白天晴灰，傍晚暮色，夜里夜读</div>
-            </div>
-            <div className="themes">
-              {THEMES.map((t) => (
-                <button
-                  type="button"
-                  key={t.value}
-                  className={settings.theme === t.value ? "theme-pick on" : "theme-pick"}
-                  onClick={() => {
-                    play("tap");
-                    void update({ theme: t.value });
-                  }}
-                >
-                  <i style={{ background: t.swatch } as CSSProperties} />
-                  {t.label}
-                </button>
-              ))}
-            </div>
-          </div>
           <div className="settings-row">
             <div>
               <div>倒计时显示</div>
@@ -218,21 +188,6 @@ export function SettingsPage() {
               <div className="hint">默认关闭。打开后，到点时形象会先叫一声，再响铃声</div>
             </div>
             <Switch label="时间到叫一声" on={!!settings.quack} onChange={(quack) => void update({ quack })} />
-          </div>
-        </section>
-
-        <section className="settings-group">
-          <h3>网课</h3>
-          <div className="settings-row">
-            <div>
-              <div>视频暂停时计时也暂停</div>
-              <div className="hint">默认关闭。课程页面只能把播放和暂停告诉计时器</div>
-            </div>
-            <Switch
-              label="视频暂停时计时也暂停"
-              on={!!settings.video_pause}
-              onChange={(video_pause) => void update({ video_pause })}
-            />
           </div>
         </section>
 

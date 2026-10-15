@@ -9,7 +9,6 @@ export const SCENES = [
 export const SOUNDS = [
   { id: "", name: "关" },
   { id: "rain", name: "雨声" },
-  { id: "library", name: "图书馆" },
   { id: "cafe", name: "咖啡馆" },
   { id: "fire", name: "篝火" },
   { id: "noise", name: "白噪音" },

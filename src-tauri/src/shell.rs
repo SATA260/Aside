@@ -17,10 +17,6 @@ pub trait Shell: Send + Sync {
     fn set_autostart(&self, on: bool) -> Result<(), String>;
     /// 运行用户在“快捷指令”里建好的专注模式指令。找不到时返回能给用户看的原因。
     fn focus_shortcut(&self, name: &str) -> Result<(), String>;
-    /// 在网课窗口里打开课程网页。窗口还没出现时由 `open_view("lecture")` 负责。
-    fn open_course(&self, url: &str);
-    /// 往课程网页里注入一段脚本。没有课程网页时什么都不做。
-    fn eval_course(&self, script: &str);
     /// 浮窗换成胶囊或形象时，窗口大小跟着变。
     fn resize_mini(&self, width: f64, height: f64);
 }
@@ -119,14 +115,6 @@ impl Shell for RecordingShell {
         } else {
             Ok(())
         }
-    }
-
-    fn open_course(&self, url: &str) {
-        self.calls.lock().unwrap().push(format!("course:{url}"));
-    }
-
-    fn eval_course(&self, script: &str) {
-        self.calls.lock().unwrap().push(format!("eval:{script}"));
     }
 
     fn resize_mini(&self, width: f64, height: f64) {

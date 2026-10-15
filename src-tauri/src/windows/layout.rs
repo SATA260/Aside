@@ -42,7 +42,8 @@ pub fn mini_size(character: &str) -> (f64, f64) {
 const MINI_RIGHT: f64 = 24.0;
 const MINI_TOP: f64 = 56.0;
 
-/// 鼠标在窗口里时，只有落在胶囊或形象上才收下点击，旁边的空白穿透到下面的窗口。
+/// 鼠标在窗口里时，只有落在胶囊或形象上才收下点击。浮窗现在整窗都能拖，这条留给测试。
+#[allow(dead_code)]
 pub fn capture_click(cursor: (f64, f64), interactive: &[Rect]) -> bool {
     let (x, y) = cursor;
     interactive.iter().any(|r| x >= r.x && y >= r.y && x < r.x + r.w && y < r.y + r.h)

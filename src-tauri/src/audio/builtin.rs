@@ -1,4 +1,4 @@
-//! 内置的五段背景音，编译进程序里，来源和授权见 `src/assets/sounds/CREDITS.md`。
+//! 内置的四段背景音，编译进程序里，来源和授权见 `src/assets/sounds/CREDITS.md`。
 
 use std::io::Cursor;
 
@@ -12,7 +12,6 @@ pub struct Builtin {
 
 const BUILTINS: &[Builtin] = &[
     Builtin { id: "rain", name: "雨声", bytes: include_bytes!("../../../src/assets/sounds/rain.wav") },
-    Builtin { id: "library", name: "图书馆", bytes: include_bytes!("../../../src/assets/sounds/library.wav") },
     Builtin { id: "cafe", name: "咖啡馆", bytes: include_bytes!("../../../src/assets/sounds/cafe.wav") },
     Builtin { id: "fire", name: "篝火", bytes: include_bytes!("../../../src/assets/sounds/fire.wav") },
     Builtin { id: "noise", name: "白噪音", bytes: include_bytes!("../../../src/assets/sounds/noise.wav") },

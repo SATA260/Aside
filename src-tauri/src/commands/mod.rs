@@ -127,36 +127,18 @@ struct HitArg {
 }
 
 #[derive(Deserialize)]
-struct VideoOnly {
-    on: bool,
-    #[serde(default)]
-    time: String,
-}
-
-#[derive(Deserialize)]
-struct VideoPlaying {
-    #[serde(default)]
-    playing: Option<bool>,
-    #[serde(default)]
-    exit: bool,
-}
-
-#[derive(Deserialize)]
 struct RenameMedia {
     id: i64,
     name: String,
 }
 
 /// `caller` 是发起调用的窗口标签，比如 `main`、`overlay-0`、`mini`。
-pub fn dispatch(app: &Aside, cmd: &str, input: Value, caller: &str) -> AppResult<Value> {
+pub fn dispatch(app: &Aside, cmd: &str, input: Value, _caller: &str) -> AppResult<Value> {
     let input = if input.is_null() {
         Value::Object(Default::default())
     } else {
         input
     };
-    if caller == "course" && cmd != "video_playing" {
-        return Err(AppError::Invalid("这个页面只能告诉计时器视频是否在播放".into()));
-    }
     match cmd {
         "timer_view" => ok(app.timer_view()),
         "timer_start" => ok(app.timer_start(args::<StartArgs>(input)?)?),
@@ -242,17 +224,6 @@ pub fn dispatch(app: &Aside, cmd: &str, input: Value, caller: &str) -> AppResult
         }
         "characters_list" => ok(app.characters()),
         "character_import" => ok(app.import_character(Path::new(&args::<UrlArg>(input)?.url))?),
-        "lecture_bookmarks" => ok(app.lecture_bookmarks()),
-        "lecture_go" => ok(app.lecture_go(&args::<UrlArg>(input)?.url)?),
-        "lecture_video" => {
-            let a: VideoOnly = args(input)?;
-            app.lecture_video(a.on, &a.time);
-            ok(())
-        }
-        "video_playing" => {
-            let a: VideoPlaying = args(input)?;
-            ok(app.video_playing(a.playing, a.exit)?)
-        }
         "stats_days" => {
             let a: Range = args(input)?;
             ok(app.stats_days(a.from, a.to)?)

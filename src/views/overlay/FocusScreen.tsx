@@ -10,18 +10,9 @@ import { clock, durationText, hm, MINUTE } from "../../shared/format";
 import { useDrift, useIdle } from "../../shared/hooks";
 import { play } from "../../shared/sfx";
 import { setTimer } from "../../shared/state";
-import { resolveTheme } from "../../shared/theme/resolve";
-import type { Settings, ThemeName, TimerView } from "../../shared/types";
+import type { Settings, TimerView } from "../../shared/types";
 import { Dot } from "../../shared/ui/controls";
 import { attempt } from "../../shared/ui/toast";
-
-const THEMES: { id: ThemeName; name: string }[] = [
-  { id: "night", name: "夜读" },
-  { id: "bamboo", name: "竹影" },
-  { id: "mist", name: "晨雾" },
-  { id: "dusk", name: "暮色" },
-  { id: "sky", name: "跟随天色" },
-];
 
 export function FocusScreen({ timer, settings }: { timer: TimerView; settings: Settings }) {
   const idle = useIdle(3000);
@@ -61,9 +52,6 @@ export function FocusScreen({ timer, settings }: { timer: TimerView; settings: S
       } else if (e.code === "KeyN") {
         const next = nextOf(soundOptions(sounds), settings.ambient ?? "");
         choose({ ambient: next.id }, next.name);
-      } else if (e.code === "KeyT") {
-        const next = nextOf(THEMES, settings.theme);
-        choose({ theme: next.id }, next.name);
       } else if (e.code === "ArrowUp" || e.code === "ArrowDown") {
         e.preventDefault();
         const step = e.code === "ArrowUp" ? 0.05 : -0.05;
@@ -179,25 +167,6 @@ export function FocusScreen({ timer, settings }: { timer: TimerView; settings: S
             <span>声音</span>
             <SoundChoices ambient={settings.ambient} onPick={(id, name) => choose({ ambient: id }, name)} />
           </div>
-          <div>
-            <span>风格</span>
-            {THEMES.map((t) => (
-              <button
-                type="button"
-                key={t.id}
-                className={settings.theme === t.id ? "on" : ""}
-                onMouseEnter={() => {
-                  document.documentElement.dataset.theme = resolveTheme(t.id, new Date().getHours());
-                }}
-                onMouseLeave={() => {
-                  document.documentElement.dataset.theme = resolveTheme(settings.theme, new Date().getHours());
-                }}
-                onClick={() => choose({ theme: t.id }, t.name)}
-              >
-                {t.name}
-              </button>
-            ))}
-          </div>
         </div>
       )}
 
@@ -213,7 +182,7 @@ export function FocusScreen({ timer, settings }: { timer: TimerView; settings: S
         </div>
         <p className="quote wk">{quoteFor(toDateStr(new Date(timer.now)))}</p>
       </footer>
-      {!idle && <p className="keys-hint">B 画面 · N 声音 · T 风格 · ↑↓ 音量</p>}
+      {!idle && <p className="keys-hint">B 画面 · N 声音 · ↑↓ 音量</p>}
     </div>
   );
 }

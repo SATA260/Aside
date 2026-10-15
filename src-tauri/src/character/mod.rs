@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::{AppResult, invalid};
 
+#[cfg(test)]
 mod penguin;
 
 pub(crate) const FRAME_W: u32 = 360;
@@ -345,27 +346,18 @@ mod tests {
     }
 
     #[test]
-    fn the_placeholder_penguin_is_a_valid_pack() {
+    fn the_shipped_penguin_pack_keeps_its_frame_size() {
         let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../src/assets/characters/gaga");
-        std::fs::create_dir_all(&root).unwrap();
-        let states = [("focus", 4u32), ("pause", 4), ("last5", 4), ("done", 4), ("blink", 2)];
-        std::fs::write(
-            root.join("character.json"),
-            r#"{"name":"嘎嘎","author":"Aside","version":1,"states":{
-                "focus":{"frames":4,"ms":180},
-                "pause":{"frames":4,"ms":180},
-                "last5":{"frames":4,"ms":180},
-                "done":{"frames":4,"ms":160},
-                "blink":{"frames":2,"ms":160}
-            }}"#,
-        )
-        .unwrap();
-        for (state, frames) in states {
-            super::penguin::sheet(state, frames).save(root.join(format!("{state}.png"))).unwrap();
-        }
-        super::penguin::sheet("focus", 1).save(root.join("preview.png")).unwrap();
         let pack = load_pack(&root).unwrap();
         assert_eq!(pack.name, "嘎嘎");
+        assert_eq!(pack.states["focus"].frames, 4);
+        assert_eq!(pack.states["blink"].frames, 2);
+    }
+
+    #[test]
+    fn the_placeholder_painter_makes_a_sheet_of_the_right_size() {
+        let img = super::penguin::sheet("focus", 4);
+        assert_eq!(img.dimensions(), (FRAME_W * 4, FRAME_H));
     }
 
     #[test]

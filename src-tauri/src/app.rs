@@ -33,8 +33,6 @@ pub struct Aside {
     /// 背景音在单独的线程里播，因为声卡对象不能跨线程。
     ambient_tx: Mutex<Option<Sender<AmbientCmd>>>,
     ambient_id: Mutex<String>,
-    /// 网课窗口正在“只看视频”
-    video_only: std::sync::atomic::AtomicBool,
     /// 浮窗里形象、气泡和按钮的位置。空着时整窗都能点，避免页面还没报上来就穿透。
     mini_hits: Mutex<Vec<crate::windows::layout::Rect>>,
 }
@@ -114,7 +112,6 @@ impl Aside {
             settings: RwLock::new(settings.clone()),
             ambient_tx: Mutex::new(None),
             ambient_id: Mutex::new(String::new()),
-            video_only: std::sync::atomic::AtomicBool::new(false),
             mini_hits: Mutex::new(Vec::new()),
         };
         app.sync_ambient(&settings);
@@ -161,15 +158,11 @@ impl Aside {
 
     fn save_settings(&self, next: Settings) -> AppResult<Settings> {
         let previous = self.settings();
-        let was_linked = previous.video_pause;
         let character_changed = previous.character != next.character;
         self.store.write(|c| store::settings::put(c, SETTINGS_KEY, &next))?;
         *self.settings.write().unwrap_or_else(|e| e.into_inner()) = next.clone();
         self.events.emit(SETTINGS_CHANGED, serde_json::to_value(&next)?);
         self.sync_ambient(&next);
-        if next.video_pause && !was_linked {
-            self.shell.eval_course(crate::lecture::PAUSE_SCRIPT);
-        }
         if character_changed {
             let (width, height) = crate::windows::mini_size(&next.character);
             self.shell.resize_mini(width, height);
@@ -316,47 +309,6 @@ impl Aside {
         self.edit_settings(|s| s.character = character.id.clone())?;
         self.data_changed();
         Ok(character)
-    }
-
-    pub fn lecture_bookmarks(&self) -> Vec<crate::lecture::Bookmark> {
-        crate::lecture::bookmarks()
-    }
-
-    pub fn lecture_go(&self, raw: &str) -> AppResult<String> {
-        let url = crate::lecture::course_url(raw).map_err(|msg| crate::error::AppError::Invalid(msg))?;
-        self.edit_settings(|s| s.lecture_url = url.clone())?;
-        self.shell.open_course(&url);
-        Ok(url)
-    }
-
-    pub fn is_video_only(&self) -> bool {
-        self.video_only.load(std::sync::atomic::Ordering::Relaxed)
-    }
-
-    pub fn lecture_video(&self, on: bool, time: &str) {
-        self.video_only.store(on, std::sync::atomic::Ordering::Relaxed);
-        self.shell.eval_course(&crate::lecture::video_script(time, on));
-        self.events.emit("lecture:video", json!({ "on": on }));
-    }
-
-    /// 课程网页告诉计时器视频在不在播。设置没开时不动计时。`exit` 退出只看视频。
-    pub fn video_playing(&self, playing: Option<bool>, exit: bool) -> AppResult<()> {
-        if exit {
-            self.lecture_video(false, "");
-        }
-        if !self.settings().video_pause {
-            return Ok(());
-        }
-        match playing {
-            Some(true) => {
-                let _ = self.timer_resume();
-            }
-            Some(false) => {
-                let _ = self.timer_pause();
-            }
-            None => {}
-        }
-        Ok(())
     }
 
     /// 开始或结束专注时，按系统去开、关勿扰。名字没填就什么都不做。

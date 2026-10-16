@@ -2,7 +2,8 @@
 name = "aside"
 version = "0.1.0"
 description = "陪考研学生自习的桌面计时器"
-authors = ["Aside"]
+authors = ["SATA260"]
+license = "MIT"
 edition = "2024"
 default-run = "aside"
 

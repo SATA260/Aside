@@ -125,7 +125,9 @@ export function FocusScreen({ timer, settings }: { timer: TimerView; settings: S
         >
           <BigClock text={clock(big.ms, big.round)} />
         </button>
-        <div className="ov-note wk">{paused ? `暂停中 · ${learned}` : learned}</div>
+        <div className={paused ? "ov-note wk paused" : "ov-note wk"}>
+          {paused ? `暂停中 · ${learned}` : learned}
+        </div>
       </main>
 
       <nav className="textctl wk">

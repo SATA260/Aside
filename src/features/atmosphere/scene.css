@@ -3,6 +3,7 @@
   inset: 0;
   overflow: hidden;
   pointer-events: none;
+  isolation: isolate;
 }
 
 .scene-bg canvas {
@@ -10,42 +11,149 @@
   inset: 0;
   width: 100%;
   height: 100%;
+  z-index: 2;
 }
 
+/* 环境光晕层：为各场景补充远景散景、天际柔光或山脊剪影 */
+.scene-ambient {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* 光学景深暗角与柔化层：让四周自然收拢，烘托中心文字与沉浸感 */
+.scene-depth {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background:
+    radial-gradient(110% 95% at 50% 48%, transparent 48%, rgba(6, 10, 16, 0.34) 100%),
+    linear-gradient(180deg, rgba(6, 10, 16, 0.16) 0%, transparent 24%, transparent 76%, rgba(6, 10, 16, 0.24) 100%);
+}
+
+/* ---------- 1. 天色 (Sky) ---------- */
 .scene-sky {
-  background: linear-gradient(180deg, var(--bg) 0%, var(--bg) 40%, var(--bg2) 100%);
+  background:
+    radial-gradient(110% 55% at 50% 102%, color-mix(in srgb, var(--accent) 22%, transparent) 0%, transparent 68%),
+    radial-gradient(85% 45% at 22% 14%, color-mix(in srgb, var(--accent) 10%, transparent) 0%, transparent 65%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--bg) 94%, #05080f) 0%,
+      var(--bg) 42%,
+      color-mix(in srgb, var(--bg2) 92%, var(--accent)) 100%
+    );
 }
 
+.scene-sky .scene-ambient {
+  background:
+    radial-gradient(75% 32% at 50% 92%, color-mix(in srgb, var(--accent) 16%, transparent) 0%, transparent 72%),
+    linear-gradient(180deg, transparent 68%, rgba(8, 12, 20, 0.18) 100%);
+}
+
+/* ---------- 2. 雨窗 (Rain) ---------- */
 .scene-rain {
-  background: linear-gradient(180deg, #141c2b 0%, #1c2838 55%, #243044 100%);
+  background:
+    radial-gradient(52% 44% at 20% 78%, rgba(226, 174, 112, 0.16) 0%, transparent 70%),
+    radial-gradient(46% 38% at 82% 84%, rgba(218, 160, 102, 0.12) 0%, transparent 68%),
+    radial-gradient(70% 55% at 52% 32%, rgba(92, 134, 184, 0.15) 0%, transparent 72%),
+    linear-gradient(180deg, #0b111c 0%, #131e2f 46%, #1b2a3e 82%, #162233 100%);
 }
 
+.scene-rain .scene-ambient {
+  /* 窗玻璃下沿的微弱水雾与窗外远景柔和散景光斑 */
+  background:
+    radial-gradient(18% 16% at 24% 74%, rgba(242, 198, 140, 0.14) 0%, transparent 75%),
+    radial-gradient(14% 13% at 76% 80%, rgba(235, 182, 122, 0.11) 0%, transparent 75%),
+    radial-gradient(22% 18% at 62% 68%, rgba(130, 172, 220, 0.1) 0%, transparent 78%),
+    linear-gradient(180deg, transparent 72%, rgba(188, 208, 232, 0.07) 100%);
+}
+
+/* ---------- 3. 台灯 (Lamp) ---------- */
 .scene-lamp {
   background:
-    radial-gradient(40% 45% at 70% 18%, rgba(232, 196, 140, 0.55), transparent 70%),
-    linear-gradient(180deg, #1a1612 0%, #241c16 100%);
+    radial-gradient(26% 30% at 73% 14%, rgba(255, 234, 192, 0.46) 0%, rgba(238, 192, 128, 0.18) 46%, transparent 76%),
+    radial-gradient(62% 68% at 66% 24%, rgba(228, 176, 112, 0.34) 0%, rgba(176, 124, 72, 0.11) 54%, transparent 82%),
+    radial-gradient(90% 36% at 52% 102%, rgba(214, 158, 94, 0.22) 0%, transparent 70%),
+    linear-gradient(168deg, #110d0a 0%, #19130e 44%, #241b14 82%, #1b140f 100%);
 }
 
+.scene-lamp .scene-ambient {
+  /* 桌面漫反射柔光与书房暗部层次 */
+  background:
+    radial-gradient(75% 28% at 56% 96%, rgba(238, 188, 124, 0.16) 0%, transparent 72%),
+    linear-gradient(180deg, transparent 0%, transparent 78%, rgba(12, 9, 6, 0.32) 100%);
+}
+
+/* ---------- 4. 星夜 (Stars) ---------- */
 .scene-stars {
-  background: radial-gradient(80% 60% at 50% 100%, #1b2740 0%, #0c1018 70%);
+  background:
+    radial-gradient(95% 58% at 50% 102%, #1d2f4f 0%, #111c32 52%, transparent 82%),
+    radial-gradient(65% 45% at 72% 24%, rgba(56, 84, 138, 0.22) 0%, transparent 70%),
+    linear-gradient(180deg, #060912 0%, #0b1222 48%, #142038 86%, #192844 100%);
 }
 
+.scene-stars .scene-ambient {
+  /* 远山与地平线微弱天光剪影 */
+  background:
+    radial-gradient(120% 24% at 32% 103%, rgba(6, 9, 16, 0.82) 0%, rgba(6, 9, 16, 0.82) 42%, transparent 43%),
+    radial-gradient(110% 20% at 78% 104%, rgba(8, 12, 22, 0.78) 0%, rgba(8, 12, 22, 0.78) 46%, transparent 47%);
+}
+
+/* ---------- 5. 晨雾 (Fog) ---------- */
 .scene-fog {
-  background: linear-gradient(180deg, #d5dde6 0%, #c5cfd8 50%, #b7c3cf 100%);
+  background:
+    radial-gradient(75% 52% at 24% 12%, rgba(255, 252, 245, 0.65) 0%, transparent 68%),
+    radial-gradient(90% 48% at 50% 95%, rgba(154, 172, 190, 0.42) 0%, transparent 72%),
+    linear-gradient(180deg, #e3eaf0 0%, #d2dce6 46%, #bfcdd9 82%, #b1c0ce 100%);
+}
+
+.scene-fog .scene-ambient {
+  /* 远山层叠剪影隐现于晨雾之中 */
+  background:
+    radial-gradient(135% 32% at 22% 106%, rgba(132, 149, 168, 0.32) 0%, rgba(132, 149, 168, 0.28) 48%, transparent 50%),
+    radial-gradient(125% 26% at 82% 105%, rgba(114, 132, 152, 0.36) 0%, rgba(114, 132, 152, 0.32) 46%, transparent 48%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, transparent 45%, rgba(168, 184, 200, 0.24) 100%);
+}
+
+.scene-fog .scene-depth {
+  background:
+    radial-gradient(115% 95% at 50% 48%, transparent 54%, rgba(56, 72, 92, 0.16) 100%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, transparent 28%, transparent 76%, rgba(68, 84, 104, 0.16) 100%);
 }
 
 /* 晨雾是浅底，字改成深色。变量写在包住文字的那一层，画面本身不包含文字。 */
 .overlay:has(.scene-fog),
 .atmo-preview:has(.scene-fog) {
-  --text: #1c2430;
-  --muted: #3e4a5c;
-  --accent: #3e4a63;
-  --line: rgba(28, 36, 48, 0.16);
-  color: #1c2430;
+  --text: #1c2532;
+  --muted: #465468;
+  --accent: #3b506b;
+  --line: rgba(28, 37, 50, 0.15);
+  --surface: rgba(238, 243, 248, 0.72);
+  color: #1c2532;
 }
 
+/* ---------- 6. 导入图片 (Photo) ---------- */
 .scene-photo img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transform: scale(1.02);
+  filter: saturate(0.94) contrast(0.98);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .scene-photo img {
+    animation: photo-breathe 28s ease-in-out infinite alternate;
+  }
+
+  @keyframes photo-breathe {
+    from {
+      transform: scale(1.015);
+    }
+    to {
+      transform: scale(1.055);
+    }
+  }
 }

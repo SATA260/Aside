@@ -10,49 +10,66 @@ html[data-view="overlay"] body {
   overflow: hidden;
   color: var(--text);
   background: linear-gradient(180deg, var(--bg) 0%, var(--bg) 35%, var(--bg2) 100%);
-  animation: overlay-in 0.6s var(--ease);
+  animation: overlay-in 0.75s var(--ease);
 }
 
 @keyframes overlay-in {
   from {
     opacity: 0;
+    transform: scale(1.012);
   }
 }
 
-/* 天色：底部一层很淡的主题色光，60 秒缓慢呼吸 */
+/* 天色与环境氛围柔光：底部与中心铺一层极淡的主题呼吸光，与背景场景自然融合 */
 .overlay .sky {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(
-    120% 60% at 50% 105%,
-    color-mix(in srgb, var(--accent) 16%, transparent) 0%,
-    transparent 60%
-  );
-  transition: filter 3s var(--ease);
+  background:
+    radial-gradient(
+      90% 55% at 50% 46%,
+      color-mix(in srgb, var(--accent) 6%, transparent) 0%,
+      transparent 70%
+    ),
+    radial-gradient(
+      120% 62% at 50% 104%,
+      color-mix(in srgb, var(--accent) 18%, transparent) 0%,
+      transparent 64%
+    );
+  transition:
+    filter 2.4s var(--ease),
+    opacity 1.8s var(--ease);
 }
 
 .overlay.ended .sky {
-  filter: brightness(1.15);
-  background: radial-gradient(
-    130% 80% at 50% 100%,
-    color-mix(in srgb, var(--accent) 26%, transparent) 0%,
-    transparent 70%
-  );
+  filter: brightness(1.12);
+  background:
+    radial-gradient(
+      85% 58% at 50% 48%,
+      color-mix(in srgb, var(--accent) 12%, transparent) 0%,
+      transparent 72%
+    ),
+    radial-gradient(
+      130% 78% at 50% 100%,
+      color-mix(in srgb, var(--accent) 26%, transparent) 0%,
+      transparent 72%
+    );
 }
 
 .overlay .dot {
   width: calc(8 * var(--u));
   height: calc(8 * var(--u));
+  box-shadow: 0 0 calc(10 * var(--u)) color-mix(in srgb, var(--c, var(--accent)) 65%, transparent);
 }
 
 /* 从上到下：科目和时刻、大数字、文字按钮、地平线和一句话。中间那块占满剩下的高度 */
 .focus {
   position: absolute;
   inset: 0;
+  z-index: 4;
   display: flex;
   flex-direction: column;
-  padding: calc(44 * var(--u)) calc(56 * var(--u)) calc(64 * var(--u));
+  padding: calc(40 * var(--u)) calc(56 * var(--u)) calc(52 * var(--u));
   transition: transform 4s linear;
 }
 
@@ -60,41 +77,98 @@ html[data-view="overlay"] body {
   cursor: none;
 }
 
+/* ---------- 顶部栏：科目任务与当前时刻 ---------- */
+
 .ov-top {
+  position: relative;
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
+  align-items: center;
   gap: calc(32 * var(--u));
 }
 
 .ov-subject {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: calc(10 * var(--u));
+  gap: calc(11 * var(--u));
   min-width: 0;
-  font-size: calc(20 * var(--u));
+  padding: calc(6 * var(--u)) calc(16 * var(--u)) calc(6 * var(--u)) calc(13 * var(--u));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 38%, transparent);
+  border: 1px solid color-mix(in srgb, var(--line) 85%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font-size: calc(19 * var(--u));
+  line-height: 1.35;
+  letter-spacing: 0.04em;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 }
 
 .ov-subject > span {
   flex: none;
+  font-weight: 500;
 }
 
 .ov-subject .task {
+  position: relative;
   flex: 0 1 auto;
   min-width: 0;
+  padding-left: calc(12 * var(--u));
+  font-weight: 400;
+  font-size: 0.9em;
+  letter-spacing: 0.02em;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--muted);
+  color: color-mix(in srgb, var(--text) 68%, var(--muted));
+}
+
+.ov-subject .task::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 22%;
+  bottom: 22%;
+  width: 1px;
+  background: var(--line);
 }
 
 .ov-clock {
   flex: none;
   font-weight: 300;
   font-size: calc(18 * var(--u));
-  color: var(--muted);
-  letter-spacing: 0.04em;
+  color: color-mix(in srgb, var(--text) 72%, var(--muted));
+  letter-spacing: 0.08em;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
 }
+
+.ov-notice {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: calc(5 * var(--u)) calc(16 * var(--u));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  text-align: center;
+  font-size: calc(14 * var(--u));
+  letter-spacing: 0.06em;
+  color: var(--text);
+  pointer-events: none;
+  animation: notice-in 0.25s var(--ease);
+}
+
+@keyframes notice-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -35%);
+  }
+}
+
+/* ---------- 中心区域：巨型专注时钟与状态副标题 ---------- */
 
 .ov-center {
   flex: 1;
@@ -108,110 +182,91 @@ html[data-view="overlay"] body {
 .ov-time {
   font-family: var(--font-num);
   font-weight: 200;
-  font-size: min(calc(228 * var(--u)), 24vw);
-  line-height: 1;
-  letter-spacing: -0.02em;
+  font-size: min(calc(224 * var(--u)), 23.5vw);
+  line-height: 0.98;
+  letter-spacing: -0.025em;
   font-variant-numeric: tabular-nums;
   color: var(--text);
   background: none;
   border: 0;
   cursor: inherit;
-  transition: opacity 0.4s;
+  text-shadow:
+    0 calc(14 * var(--u)) calc(48 * var(--u)) rgba(0, 0, 0, 0.26),
+    0 calc(2 * var(--u)) calc(12 * var(--u)) rgba(0, 0, 0, 0.14);
+  transition:
+    opacity 0.45s var(--ease),
+    transform 0.45s var(--ease),
+    font-size 0.4s var(--ease);
+}
+
+.overlay:has(.scene-fog) .ov-time {
+  text-shadow:
+    0 calc(10 * var(--u)) calc(36 * var(--u)) rgba(28, 37, 50, 0.1),
+    0 calc(2 * var(--u)) calc(8 * var(--u)) rgba(255, 255, 255, 0.35);
+}
+
+.ov-time:hover {
+  transform: scale(1.006);
 }
 
 .ov-time.paused {
-  opacity: 0.55;
+  opacity: 0.52;
+  transform: scale(0.988);
 }
 
 .ov-time .colon {
   display: inline-block;
-  width: 0.32em;
-  height: 0.5em;
-  vertical-align: 0.1em;
-  opacity: 0.5;
+  width: 0.28em;
+  height: 0.56em;
+  vertical-align: 0.08em;
+  opacity: 0.58;
   color: transparent;
   overflow: hidden;
   background:
-    radial-gradient(circle at 50% 12%, var(--text) 0.028em, transparent 0.034em),
-    radial-gradient(circle at 50% 88%, var(--text) 0.028em, transparent 0.034em);
+    radial-gradient(circle at 50% 28%, var(--text) 0.035em, transparent 0.042em),
+    radial-gradient(circle at 50% 72%, var(--text) 0.035em, transparent 0.042em);
 }
 
 .ov-note {
-  margin-top: calc(18 * var(--u));
+  margin-top: calc(20 * var(--u));
+  padding: calc(4 * var(--u)) calc(14 * var(--u));
+  border-radius: 999px;
   font-size: calc(17 * var(--u));
-  color: var(--muted);
-  letter-spacing: 0.08em;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--text) 74%, var(--muted));
+  letter-spacing: 0.1em;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+  transition:
+    color 0.3s var(--ease),
+    background-color 0.3s var(--ease);
 }
 
-.ov-bottom {
-  align-self: center;
-  width: 80vw;
+.ov-note.paused {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, transparent);
 }
 
-.horizon {
-  position: relative;
-  height: 12px;
-}
+/* ---------- 悬浮控制条与氛围抽屉 ---------- */
 
-.horizon .track {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 6px;
-  height: 1px;
-  background: var(--line);
-}
-
-.horizon .fill {
-  position: absolute;
-  left: 0;
-  top: 6px;
-  height: 1px;
-  width: calc(var(--p) * 100%);
-  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 80%, transparent));
-  transition: width 1s linear;
-}
-
-.horizon .glow {
-  position: absolute;
-  top: 6px;
-  left: calc(var(--p) * 100%);
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  background: var(--accent);
-  box-shadow:
-    0 0 12px 3px color-mix(in srgb, var(--accent) 55%, transparent),
-    0 0 40px 10px color-mix(in srgb, var(--accent) 18%, transparent);
-  transition: left 1s linear;
-}
-
-.h-labels {
-  display: flex;
-  justify-content: space-between;
-  margin-top: calc(14 * var(--u));
-  font-size: calc(13 * var(--u));
-  color: var(--muted);
-  letter-spacing: 0.04em;
-}
-
-.quote {
-  margin-top: calc(34 * var(--u));
-  text-align: center;
-  font-size: calc(19 * var(--u));
-  color: var(--muted);
-  letter-spacing: 0.12em;
-}
-
-/* 文字按钮：直接写在背景上，鼠标静止 3 秒淡出 */
 .textctl {
-  display: flex;
+  align-self: center;
+  display: inline-flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: clamp(18px, 4vw, calc(48 * var(--u)));
-  margin-bottom: calc(30 * var(--u));
-  transition: opacity 0.6s var(--ease);
+  align-items: center;
+  gap: clamp(14px, 2.8vw, calc(34 * var(--u)));
+  padding: calc(8 * var(--u)) calc(24 * var(--u));
+  margin-bottom: calc(24 * var(--u));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 44%, transparent);
+  border: 1px solid color-mix(in srgb, var(--line) 90%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.14);
+  transition:
+    opacity 0.6s var(--ease),
+    transform 0.6s var(--ease);
 }
 
 .focus.idle:not(.atmo-open) .textctl,
@@ -222,79 +277,81 @@ html[data-view="overlay"] body {
 }
 
 .focus.atmo-open .ov-time {
-  font-size: min(calc(168 * var(--u)), 18vw);
+  font-size: min(calc(164 * var(--u)), 17.5vw);
 }
 
 .atmo-live {
+  align-self: center;
+  width: min(86vw, calc(740 * var(--u)));
   display: flex;
   justify-content: space-between;
-  gap: calc(18 * var(--u));
+  gap: calc(20 * var(--u));
+  padding: calc(14 * var(--u)) calc(22 * var(--u));
   margin-bottom: calc(16 * var(--u));
-  transition: opacity 0.6s var(--ease);
+  border-radius: calc(16 * var(--u));
+  background: color-mix(in srgb, var(--surface) 58%, transparent);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.18);
+  transition: opacity 0.5s var(--ease);
 }
 
 .atmo-live > div {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-  align-items: baseline;
-  gap: calc(6 * var(--u)) calc(12 * var(--u));
-  max-width: 48%;
+  justify-content: flex-start;
+  align-items: center;
+  gap: calc(6 * var(--u)) calc(10 * var(--u));
+  max-width: 49%;
 }
 
 .atmo-live span {
   color: var(--muted);
-  font-size: calc(15 * var(--u));
+  font-size: calc(14 * var(--u));
+  letter-spacing: 0.06em;
+  margin-right: calc(4 * var(--u));
   cursor: default;
 }
 
 .atmo-live button {
-  background: none;
-  border: 0;
-  color: var(--text);
-  opacity: 0.8;
+  padding: calc(3 * var(--u)) calc(10 * var(--u));
+  border-radius: 999px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: color-mix(in srgb, var(--text) 78%, var(--muted));
   font-family: var(--font-wk);
-  font-size: calc(15 * var(--u));
+  font-size: calc(14.5 * var(--u));
+  letter-spacing: 0.04em;
   cursor: pointer;
+  transition:
+    color 0.2s,
+    background-color 0.2s,
+    border-color 0.2s;
 }
 
-.atmo-live button:hover,
-.atmo-live button.on {
-  opacity: 1;
+.atmo-live button:hover {
   color: var(--text);
+  background: color-mix(in srgb, var(--text) 8%, transparent);
 }
 
-.ov-notice {
-  position: absolute;
-  top: calc(16 * var(--u));
-  left: 0;
-  right: 0;
-  text-align: center;
-  font-size: calc(14 * var(--u));
-  color: var(--muted);
-  pointer-events: none;
-}
-
-.keys-hint {
-  position: absolute;
-  right: calc(28 * var(--u));
-  bottom: calc(16 * var(--u));
-  font-size: calc(11 * var(--u));
-  color: var(--muted);
-  opacity: 0.65;
-  transition: opacity 0.6s var(--ease);
+.atmo-live button.on {
+  color: var(--text);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 38%, transparent);
 }
 
 .textctl button {
   position: relative;
+  padding: calc(3 * var(--u)) calc(6 * var(--u));
   font-family: var(--font-wk);
   font-size: calc(15 * var(--u));
-  letter-spacing: 0.14em;
-  color: var(--muted);
+  letter-spacing: 0.12em;
+  color: color-mix(in srgb, var(--text) 72%, var(--muted));
   background: none;
   border: 0;
   cursor: pointer;
-  transition: color 0.2s;
+  transition: color 0.22s var(--ease);
 }
 
 .textctl button:hover {
@@ -309,34 +366,130 @@ html[data-view="overlay"] body {
   content: "";
   position: absolute;
   left: 50%;
-  bottom: calc(-9 * var(--u));
+  bottom: calc(-4 * var(--u));
   width: calc(4 * var(--u));
   height: calc(4 * var(--u));
   border-radius: 50%;
   background: var(--accent);
   transform: translateX(-50%);
-  box-shadow: 0 0 8px 1px color-mix(in srgb, var(--accent) 60%, transparent);
+  box-shadow: 0 0 8px 1px color-mix(in srgb, var(--accent) 65%, transparent);
 }
 
 .textctl .end {
-  opacity: 0.7;
+  color: color-mix(in srgb, var(--text) 58%, var(--muted));
 }
 
-/* ---------- 结束页 ---------- */
+.textctl .end:hover {
+  color: var(--text);
+}
+
+/* ---------- 底部：地平线进度条与每日一句 ---------- */
+
+.ov-bottom {
+  align-self: center;
+  width: min(78vw, calc(760 * var(--u)));
+}
+
+.horizon {
+  position: relative;
+  height: 12px;
+}
+
+.horizon .track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 6px;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--line) 8%,
+    color-mix(in srgb, var(--text) 18%, transparent) 50%,
+    var(--line) 92%,
+    transparent 100%
+  );
+}
+
+.horizon .fill {
+  position: absolute;
+  left: 0;
+  top: 5.5px;
+  height: 1.5px;
+  width: calc(var(--p) * 100%);
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--accent) 38%, transparent) 28%,
+    color-mix(in srgb, var(--accent) 92%, transparent) 100%
+  );
+  transition: width 1s linear;
+}
+
+.horizon .glow {
+  position: absolute;
+  top: 6px;
+  left: calc(var(--p) * 100%);
+  width: calc(6 * var(--u));
+  height: calc(6 * var(--u));
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: color-mix(in srgb, var(--accent) 75%, #ffffff);
+  box-shadow:
+    0 0 12px 3px color-mix(in srgb, var(--accent) 65%, transparent),
+    0 0 36px 10px color-mix(in srgb, var(--accent) 24%, transparent);
+  transition: left 1s linear;
+}
+
+.h-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: calc(11 * var(--u));
+  font-size: calc(12.5 * var(--u));
+  color: color-mix(in srgb, var(--text) 56%, var(--muted));
+  letter-spacing: 0.06em;
+}
+
+.quote {
+  margin-top: calc(24 * var(--u));
+  margin-inline: auto;
+  max-width: 44em;
+  text-align: center;
+  font-size: calc(16.5 * var(--u));
+  line-height: 1.65;
+  color: color-mix(in srgb, var(--text) 74%, var(--muted));
+  letter-spacing: 0.08em;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.16);
+}
+
+.keys-hint {
+  position: absolute;
+  right: calc(32 * var(--u));
+  bottom: calc(18 * var(--u));
+  font-size: calc(11.5 * var(--u));
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  opacity: 0.62;
+  transition: opacity 0.6s var(--ease);
+}
+
+/* ---------- 结算页 (EndScreen) ---------- */
 
 .end-wrap {
   position: absolute;
   inset: 0;
+  z-index: 4;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   justify-content: safe center;
-  gap: calc(8 * var(--u));
-  padding: calc(40 * var(--u)) max(24px, 6vw) calc(32 * var(--u));
+  gap: calc(10 * var(--u));
+  padding: calc(40 * var(--u)) max(24px, 6vw) calc(36 * var(--u));
   overflow-y: auto;
   text-align: center;
-  animation: end-in 0.8s var(--ease) both;
+  animation: end-in 0.85s var(--ease) both;
 }
 
 .overlay.completed .end-wrap {
@@ -346,49 +499,69 @@ html[data-view="overlay"] body {
 @keyframes end-in {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(12px);
   }
 }
 
 .end-pet {
+  margin-top: calc(8 * var(--u));
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: calc(8 * var(--u));
 }
 
 .bubble {
-  padding: 4px 12px;
+  padding: calc(5 * var(--u)) calc(14 * var(--u));
   border-radius: 999px;
-  background: #f4ecdc;
+  background: color-mix(in srgb, #f6efe2 92%, var(--surface));
   color: #1c2430;
   font-family: var(--font-wk);
-  font-size: 16px;
+  font-size: calc(15 * var(--u));
+  letter-spacing: 0.04em;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.16);
 }
 
 .end-title {
-  font-size: calc(46 * var(--u));
-  letter-spacing: 0.06em;
+  max-width: min(92vw, calc(720 * var(--u)));
+  font-size: calc(40 * var(--u));
+  line-height: 1.42;
+  letter-spacing: 0.05em;
+  color: var(--text);
+  text-shadow: 0 8px 32px rgba(0, 0, 0, 0.22);
 }
 
 .end-title em {
   font-style: normal;
   font-weight: 300;
-  font-size: calc(54 * var(--u));
-  margin: 0 0.12em;
+  font-size: calc(48 * var(--u));
+  color: var(--accent);
+  margin: 0 0.14em;
+  vertical-align: -0.02em;
 }
 
 .end-sub {
-  margin-top: calc(18 * var(--u));
-  font-size: calc(18 * var(--u));
-  color: var(--muted);
-  display: flex;
+  margin-top: calc(12 * var(--u));
+  padding: calc(7 * var(--u)) calc(18 * var(--u));
+  max-width: min(90vw, calc(620 * var(--u)));
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 46%, transparent);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  font-size: calc(17 * var(--u));
+  line-height: 1.45;
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, var(--text) 78%, var(--muted));
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: calc(10 * var(--u));
   align-items: center;
 }
 
 .end-actions {
-  margin-top: calc(36 * var(--u));
+  margin-top: calc(28 * var(--u));
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
@@ -397,43 +570,67 @@ html[data-view="overlay"] body {
 
 .end-wrap .btn {
   font-size: calc(15 * var(--u));
-  padding: calc(13 * var(--u)) calc(30 * var(--u));
+  letter-spacing: 0.06em;
+  padding: calc(12 * var(--u)) calc(32 * var(--u));
+}
+
+.end-wrap .btn.primary {
+  box-shadow: 0 8px 28px color-mix(in srgb, var(--accent) 26%, transparent);
 }
 
 .note-box {
-  margin-top: calc(24 * var(--u));
-  width: min(calc(460 * var(--u)), 100%);
+  margin-top: calc(20 * var(--u));
+  width: min(calc(480 * var(--u)), 100%);
+  padding: calc(6 * var(--u));
+  border-radius: calc(14 * var(--u));
+  background: color-mix(in srgb, var(--surface) 52%, transparent);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.14);
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   justify-content: center;
-  gap: calc(10 * var(--u));
+  gap: calc(8 * var(--u));
+  transition: border-color 0.25s var(--ease);
+}
+
+.note-box:focus-within {
+  border-color: color-mix(in srgb, var(--accent) 48%, transparent);
 }
 
 .note-box input {
   flex: 1;
   min-width: 0;
-  padding: calc(12 * var(--u)) calc(16 * var(--u));
+  padding: calc(10 * var(--u)) calc(14 * var(--u));
   border-radius: calc(10 * var(--u));
-  border: 1px solid var(--line);
-  background: color-mix(in srgb, var(--surface) 60%, transparent);
+  border: 1px solid transparent;
+  background: transparent;
   color: var(--text);
-  font-size: calc(16 * var(--u));
+  font-size: calc(15.5 * var(--u));
+  letter-spacing: 0.03em;
   outline: none;
-}
-
-.note-box input:focus {
-  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
 }
 
 .note-box input::placeholder {
   color: var(--muted);
+  opacity: 0.78;
 }
 
 .note-box .btn {
-  padding: calc(10 * var(--u)) calc(20 * var(--u));
+  padding: calc(9 * var(--u)) calc(20 * var(--u));
+  border-radius: calc(10 * var(--u));
+  background: color-mix(in srgb, var(--text) 8%, transparent);
+  border-color: transparent;
+}
+
+.note-box .btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--text) 14%, transparent);
 }
 
 .score-box {
+  padding: calc(8 * var(--u)) calc(14 * var(--u));
   align-items: center;
   flex-wrap: wrap;
 }
@@ -442,6 +639,8 @@ html[data-view="overlay"] body {
   flex: none;
   width: calc(88 * var(--u));
   text-align: center;
+  background: color-mix(in srgb, var(--bg) 42%, transparent);
+  border: 1px solid var(--line);
 }
 
 .score-full {
@@ -460,7 +659,7 @@ html[data-view="overlay"] body {
 
 .end-wrap .quote {
   position: static;
-  margin-top: calc(36 * var(--u));
+  margin-top: calc(32 * var(--u));
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -473,12 +672,23 @@ html[data-view="overlay"] body {
 
 @media (prefers-reduced-motion: no-preference) {
   .horizon .glow {
-    animation: breathe 6s ease-in-out infinite;
+    animation: breathe 5s ease-in-out infinite;
+  }
+
+  .ov-time:not(.paused) .colon {
+    animation: colon-pulse 4s ease-in-out infinite;
   }
 
   @keyframes breathe {
     50% {
-      opacity: 0.65;
+      opacity: 0.62;
+      transform: translate(-50%, -50%) scale(0.88);
+    }
+  }
+
+  @keyframes colon-pulse {
+    50% {
+      opacity: 0.32;
     }
   }
 }

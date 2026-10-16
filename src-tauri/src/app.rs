@@ -42,6 +42,8 @@ enum AmbientCmd {
     PlayFile { path: PathBuf, gain_db: f32, volume: f32 },
     Once(Vec<f32>),
     Volume(f32),
+    /// 只停一次性的铃声，循环的背景音留着。
+    Silence,
     Stop,
 }
 
@@ -66,6 +68,11 @@ fn ambient_thread(rx: mpsc::Receiver<AmbientCmd>) {
             AmbientCmd::Volume(volume) => {
                 if let Some(player) = player.as_ref() {
                     player.set_volume(volume);
+                }
+            }
+            AmbientCmd::Silence => {
+                if let Some(player) = player.as_ref() {
+                    player.silence();
                 }
             }
             AmbientCmd::Stop => {
@@ -214,7 +221,7 @@ impl Aside {
     }
 
     pub fn silence_alarm(&self) {
-        self.send_ambient(AmbientCmd::Stop);
+        self.send_ambient(AmbientCmd::Silence);
     }
 
     fn play_imported(&self, id: i64, volume: f32) {
@@ -337,7 +344,7 @@ impl Aside {
     fn send_ambient(&self, cmd: AmbientCmd) {
         let mut slot = self.ambient_tx.lock().unwrap_or_else(|e| e.into_inner());
         if slot.is_none() {
-            if matches!(cmd, AmbientCmd::Stop | AmbientCmd::Volume(_)) {
+            if matches!(cmd, AmbientCmd::Stop | AmbientCmd::Silence | AmbientCmd::Volume(_)) {
                 return;
             }
             let (tx, rx) = mpsc::channel();

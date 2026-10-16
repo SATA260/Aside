@@ -41,6 +41,8 @@ impl Voice {
 pub struct Engine {
     current: Option<Voice>,
     incoming: Option<Voice>,
+    /// 到点铃声。叠在循环的背景音上面，停掉它不会把背景音一起清掉。
+    oneshot: Option<Voice>,
     fade_done: usize,
     fade_len: usize,
     volume: f32,
@@ -48,13 +50,24 @@ pub struct Engine {
 
 impl Engine {
     pub fn new() -> Self {
-        Self { current: None, incoming: None, fade_done: 0, fade_len: 0, volume: 1.0 }
+        Self { current: None, incoming: None, oneshot: None, fade_done: 0, fade_len: 0, volume: 1.0 }
     }
 
     /// 直接换成一段声音，没有渐变。
     pub fn set_clip(&mut self, samples: Vec<f32>) {
         self.current = Some(Voice::clip(samples, false));
         self.incoming = None;
+        self.oneshot = None;
+    }
+
+    /// 在正在循环的背景音上叠一段一次性的声音，比如到点铃声。
+    pub fn play_once(&mut self, samples: Vec<f32>) {
+        self.oneshot = Some(Voice::clip(samples, true));
+    }
+
+    /// 只拿掉一次性的声音，循环的背景音继续。
+    pub fn silence(&mut self) {
+        self.oneshot = None;
     }
 
     /// 用两秒交叉渐变换成一段新的声音。
@@ -90,17 +103,23 @@ impl Engine {
 
     fn sample(&mut self) -> f32 {
         let current = self.current.as_mut().map_or(0.0, Voice::next_sample);
-        let Some(incoming) = self.incoming.as_mut() else {
-            return current * self.volume;
+        let mixed = if let Some(incoming) = self.incoming.as_mut() {
+            let t = self.fade_done as f32 / self.fade_len as f32;
+            let incoming = incoming.next_sample();
+            self.fade_done += 1;
+            let mixed = current * (1.0 - t) + incoming * t;
+            if self.fade_done >= self.fade_len {
+                self.current = self.incoming.take();
+            }
+            mixed
+        } else {
+            current
         };
-        let t = self.fade_done as f32 / self.fade_len as f32;
-        let incoming = incoming.next_sample();
-        self.fade_done += 1;
-        let mixed = (current * (1.0 - t) + incoming * t) * self.volume;
-        if self.fade_done >= self.fade_len {
-            self.current = self.incoming.take();
+        let shot = self.oneshot.as_mut().map(Voice::next_sample).unwrap_or(0.0);
+        if self.oneshot.as_ref().is_some_and(|voice| voice.once && voice.pos >= voice.samples.len()) {
+            self.oneshot = None;
         }
-        mixed
+        (mixed * self.volume + shot).clamp(-1.0, 1.0)
     }
 }
 
@@ -200,15 +219,16 @@ impl Player {
     }
 
     pub fn play_once(&self, samples: Vec<f32>) {
-        let mut engine = self.engine.lock().unwrap_or_else(|e| e.into_inner());
-        engine.set_volume(1.0);
-        engine.current = Some(Voice::clip(samples, true));
-        engine.incoming = None;
+        self.engine.lock().unwrap_or_else(|e| e.into_inner()).play_once(samples);
     }
 
     pub fn switch_live(&self, path: std::path::PathBuf, gain_db: f32) {
         let live = fileloop::LiveFeed::open(path, gain_db);
         self.engine.lock().unwrap_or_else(|e| e.into_inner()).switch_live(live);
+    }
+
+    pub fn silence(&self) {
+        self.engine.lock().unwrap_or_else(|e| e.into_inner()).silence();
     }
 
     pub fn stop(&self) {

@@ -88,6 +88,21 @@ fn clips_keep_looping_while_fading() {
 }
 
 #[test]
+fn silencing_the_alarm_leaves_the_loop_playing() {
+    let mut engine = Engine::new();
+    engine.set_volume(1.0);
+    engine.set_clip(vec![0.25]);
+    engine.play_once(vec![0.5, 0.5]);
+    let mut out = [0.0; 2];
+    engine.render(&mut out);
+    assert!((out[0] - 0.75).abs() < 1e-4, "{}", out[0]);
+    engine.silence();
+    engine.render(&mut out);
+    assert!((out[0] - 0.25).abs() < 1e-4, "{}", out[0]);
+    assert!((out[1] - 0.25).abs() < 1e-4, "{}", out[1]);
+}
+
+#[test]
 fn every_builtin_sound_decodes_to_audible_audio() {
     for sound in aside_lib::audio::builtin::list() {
         let samples = aside_lib::audio::builtin::samples(sound);
